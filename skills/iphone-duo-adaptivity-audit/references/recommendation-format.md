@@ -18,8 +18,8 @@ approve, and nothing is changed until they do.
   controller's toolbar; delete the manual bar and its constraints.
 - **SDK:** available in the selected SDK (iOS 27.0) · or: *blocked on iOS 27.1 SDK*
 - **Risk:** low — layout-only; one screen.
-- **Verify:** Device Hub, iPhone Duo inner display in landscape: actions appear in
-  the vertical bar; outer display unchanged.
+- **Verify:** Device Hub, iPhone Duo outer display and inner display in landscape:
+  actions appear in the vertical bar; inner display in portrait: horizontal.
 - **Status:** proposed
 ```
 
@@ -27,8 +27,9 @@ approve, and nothing is changed until they do.
 
 - **IDs are stable** across a session (`DUO-01`, `DUO-02`, …). A scanner finding keeps
   its own ID (`DUO007:path:line`) in the *Finding* line so it can be re-located.
-- **One source per item, with a timestamp.** No source, no recommendation — if the
-  advice is your own inference, label it *inference* and say what it rests on.
+- **One source per item, with a timestamp** (or, for the Human Interface Guidelines,
+  the page section). No source, no recommendation — if the advice is your own
+  inference, label it *inference* and say what it rests on.
 - **Say what you did not verify.** "Builds with Xcode 27.0" is not "works on iPhone
   Duo". If no iPhone Duo simulator was available, the *Verify* line is a step for the
   developer, not a claim.

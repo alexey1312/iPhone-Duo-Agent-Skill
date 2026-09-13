@@ -223,7 +223,7 @@ skills/
   iphone-duo-displays/          + references/displays-code.md
     SKILL.md                    Workflow and rules for the skill
     references/                 sources, api-availability, recommendation-format,
-                                pose-test-matrix (shared copies)
+                                pose-test-matrix, device-geometry (shared copies)
     scripts/                    duo_scan.py, sdk_api_check.py (shared copies)
     evals/                      skill-creator evals and fixture projects
 references/                     Canonical shared references
@@ -254,6 +254,9 @@ READINESS-CHECKS.md             Every automated and manual check, with sources
 - [Raise the bar with iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111462/) — Tech Talk
 - [Strike a pose with adaptive layouts on iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111463/) — Tech Talk
 - [Leverage multiple displays and scenes on iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111464/) — Tech Talk
+- [Design for iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111466/) — Tech Talk
+- [Designing for iPhone Duo](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo) — Human Interface Guidelines
+- [iPhone Duo tech specs](https://www.apple.com/iphone-duo/specs/) — hardware facts in `references/device-geometry.md`
 - [Modernize your UIKit app](https://developer.apple.com/videos/play/wwdc2026/278/) — WWDC26
 
 Chapter-level notes: [references/sources.md](references/sources.md).

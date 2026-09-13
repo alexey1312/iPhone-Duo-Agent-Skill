@@ -2,7 +2,8 @@
 name: iphone-duo-bars
 description: >-
   Prepare navigation bars, toolbars and tab bars for iPhone Duo's vertical bars,
-  where controls move to the side of the inner display in landscape. Use when a
+  where controls move to the side of the outer display and of the inner display
+  in landscape. Use when a
   developer asks about vertical bars, bar item ordering, back or close button
   placement, pinned trailing or prominent actions, toolbar items without titles,
   axisBehavior, symbol-only items and badges, custom views in toolbars,
@@ -14,14 +15,19 @@ description: >-
 
 # iPhone Duo vertical bars
 
-On the inner display in landscape, iPhone Duo moves controls that normally sit at the
-top and bottom to the side, keeping vertical space for content and controls within
-reach. In portrait they return to a horizontal layout. (Tech Talk 111462, 0:28)
+On the outer display and on the inner display in landscape, iPhone Duo moves controls
+that normally sit at the top and bottom to the side, keeping vertical space for content
+and controls within reach. Only the inner display in portrait keeps horizontal bars.
+Top to bottom the side stack is Dynamic Island, status bar, toolbar (with navigation
+buttons), tab bar. (Tech Talk 111462, 0:28; Tech Talk 111466, 5:07; HIG *Designing for
+iPhone Duo* › Vertical controls)
 
 Read `references/vertical-bars.md` for the code; `references/api-availability.md` for
 which parts compile with the selected SDK — `axisBehavior`, `toolbarVerticalEdge`,
 compression behavior and the opt-out need the **iOS 27.1 SDK**, while titles, symbols,
 badges, placements, `visibilityPriority` and `ToolbarOverflowMenu` work today.
+Where the corner camera and the side controls physically sit:
+`references/device-geometry.md`.
 
 ## How the system decides
 
@@ -48,7 +54,10 @@ badges, placements, `visibilityPriority` and `ToolbarOverflowMenu` work today.
    prominent actions (done, save). Use `.cancellationAction` / leading item groups
    with `leftItemsSupplementBackButton = false` for close, and
    `.topBarPinnedTrailing` / `pinnedTrailingGroup` for prominent actions. Keep
-   controls associated with the container they belong to. (4:29)
+   controls associated with the container they belong to. (4:29) Group related items
+   with `ToolbarItemGroup` / `UIBarButtonItemGroup` instead of manual spacing, and keep
+   controls next to the content they affect — Mail's list controls stay above the
+   leading pane. (HIG › Vertical controls)
 3. **Title and symbol on every item.** Provide both, even when only the symbol shows.
 4. **Text that carries information stays horizontal.** A symbol plus redundant text →
    symbol only (use a badge for counts, iOS 26 badge API). Text with standalone value
@@ -74,6 +83,9 @@ badges, placements, `visibilityPriority` and `ToolbarOverflowMenu` work today.
    preserve glanceability. Rare actions: low. (13:10)
 10. **Opt-out only where it fits.** Single-page, bottom-heavy layouts (Calculator-like)
     and sheets with a single close button. Not as a fix for items that overflow. (14:21)
+    Otherwise don't override the default placement; a full-width layout suits only
+    immersive, non-scrolling screens that don't conflict with the Dynamic Island or
+    status bar. (HIG › Vertical controls; Tech Talk 111466, 6:33)
 
 ## Output
 
@@ -84,6 +96,6 @@ ship now and improves bars on every iPhone.
 
 ## Verify
 
-Pose matrix P2 (outer display landscape, keyboard up), P3 (inner landscape: vertical
-bar), P4 (inner portrait: horizontal), P11 (right-to-left), P12 (Reduce Transparency)
+Pose matrix P1 (outer display: side controls), P2 (outer display landscape, keyboard
+up), P3 (inner landscape: vertical bar), P4 (inner portrait: horizontal), P11 (right-to-left), P12 (Reduce Transparency)
 from `references/pose-test-matrix.md`. Check which items overflow and in what order.

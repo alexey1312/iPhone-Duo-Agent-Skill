@@ -31,6 +31,7 @@ COPIES: dict[str, list[str]] = {
     "references/api-availability.md": ALL_SKILLS,
     "references/recommendation-format.md": ALL_SKILLS,
     "references/pose-test-matrix.md": POSE_SKILLS,
+    "references/device-geometry.md": POSE_SKILLS,
     "scripts/duo_scan.py": ALL_SKILLS,
     "scripts/sdk_api_check.py": ALL_SKILLS,
 }

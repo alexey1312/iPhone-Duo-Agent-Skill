@@ -3,7 +3,8 @@
 Automated rules run by `scripts/duo_scan.py`, followed by the manual checks each skill
 performs. Session abbreviations: **111461** Prepare your app for iPhone Duo, **111462**
 Raise the bar, **111463** Strike a pose, **111464** Leverage multiple displays and
-scenes, **278** Modernize your UIKit app (WWDC26).
+scenes, **111466** Design for iPhone Duo, **278** Modernize your UIKit app (WWDC26),
+**HIG** Designing for iPhone Duo (Human Interface Guidelines, cited by section).
 
 ## Automated rules
 
@@ -56,6 +57,8 @@ Every finding needs the code read before it becomes a recommendation.
 - Compression behavior matches the app's focus. (111462 12:23)
 - Visibility priority on groups, then items. (111462 13:10)
 - Opt-out only for bottom-heavy single-page apps and single-control sheets. (111462 14:21)
+- Outer display: content offset by the safe area so side controls don't hide it. (111466 6:33; HIG Vertical controls)
+- Related items grouped with `ToolbarItemGroup` / `UIBarButtonItemGroup`, no manual spacing; controls stay next to the content they affect. (HIG Vertical controls)
 
 ### Layout
 
@@ -66,6 +69,9 @@ Every finding needs the code read before it becomes a recommendation.
 - Nothing important spans the fold; displacement chosen per element; scrolling content not displaced. (111463 1:29–5:12)
 - Top manually laid out controls query division and occlusion regions. (111463 6:39–7:50)
 - Custom two-view layouts considered for split or overlay arrangements, not nested in scroll views or around navigation containers. (111463 9:20–16:09)
+- Same functionality and state on both displays; an extra hierarchy level on the inner display where it fits. (HIG Best practices; 111466 7:34)
+- Small adjustments, not rearrangement, while folding. (HIG Reserved regions)
+- Games playable in every pose, changing aspect ratio rather than letterboxing or pillarboxing. (HIG Best practices)
 
 ### Displays and scenes
 

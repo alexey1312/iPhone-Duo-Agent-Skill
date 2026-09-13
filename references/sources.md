@@ -1,8 +1,10 @@
 # Sources
 
-Every recommendation in these skills traces to one of the sessions below. Cite the
-session and chapter timestamp when you recommend a change, so the developer can
-watch the exact passage.
+Every recommendation in these skills traces to one of the sessions or pages below.
+Cite the session and chapter timestamp when you recommend a change, so the developer
+can watch the exact passage. The Human Interface Guidelines have no timestamps: cite
+the page and section (for example *HIG, Designing for iPhone Duo › Vertical
+controls*).
 
 Chapter summaries and code samples are published on each session page. When a
 code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
@@ -77,6 +79,47 @@ code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
 | 5:00 | Camera capture accessory | Outer-display UI while the main UI stays inside; requires full screen on the inner display with an active camera session; register on the camera view. |
 | 5:34 | Teleprompter example | `.sceneAccessory { CameraCaptureAccessory(isEnabled:) { … } .onAvailabilityChange { … } }`, toolbar toggle disabled while unavailable. |
 
+## Design for iPhone Duo — Tech Talk 111466
+
+<https://developer.apple.com/videos/play/tech-talks/111466/>
+
+| Time | Chapter | Takeaway |
+| --- | --- | --- |
+| 0:28 | Design principles | Many poses; controls move to the outer edge of the display to maximize vertical space; folded, content moves away from the center; Split View multitasking and video PiP put apps at other aspect ratios, so support resizability. |
+| 3:42 | Adapting your design | No custom layout per pose — design for compact and regular; layout margins and safe area insets; a bespoke pose layout must keep functionality and hierarchy. |
+| 5:07 | Positioning controls | Toolbars, tab bars and controls along the side, sharing that space with Live Activities and the status bar; overflow when it runs out; controls too wide for the vertical space are the exception. |
+| 6:33 | Designing for the outer display | Most content needs an offset so controls don't hide it — safe areas provide it; immersive, non-scrolling UIs may center on the full display; a full-width background can hold inset text. |
+| 7:34 | Designing for the inner display | Use the width: split views surface more hierarchy, or rearrange into two columns. |
+| 8:36 | Sheet behavior | Outer display: sheets can present with vertical controls. Inner display: horizontal bars. Folded: sheets slide over to avoid resting in the fold. |
+| 9:28 | Fold avoidance | System components nudge interactive elements away from the center when partially folded; except for scrollable content, keep interactive elements away from the hinge. |
+
+## Designing for iPhone Duo — Human Interface Guidelines
+
+<https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo>
+— new page, change log September 9, 2026. The page renders with JavaScript; its text is
+in <https://developer.apple.com/tutorials/data/design/human-interface-guidelines/designing-for-iphone-duo.json>.
+It links Tech Talks 111466, 111462 and 111463.
+
+| Section | Guidance |
+| --- | --- |
+| Introduction | Two displays, each with its own front camera, and a center hinge. Still designing for iPhone: iOS patterns apply. Standard components plus resizing support adapt with little adjustment. |
+| Anatomy | Closed, people use the outer display and the system puts toolbars and tab bars on the side; controls stay on the side when the device opens in landscape. The outer front camera is in the corner, always visible, vertically aligned with the side controls; the inner camera is behind the display, hidden until active. |
+| Device poses | Held partially folded like a book, placed on a surface, or standing on its edges (six poses illustrated). Don't design a layout per pose: compact width for the outer display, regular width for the inner display. |
+| Best practices | Build to resize (size classes, layout margins, safe area insets; no fixed widths or display-specific dependencies). Keep functionality and state consistent across displays; optionally show one more hierarchy level on the inner display (Mail: list or message closed, both open). Same functionality in every pose. Follow the system vertical layout for bars. Games: playable in every pose, fill the screen, keep text and control sizes consistent, prefer changing the aspect ratio over letterboxing or pillarboxing, else add artwork to the padding. |
+| Reserved regions | Outer front camera: always present, expands into the Dynamic Island for Live Activities; side controls account for it. Inner front camera: only while active; the UI moves aside. Folding region: when partially open it divides the inner display, excluding the center. Alerts, context menus and sheets move for the fold; split views adapt column widths and margins to the inner display's symmetry. Prefer adaptive containers (Notes split view); even number of grid columns; reserved-region APIs for custom content; avoid extreme layout changes while folding — small adjustments over rearrangement. |
+| Split views | Expand on the inner display, collapse to one pane on the outer display (`NavigationSplitView`, `UISplitViewController`). |
+| Arrangement views | Split: horizontal when wider than tall, vertical when taller. Overlay: side by side when partially folded, otherwise primary atop secondary. Split axes can be limited; the overlay secondary can collapse. `HStack`/`VStack` → split, `ZStack` → overlay. Keep navigation containers outside. |
+| Vertical controls | Toolbars, tab bars and navigation controls move to the side everywhere except the inner display in portrait. Side stack, top to bottom: Dynamic Island, status bar, toolbar (with navigation buttons), tab bar. In Split View multitasking each app puts controls on its outer edge. Controls stay aligned with the hardware: same position relative to the outer camera, same side in right-to-left languages. Handle the asymmetric content area with safe areas, including controls on the opposite edge. Keep relative positions consistent across poses. |
+| Vertical controls — items | Top: primary navigation (Back, Close), then prominent actions (Done); original groupings kept, with system spacing between top-bar and bottom-bar items. Overflow runs bottom to top; set `ToolbarItemVisibilityPriority` / `UIBarButtonItemVisibilityPriority` by group, then item; keep frequent actions (Compose, New Note) and badged items visible longest. Don't override the default bar placement. Full-width layouts suit immersive, non-scrolling UIs if nothing conflicts with the Dynamic Island or status bar (Calculator); a full-width background can hold inset scrolling content. Group with `ToolbarItemGroup` / `UIBarButtonItemGroup`, no manual spacing. Keep controls near the content they affect (Mail list controls stay above the leading pane). Title and symbol for every item that isn't text-only (`Label` / `UIBarButtonItem`); minimize text buttons — text labels stay in a horizontal bar. Limited space: navigation-focused keeps the tab bar and overflows toolbar items (default); task-oriented minimizes the tab bar. One system overflow menu (`ToolbarOverflowMenu` / `additionalOverflowItems`); ellipsis only for overflow. |
+
+## Hardware facts
+
+Displays, dimensions, cameras, hinge position and poses — with Apple's
+[tech specs](https://www.apple.com/iphone-duo/specs/) and
+[newsroom announcement](https://www.apple.com/newsroom/2026/09/apple-unveils-iphone-duo/)
+kept apart from diagram measurements and third-party claims — are in
+`device-geometry.md`, shipped with the readiness, bars, layout and displays skills.
+
 ## Modernize your UIKit app — WWDC26 session 278
 
 <https://developer.apple.com/videos/play/wwdc2026/278/>
@@ -98,4 +141,4 @@ code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
 | 14:07 | Agentic coding | Xcode's modernization skill; export with `xcrun agent skills export`. |
 
 Related: *Get the most out of Device Hub* (WWDC26), *Build a great camera experience
-for iPhone Duo* (Tech Talk), *Make your UIKit app more flexible* (WWDC25).
+for iPhone Duo* (Tech Talk 111465), *Make your UIKit app more flexible* (WWDC25).

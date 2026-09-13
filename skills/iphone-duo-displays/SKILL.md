@@ -17,7 +17,9 @@ description: >-
 
 Code: `references/displays-code.md`. Availability: `references/api-availability.md` —
 the hinge APIs and `CameraCaptureAccessory` need the **iOS 27.1 SDK**; `sceneAccessory`,
-`onAvailabilityChange` and `UIWindowScene.ActivationAction` exist earlier.
+`onAvailabilityChange` and `UIWindowScene.ActivationAction` exist earlier. Which half
+carries the outer display and the inner camera, and how each pose faces:
+`references/device-geometry.md`.
 
 ## Hinge (Tech Talk 111464, 0:49–2:35)
 

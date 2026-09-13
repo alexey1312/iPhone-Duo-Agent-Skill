@@ -24,7 +24,9 @@ cameras that occlude part of it. Start from system containers — most of the be
 comes for free — and add custom work only where a container cannot express it.
 
 Code: `references/layout-code.md`. Availability: `references/api-availability.md`
-(reserved regions and arrangements need the **iOS 27.1 SDK**).
+(reserved regions and arrangements need the **iOS 27.1 SDK**). Physical facts —
+display sizes, where the cameras and fold sit, poses, drawing mockups:
+`references/device-geometry.md` (never a layout input).
 
 ## 1. Size classes, not devices (Tech Talk 111461, 2:46)
 
@@ -35,6 +37,13 @@ Code: `references/layout-code.md`. Availability: `references/api-availability.md
   orientation or idiom (`iphone-duo-adaptivity-audit` owns removing those).
 - Design across a continuum of sizes (1:33). A fixed phone-width column centered on
   the inner display is a finding: propose two columns, a split view, or a grid.
+- Keep functionality and state the same on both displays; show one more level of
+  hierarchy on the inner display where it fits (Mail: list or message when closed,
+  both when open). Don't design a layout per pose. (HIG › Best practices; Tech Talk
+  111466, 3:42 and 7:34)
+- Games: playable in every pose and filling the screen; prefer changing the aspect
+  ratio over letterboxing or pillarboxing, else put artwork in the padding. (HIG ›
+  Best practices)
 
 ## 2. Standard navigation and presentations (5:01; 111463 8:39)
 
@@ -47,7 +56,9 @@ Code: `references/layout-code.md`. Availability: `references/api-availability.md
   `sidebar.isAvailable` and surface sidebar-only destinations elsewhere when it is
   not. (WWDC26 278, 9:18)
 - Sheets, popovers, context menus, alerts and action sheets adapt and are
-  repositioned around reserved regions automatically. (111463 5:12)
+  repositioned around reserved regions automatically. (111463 5:12) Sheets can
+  present with vertical controls on the outer display, use horizontal bars on the
+  inner display, and slide clear of the fold. (111466 8:36)
 
 ## 3. Safe areas (111461, 6:06)
 
@@ -80,6 +91,8 @@ Code: `references/layout-code.md`. Availability: `references/api-availability.md
   interactive controls on the bottom. Keep it contextual.
 - Adapt more than position and size where it helps: a grid keeps outer margins and
   widens spacing around the hinge; a split view keeps an even split.
+- Favor small adjustments over rearrangement while folding: controls that vanish or
+  jump are hard to track. (HIG › Reserved regions)
 
 **Then query** (6:39–7:50):
 
@@ -88,7 +101,10 @@ Code: `references/layout-code.md`. Availability: `references/api-availability.md
 - The fold is a **division** region: active only when folded, zero width when flat.
   `options: .includeInactive` returns it anyway — use that for high-level decisions
   such as preferring an even number of grid columns.
-- **Occlusion** regions represent the FaceTime camera.
+- **Occlusion** regions represent the FaceTime camera. The inner camera's region
+  exists only while the camera is active (the UI moves aside); the outer camera's is
+  always present and expands into the Dynamic Island for Live Activities. (HIG ›
+  Reserved regions)
 - Adopt the query for the highest-priority manually laid out controls, not for every
   view (16:34).
 
