@@ -19,9 +19,8 @@ code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
 | --- | --- | --- |
 | 0:30 | Build with the latest SDK | Apps run unmodified, but screen use improves per SDK: the iOS 27 SDK extends the app left of the status bar on the inner display; the iOS 27.1 SDK reaches the screen edge and lays standard navigation and toolbar buttons out vertically. |
 | 1:17 | Get started in Xcode | Xcode 27.1, iPhone Duo simulator in Device Hub, on-screen controls to open, close, rotate and fold. |
-| 1:33 | Adopt flexible layouts | No assumptions about display size or capability from the user interface idiom; design across a continuum of sizes. |
+| 1:33 | Adopt flexible layouts | No assumptions about display size or device capability from the user interface idiom (the sentence at 2:34 — on iPhone Duo that includes biometrics: Touch ID, not Face ID, see `device-geometry.md`); design across a continuum of sizes. |
 | 2:46 | Use size classes | Outer display behaves like other iPhones; inner display is regular × regular. The inner display does not honor supported interface orientations. |
-| 2:30 | Adaptive across a continuum | The best layouts avoid assumptions about display sizes or device capabilities based on user interface idioms — on iPhone Duo that also covers biometrics (Touch ID, not Face ID; see `device-geometry.md`). |
 | 3:30 | Orientation per display | The outer display rotates like any iPhone — a reason to support landscape, since people set the device down like a tent. The inner display does not honor supported interface orientations. |
 | 3:57 | Avoid screen assumptions | Don't reference the main screen (ambiguous, being deprecated). Use environment, trait collection, scene bounds, `window?.windowScene?.screen`. Concentricity APIs fit the screen corners. |
 | 4:37 | `UIRequiresFullScreen` | Still honored, but the app resizes anyway when the device opens or closes; supported orientations are respected, but the app scales on the inner display, including in Split View multitasking. |
@@ -43,8 +42,8 @@ code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
 | 4:29 | Order items | Top: back or close (`.cancellationAction`; UIKit leading group with `leftItemsSupplementBackButton = false`), then prominent actions (`.topBarPinnedTrailing` / `pinnedTrailingGroup`). |
 | 5:56 | Prepare toolbar content | Fixed width, flexible height. Items with an icon go vertical, text-only items stay horizontal. Always provide a title. |
 | 8:00 | Control the axis | `axisBehavior(.verticalPreferred)` / `.horizontalOnly`; the system Edit button stays horizontal automatically; custom views stay horizontal by default. |
-| 10:00 | Keyboard accessory bars | Accessory bars remain attached to the keyboard rather than moving to the vertical axis. |
 | 9:00 | Prefer symbol-only items | Use badges instead of text-plus-symbol; keep text that carries standalone information (a cart total) horizontal. |
+| 10:00 | Keyboard accessory bars | Accessory bars remain attached to the keyboard rather than moving to the vertical axis. |
 | 10:07 | Adapt custom views | Fit the fixed width or adapt layout; read `toolbarVerticalEdge` / `verticalBarEdge`. No scroll edge effect by default; background with Reduce Transparency; flexible spacers are zero vertically. |
 | 11:40 | Manage overflow | Overflow happens more on the outer display in landscape, with the keyboard, and with Picture in Picture in open portrait. Toolbars compress first by default; `toolbarVerticalCompressionBehavior` / `verticalBarCompressionBehavior`. Consolidate into `ToolbarOverflowMenu` / `additionalOverflowItems`; the ellipsis is for overflow only. |
 | 13:10 | Prioritize visibility | Items overflow bottom to top; `visibilityPriority` on groups first, then items. Frequent actions and badged status items overflow last. |

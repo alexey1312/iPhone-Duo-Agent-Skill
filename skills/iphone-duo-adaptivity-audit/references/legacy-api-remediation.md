@@ -244,8 +244,10 @@ Keep `NSFaceIDUsageDescription` in Info.plist — Face ID devices still require 
 Touch ID needs no usage string. Sentences that hard-code the words ("Enable Face ID"
 in onboarding, a settings toggle, an error alert) often live in `.strings` or
 `.xcstrings` catalogs the scanner does not read: grep them and turn the sentence into
-a format string that takes `biometry.name`. `DUO013` is suppressed in a file that
-reads `biometryType` at all, so a flagged file is one that never asked.
+a format string that takes `biometry.name`. In a file that already reads
+`biometryType`, `DUO013` reports the remaining strings at `low` severity: confirm each
+one sits in the `.faceID` branch (*kept*) or fix it; a `medium` finding is in a file
+that never asked.
 
 ## DUO020 — UIRequiresFullScreen
 

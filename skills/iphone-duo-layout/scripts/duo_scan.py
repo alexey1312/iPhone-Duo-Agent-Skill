@@ -56,9 +56,10 @@ class Rule:
     advice: str
     pattern: str
     supersedes: tuple[str, ...] = ()
-    # When this regex matches anywhere in the (comment-stripped) file, the rule is
-    # skipped for that file: the code has already considered the case.
-    unless_in_file: str = ""
+    # Regex naming the API that handles this case. A logical line that matches it is
+    # not reported; in a file that matches it elsewhere, findings are reported at
+    # `low` severity so the reader confirms the branch instead of hunting for it.
+    already_handled: str = ""
 
 
 RULES: list[Rule] = [
@@ -239,8 +240,11 @@ RULES: list[Rule] = [
             "for Face ID devices. Localizable .strings and .xcstrings files are not scanned; "
             "grep them too."
         ),
-        pattern=r"\"[^\"\n]*\bFace ?ID\b[^\"\n]*\"|\"faceid\"",
-        unless_in_file=r"\bbiometryType\b|\.faceID\b|\.touchID\b|\bLABiometryType",
+        # "face id" / "Face-ID" with a separator can only occur inside a string once
+        # comments are stripped (multi-line literals included); the joined spelling is
+        # matched inside a single-line literal only, so `.faceID` enum cases stay clean.
+        pattern=r"(?i:\bface[ -]id\b)|\"[^\"\n]*(?i:\bfaceid\b)[^\"\n]*\"",
+        already_handled=r"\bbiometryType\b|\bLABiometryType\b",
     ),
 ]
 
@@ -409,12 +413,12 @@ def relative(path: Path, root: Path) -> str:
         return str(path)
 
 
-def make_finding(rule: Rule, rel: str, line: int, snippet: str) -> Finding:
+def make_finding(rule: Rule, rel: str, line: int, snippet: str, severity: str | None = None) -> Finding:
     return Finding(
         id=f"{rule.id}:{rel}:{line}",
         rule=rule.id,
         title=rule.title,
-        severity=rule.severity,
+        severity=severity or rule.severity,
         skill=rule.skill,
         file=rel,
         line=line,
@@ -442,27 +446,28 @@ def logical_lines(stripped: str) -> list[tuple[int, str]]:
 
 
 def scan_source(
-    path: Path,
     rel: str,
     text: str,
+    stripped: str,
     compiled: list[tuple[Rule, re.Pattern[str], re.Pattern[str] | None]],
 ) -> list[Finding]:
-    stripped = strip_comments(text, nested_block_comments=path.suffix == ".swift")
+    """Match line rules against the comment-stripped text; `text` supplies the snippets."""
     original_lines = text.splitlines()
     findings: list[Finding] = []
-    active = [
-        (rule, regex)
-        for rule, regex, unless in compiled
-        if unless is None or not unless.search(stripped)
-    ]
+    handled_in_file = {rule.id for rule, _, handled in compiled if handled and handled.search(stripped)}
     for number, code in logical_lines(stripped):
-        matched = [rule for rule, regex in active if regex.search(code)]
+        matched = [
+            rule
+            for rule, regex, handled in compiled
+            if regex.search(code) and not (handled and handled.search(code))
+        ]
         superseded = {rid for rule in matched for rid in rule.supersedes}
         for rule in matched:
             if rule.id in superseded:
                 continue
             snippet = original_lines[number - 1] if number - 1 < len(original_lines) else code
-            findings.append(make_finding(rule, rel, number, snippet))
+            severity = "low" if rule.id in handled_in_file else None
+            findings.append(make_finding(rule, rel, number, snippet, severity=severity))
     return findings
 
 
@@ -541,7 +546,7 @@ def line_of(text: str, index: int) -> int:
 def scan(root: Path, include_dependencies: bool = False) -> dict:
     root = root.resolve()
     compiled = [
-        (rule, re.compile(rule.pattern), re.compile(rule.unless_in_file) if rule.unless_in_file else None)
+        (rule, re.compile(rule.pattern), re.compile(rule.already_handled) if rule.already_handled else None)
         for rule in RULES
     ]
     inventory_regex = {name: re.compile(pattern) for name, pattern in INVENTORY_PATTERNS.items()}
@@ -609,7 +614,7 @@ def scan(root: Path, include_dependencies: bool = False) -> dict:
                 app_delegate = (rel, number, text.splitlines()[number - 1])
         for name, regex in inventory_regex.items():
             inventory[name] += len(regex.findall(stripped))
-        findings.extend(scan_source(path, rel, text, compiled))
+        findings.extend(scan_source(rel, text, stripped, compiled))
 
     if swiftui_app:
         lifecycle = "swiftui-app"

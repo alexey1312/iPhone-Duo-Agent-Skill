@@ -164,18 +164,26 @@ class SourceRuleTests(ScanTestCase):
         self.assertRules('Image(systemName: "ellipsis.circle")\n', ["DUO011"])
 
     def test_face_id_copy(self) -> None:
-        self.assertRules('Text("Unlock with Face ID")\n', ["DUO013"])
-        self.project.close()
-        self.project = ProjectFixture()
-        self.assertRules('label.text = @"Use FaceID to continue";\n', ["DUO013"], name="Sources/Unlock.m")
-        self.project.close()
-        self.project = ProjectFixture()
-        self.assertRules('Image(systemName: "faceid")\n', ["DUO013"])
+        for name, source in [
+            ("Sources/A.swift", 'Text("Unlock with Face ID")\n'),
+            ("Sources/B.m", 'label.text = @"Use FaceID to continue";\n'),
+            ("Sources/C.swift", 'Image(systemName: "faceid")\n'),
+            ("Sources/D.swift", 'let t = "unlock with face id"\n'),
+            ("Sources/E.swift", 'let t = "Set up Face-ID"\n'),
+            ("Sources/F.swift", 'let intro = """\n    Set up Face ID to unlock faster.\n    """\n'),
+        ]:
+            with self.subTest(name=name):
+                self.project.close()
+                self.project = ProjectFixture()
+                self.assertRules(source, ["DUO013"], name=name)
 
-    def test_face_id_copy_branched_on_biometry_is_clean(self) -> None:
+    def test_face_id_enum_cases_and_identifiers_are_clean(self) -> None:
+        self.assertRules("case .faceID:\n    icon = faceIDImage\nlet faceID = LAContext()\n", [])
+
+    def test_face_id_read_on_the_same_line_is_clean(self) -> None:
         self.assertRules('let name = context.biometryType == .faceID ? "Face ID" : "Touch ID"\n', [])
-        self.project.close()
-        self.project = ProjectFixture()
+
+    def test_face_id_copy_next_to_a_biometry_read_is_low(self) -> None:
         source = "\n".join(
             [
                 "switch context.biometryType {",
@@ -183,18 +191,28 @@ class SourceRuleTests(ScanTestCase):
                 '    title = "Face ID"',
                 "case .touchID:",
                 '    title = "Touch ID"',
-                "default:",
-                '    title = "Passcode"',
                 "}",
+                'reason = "Face ID is required to open your vault"',
             ]
         )
-        self.assertRules(source + "\n", [])
+        self.project.write("Sources/View.swift", source + "\n")
+        findings = self.project.scan()["findings"]
+        self.assertEqual([(f["rule"], f["line"], f["severity"]) for f in findings], [("DUO013", 3, "low"), ("DUO013", 7, "low")])
 
-    def test_face_id_suppression_is_per_file(self) -> None:
-        self.project.write("Sources/Unlock.swift", "let kind = LAContext().biometryType\n")
+    def test_face_id_downgrade_is_per_file(self) -> None:
+        self.project.write("Sources/Unlock.swift", 'let kind = LAContext().biometryType\nlet hint = "Look at the camera for Face ID"\n')
         self.project.write("Sources/Strings.swift", 'static let unlock = "Unlock with Face ID"\n')
         findings = self.project.scan()["findings"]
-        self.assertEqual([(f["rule"], f["file"]) for f in findings], [("DUO013", "Sources/Strings.swift")])
+        self.assertEqual(
+            [(f["file"], f["severity"]) for f in findings],
+            [("Sources/Strings.swift", "medium"), ("Sources/Unlock.swift", "low")],
+        )
+
+    def test_face_id_app_enum_does_not_count_as_handled(self) -> None:
+        source = "enum AuthMethod { case faceID, touchID }\nlet method: AuthMethod = .faceID\nlet title = \"Unlock with Face ID\"\n"
+        self.project.write("Sources/View.swift", source)
+        findings = self.project.scan()["findings"]
+        self.assertEqual([(f["rule"], f["severity"]) for f in findings], [("DUO013", "medium")])
 
 
 class CommentAndStringTests(ScanTestCase):

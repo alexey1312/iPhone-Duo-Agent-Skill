@@ -202,6 +202,12 @@ final class DirectionObserver {
 }
 ```
 
+Apple's sample records `replacement` before the actor confirms the swap. If
+`selectCamera` can fail in your app (a `nil` device, `canAddInput` false, a thrown
+error), have it return the descriptor it actually installed and assign
+`activeCameraDescriptor` from that result; otherwise a failed switch looks done and is
+never retried while the direction map stays the same.
+
 Resolve the descriptor where the session lives, and handle a `nil` device — the set
 of cameras can change while dispatching:
 
@@ -245,6 +251,12 @@ private func applyVideoMirroring(from directionMap: AVCaptureDeviceDirectionMap)
     connection.isVideoMirrored = isFacingForward
 }
 ```
+
+The early return assumes the input is replaced whenever a camera turns away, which
+gives a fresh connection with automatic mirroring on. An app that keeps streaming
+from a camera the coordinator no longer lists as forward-facing must also restore
+`automaticallyAdjustsVideoMirroring = true` in the "agree" case, or the override from
+the previous pose sticks to the connection.
 
 State in the recommendation: the coordinator, `AVCaptureDeviceDescriptor` and the
 physical front camera types are 27.1 SDK; camera behavior is verified on a device

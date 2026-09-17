@@ -19,6 +19,24 @@
         "The no-displacement claim cites Tech Talk 111463 at 2:26 (or the fold-region claim cites 111463 7:50).",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 2,
+      "name": "letterbox-and-chapter-overlay",
+      "prompt": "On the iPhone Duo inner display our player (evals/files/Cinema) shows the video with thick black bars, the transport controls land in the fold when the phone is half folded, and the chapter list covers the picture. What should the layout do on the wide screen and when folded? Plan only.",
+      "expected_output": "A plan that explains the letterbox as a property of the 1.42 display and uses the band for controls and metadata, proposes an overlay arrangement for the controls and a split arrangement for the chapter list (with a layout ratio and the folded side-by-side behavior), keeps the controls clear of the fold, and marks the arrangement APIs blocked on the 27.1 SDK.",
+      "files": [
+        "evals/files/Cinema"
+      ],
+      "expectations": [
+        "Explains that a 16:9 frame in landscape leaves about a fifth of the inner display's height unused because the display is 1.42, labels that figure as derived (device-geometry), and proposes putting the transport controls and metadata in that band rather than stretching the video or leaving it black.",
+        "Proposes ArrangementView with the overlay style for the controls over the player (ZStack → overlay, 111463 13:21–14:39) and notes that when partially folded the overlay moves to a side-by-side layout, reading overlayArrangementZIndex or setting overlayArrangementEdge.",
+        "Proposes a split arrangement for the chapter list beside the player instead of an overlay that covers it, restricted to the horizontal axis and sized with splitArrangementLayoutRatio (or a NavigationSplitView), citing 111463 12:00 or the ArrangementView documentation.",
+        "States that interactive controls must not sit in the fold in book pose and that the arrangement or the division reserved region keeps them clear, citing 111463 1:29–5:12 or 111466 9:28.",
+        "Keeps the NavigationStack and its toolbar outside the arrangement view (navigation containers around it, not inside).",
+        "Marks ArrangementView, its modifiers and reservedRegions as blocked on the iOS 27.1 SDK with the installed 27.0 SDK, and offers the size-class or GeometryReader fallback that compiles today.",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }

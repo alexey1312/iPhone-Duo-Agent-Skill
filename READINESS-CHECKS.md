@@ -25,7 +25,7 @@ technote, **Spec** iPhone Duo tech specs, **Newsroom** Apple's iPhone Duo announ
 | DUO010 | medium | Scene activation with `errorHandler: nil` | displays | 111464 3:38 |
 | DUO011 | low | Custom `ellipsis` symbol buttons | bars | 111462 11:40 |
 | DUO012 | low | Scene delegate but no scene manifest found | adaptivity-audit | 278 2:10 |
-| DUO013 | medium | String literals naming Face ID or the `faceid` symbol, in files that never read `biometryType` | adaptivity-audit | 111461 2:34; Spec |
+| DUO013 | medium | "Face ID" in any case, with a space or hyphen, in single- or multi-line string literals, or the `faceid` symbol; `low` in files that read `biometryType` elsewhere, skipped on the line that reads it | adaptivity-audit | 111461 2:34; Spec |
 | DUO020 | info | `UIRequiresFullScreen` in Info.plist or build settings | adaptivity-audit | 278 5:46; 111461 4:37 |
 | DUO021 | info | Portrait-only supported orientations | layout | 111461 2:46; 278 6:50 |
 

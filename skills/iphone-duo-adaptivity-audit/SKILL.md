@@ -66,8 +66,9 @@ begins.
    - *Non-layout behavior* keyed off idiom (feature availability, analytics) → kept,
      with a comment naming why.
    - *Capability assumption* (Face ID in strings, `faceid` symbols, onboarding) →
-     derive from `LAContext.biometryType`; `DUO013` skips files that already read it,
-     so read the ones it flags for the switch that is missing.
+     derive from `LAContext.biometryType`. `DUO013` reports `medium` where nothing in
+     the file ever asked, and `low` next to an existing `biometryType` read — confirm
+     those strings sit in the `.faceID` branch and mark them *kept*.
 3. **Check Xcode's skill.** Export into a temporary directory — without
    `--output-dir` the command writes into the current directory:
    ```bash

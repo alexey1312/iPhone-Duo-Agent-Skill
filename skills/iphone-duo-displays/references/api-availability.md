@@ -79,7 +79,8 @@ StandBy. Vertical-bar axis tuning, reserved regions, arrangements, the hinge, th
 camera capture accessory and the camera direction coordinator wait for the 27.1 SDK.
 
 **Documented, not yet measured** (added 2026-09-17 from Apple's documentation pages;
-the script checks them, nobody has run it against a 27.1 SDK yet):
+`sdk_api_check.py` checks every name below, but nobody has run it against a 27.1 SDK
+yet):
 
 | Area | Symbol | Documented availability |
 | --- | --- | --- |
@@ -87,7 +88,7 @@ the script checks them, nobody has run it against a 27.1 SDK yet):
 | Bars | `presentationPlacement` (SwiftUI), `UISheetPresentationController.preferredPlacement` | iOS 27.0 |
 | Bars | `backgroundExtensionEffect`, `UIBackgroundExtensionView` | iOS 26 |
 | Layout | `splitArrangementAxis`, `overlayArrangementEdge`, `splitArrangementLayoutRatio`, `splitArrangementLayoutSize`, `UISplitArrangement`, `UIOverlayArrangement` | iOS 27.1 |
-| Displays | `UIHinge`, `UIHingeInteraction.Update` | iOS 27.1 |
+| Displays | `UIHinge` (its update type is `UIHingeInteraction.Update`) | iOS 27.1 |
 | Displays | `UISceneAccessory`, `registerSceneAccessory`, `UISceneAccessoryRegistration` | iOS 27.0 |
 | Cameras | `AVCaptureDeviceDirectionCoordinator`, `AVCaptureDeviceDirectionMap`, `AVCaptureDeviceDescriptor` (AVKit), `builtInOuterUltraWideCamera`, `builtInInnerUltraWideCamera` | iOS 27.1 (Tech Talk 111465; the device types are annotated 27.1 beta) |
 | Cameras | `dynamicAspectRatio`, `AVCaptureDevice.RotationCoordinator` | iOS 26 / iOS 17 |

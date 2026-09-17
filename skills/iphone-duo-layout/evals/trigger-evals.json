@@ -4,7 +4,7 @@
     "should_trigger": true
   },
   {
-    "query": "keep my floating play button off the hinge when iPhone Duo is folded like a book \u2014 SwiftUI",
+    "query": "keep my floating play button off the hinge when iPhone Duo is folded like a book — SwiftUI",
     "should_trigger": true
   },
   {
@@ -36,11 +36,23 @@
     "should_trigger": true
   },
   {
+    "query": "our video player letterboxes badly on the iPhone Duo inner screen, what do we do with the black bars?",
+    "should_trigger": true
+  },
+  {
+    "query": "reservedRegions frames look flipped in Arabic on iPhone Duo — do I need layoutDirectionBehavior .fixed?",
+    "should_trigger": true
+  },
+  {
+    "query": "splitArrangementLayoutRatio for a 30/70 split of the player and lyrics on the iPhone Duo inner display",
+    "should_trigger": true
+  },
+  {
     "query": "my SwiftUI List jumps to the top every time I pop back from the detail view, NavigationStack with a path binding, iOS 27. how do i keep the scroll position",
     "should_trigger": false
   },
   {
-    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent\u2026 for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
+    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent… for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
     "should_trigger": false
   },
   {
@@ -77,6 +89,10 @@
   },
   {
     "query": "Auto Layout constraint conflicts in a UITableViewCell with dynamic type",
+    "should_trigger": false
+  },
+  {
+    "query": "switch between HStack and VStack with AnyLayout when Dynamic Type gets large, iOS 17",
     "should_trigger": false
   }
 ]

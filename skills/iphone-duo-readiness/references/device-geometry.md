@@ -46,7 +46,7 @@ sizes for both displays, and those are the closest thing to one.
 | | Inner display | Outer display | Source |
 | --- | --- | --- | --- |
 | Screenshot pixels | 2007 × 2853 (2853 × 2007 landscape) | 1398 × 2034 (2034 × 1398 landscape) | App Store Connect |
-| Points at @3x | **669 × 951** | **466 × 678** | Derived: screenshot ÷ 3, the scale Apple's layout table lists for the identical 1206 × 2622 panel of iPhone 17 Pro (402 × 874 pt) |
+| Points at @3x | **669 × 951** | **466 × 678** | Derived: screenshot ÷ 3, assuming the @3x scale Apple's layout table lists for current iPhones (iPhone 17 Pro: 1206 × 2622 px = 402 × 874 pt) |
 | Relation to the panel | ≈ 6.9 % more than 1878 × 2670 in each dimension | equal to the panel | Derived |
 | Rendering | 669 × 951 pt rendered and scaled down ≈ 6.4 % to the panel, as the 5.5-inch Plus iPhones were (414 × 736 pt at @3x, 1242 × 2208 screenshots on a 1080 × 1920 panel — App Store Connect still asks for that size) | 1:1 | Inference |
 | Density in points | ≈ 153 pt/in on both displays, so text and controls keep one physical size as the device opens | | Inference |

@@ -8,7 +8,7 @@
     "should_trigger": true
   },
   {
-    "query": "we have a custom UIToolbar pinned to the bottom of our editor \u2014 Apple says it's ignored for vertical bars? what do we do instead",
+    "query": "we have a custom UIToolbar pinned to the bottom of our editor — Apple says it's ignored for vertical bars? what do we do instead",
     "should_trigger": true
   },
   {
@@ -32,7 +32,15 @@
     "should_trigger": true
   },
   {
-    "query": "tab bar vs toolbar compression on the foldable's outer display in landscape \u2014 our task app should keep actions visible, not tabs",
+    "query": "tab bar vs toolbar compression on the foldable's outer display in landscape — our task app should keep actions visible, not tabs",
+    "should_trigger": true
+  },
+  {
+    "query": "our hero image stops at the vertical bar on iPhone Duo and leaves a strip — is backgroundExtensionEffect the fix?",
+    "should_trigger": true
+  },
+  {
+    "query": "sheet on the iPhone Duo inner display: presentationPlacement(.leading) so the map stays visible — does the sheet still get a vertical toolbar?",
     "should_trigger": true
   },
   {
@@ -40,7 +48,7 @@
     "should_trigger": false
   },
   {
-    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent\u2026 for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
+    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent… for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
     "should_trigger": false
   },
   {
@@ -77,6 +85,10 @@
   },
   {
     "query": "on iPad, how do I make my tab bar become a sidebar (sidebarAdaptable)",
+    "should_trigger": false
+  },
+  {
+    "query": "backgroundExtensionEffect for the detail banner under the sidebar in our iPad NavigationSplitView, nothing to do with iPhone",
     "should_trigger": false
   }
 ]
