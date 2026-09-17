@@ -12,7 +12,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Check that the tag matches the plugin version
         run: |
@@ -33,7 +33,7 @@ jobs:
         run: python3 scripts/package_skills.py --output dist
 
       - name: Publish the release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: "${{ github.ref_name }} — iPhone Duo Agent Skills"
           generate_release_notes: true

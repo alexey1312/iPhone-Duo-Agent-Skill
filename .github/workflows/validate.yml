@@ -13,7 +13,7 @@ jobs:
   test:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Compile Python
         run: python3 -m compileall -q scripts skills tests
       - name: Skill copies in sync
