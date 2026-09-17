@@ -15,26 +15,28 @@
   <rect width="1280" height="640" fill="url(#bg)"/>
   <g transform="translate(0 80)">
 
-  <!-- Device: open foldable with a vertical bar and a hinge -->
-  <g transform="translate(820 70)">
-    <rect x="0" y="0" width="170" height="340" rx="34" fill="url(#panel)" stroke="#e2e8f0" stroke-width="6"/>
-    <rect x="186" y="0" width="170" height="340" rx="34" fill="url(#panel)" stroke="#e2e8f0" stroke-width="6"/>
-    <path d="M178 -18v376" stroke="#7ee7c7" stroke-width="5" stroke-linecap="round" stroke-dasharray="3 14"/>
-    <!-- content columns -->
-    <rect x="28" y="48" width="114" height="18" rx="9" fill="#e2e8f0" fill-opacity="0.8"/>
-    <rect x="28" y="84" width="96" height="12" rx="6" fill="#e2e8f0" fill-opacity="0.45"/>
-    <rect x="28" y="108" width="106" height="12" rx="6" fill="#e2e8f0" fill-opacity="0.45"/>
-    <rect x="28" y="132" width="80" height="12" rx="6" fill="#e2e8f0" fill-opacity="0.45"/>
-    <rect x="214" y="48" width="96" height="96" rx="16" fill="#e2e8f0" fill-opacity="0.25"/>
-    <rect x="214" y="164" width="96" height="12" rx="6" fill="#e2e8f0" fill-opacity="0.45"/>
-    <!-- vertical bar -->
-    <rect x="322" y="46" width="18" height="150" rx="9" fill="#7ee7c7" fill-opacity="0.2"/>
-    <circle cx="331" cy="70" r="5" fill="#7ee7c7"/>
-    <circle cx="331" cy="104" r="5" fill="#7ee7c7"/>
-    <circle cx="331" cy="138" r="5" fill="#7ee7c7"/>
-    <circle cx="331" cy="172" r="5" fill="#7ee7c7"/>
+  <!-- Device: iPhone Duo open in landscape (about 1.40:1) — one display, the folding region as a band in the centre, vertical bar on the trailing edge -->
+  <g transform="translate(800 97)">
+    <rect x="0" y="0" width="400" height="286" rx="34" fill="url(#panel)" stroke="#e2e8f0" stroke-width="6"/>
+    <!-- folding region: a band content avoids, not a gap -->
+    <rect x="188" y="3" width="24" height="280" fill="#7ee7c7" fill-opacity="0.08"/>
+    <path d="M200 -16v318" stroke="#7ee7c7" stroke-width="5" stroke-linecap="round" stroke-dasharray="3 14"/>
+    <!-- leading half: list -->
+    <rect x="30" y="44" width="118" height="18" rx="9" fill="#e2e8f0" fill-opacity="0.8"/>
+    <rect x="30" y="80" width="100" height="12" rx="6" fill="#e2e8f0" fill-opacity="0.45"/>
+    <rect x="30" y="104" width="110" height="12" rx="6" fill="#e2e8f0" fill-opacity="0.45"/>
+    <rect x="30" y="128" width="84" height="12" rx="6" fill="#e2e8f0" fill-opacity="0.45"/>
+    <!-- trailing half: detail -->
+    <rect x="232" y="44" width="110" height="110" rx="16" fill="#e2e8f0" fill-opacity="0.25"/>
+    <rect x="232" y="174" width="110" height="12" rx="6" fill="#e2e8f0" fill-opacity="0.45"/>
+    <!-- vertical bar: Dynamic Island, status bar, toolbar, tab bar stacked on the trailing edge -->
+    <rect x="364" y="40" width="18" height="150" rx="9" fill="#7ee7c7" fill-opacity="0.2"/>
+    <circle cx="373" cy="64" r="5" fill="#7ee7c7"/>
+    <circle cx="373" cy="98" r="5" fill="#7ee7c7"/>
+    <circle cx="373" cy="132" r="5" fill="#7ee7c7"/>
+    <circle cx="373" cy="166" r="5" fill="#7ee7c7"/>
     <!-- check -->
-    <path d="m48 250 22 22 44-52" fill="none" stroke="#7ee7c7" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m50 214 22 22 44-52" fill="none" stroke="#7ee7c7" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
   <g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif">

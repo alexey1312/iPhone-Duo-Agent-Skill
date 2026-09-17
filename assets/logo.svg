@@ -7,12 +7,11 @@
     </linearGradient>
   </defs>
   <rect width="128" height="128" rx="28" fill="url(#bg)"/>
-  <!-- Open foldable: two panels meeting at a hinge -->
-  <rect x="22" y="28" width="40" height="72" rx="9" fill="none" stroke="#fff" stroke-width="6"/>
-  <rect x="66" y="28" width="40" height="72" rx="9" fill="none" stroke="#fff" stroke-width="6"/>
-  <path d="M64 22v84" stroke="#7ee7c7" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 8"/>
-  <!-- Vertical bar on the trailing panel -->
-  <path d="M94 44v6M94 60v6M94 76v6" stroke="#7ee7c7" stroke-width="6" stroke-linecap="round"/>
-  <!-- Checkmark on the leading panel -->
-  <path d="m32 66 7 7 13-16" fill="none" stroke="#7ee7c7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- iPhone Duo open in landscape (about 1.40:1): one display, the fold in the centre, vertical bar on the trailing edge -->
+  <rect x="20" y="33" width="88" height="63" rx="12" fill="none" stroke="#fff" stroke-width="6"/>
+  <path d="M64 26v78" stroke="#7ee7c7" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 8"/>
+  <!-- Vertical bar on the trailing half -->
+  <path d="M96 48v6M96 61v6M96 74v6" stroke="#7ee7c7" stroke-width="6" stroke-linecap="round"/>
+  <!-- Checkmark on the leading half -->
+  <path d="m32 64 7 7 13-16" fill="none" stroke="#7ee7c7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
