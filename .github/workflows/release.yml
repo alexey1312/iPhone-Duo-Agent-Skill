@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check that the tag matches the plugin version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(python3 -c 'import json; print(json.load(open(".claude-plugin/plugin.json"))["version"])')"
+          if [ "$tag" != "$version" ]; then
+            echo "Tag v$tag does not match .claude-plugin/plugin.json version $version" >&2
+            exit 1
+          fi
+
+      - name: Validate
+        run: |
+          python3 -m compileall -q scripts skills tests
+          python3 scripts/sync_skill_copies.py --check
+          python3 -m unittest discover -s tests
+
+      - name: Package skills
+        run: python3 scripts/package_skills.py --output dist
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "${{ github.ref_name }} — iPhone Duo Agent Skills"
+          generate_release_notes: true
+          body: |
+            One `.skill` archive per skill, built by `scripts/package_skills.py` (evals left out).
+
+            - Install all five: `npx skills add https://github.com/alexey1312/iPhone-Duo-Agent-Skill`
+            - Claude Code plugin: `/plugin marketplace add alexey1312/iPhone-Duo-Agent-Skill`, then `/plugin install iphone-duo-skills@iphone-duo-skills`
+            - Manual: download an archive below and install it per your tool's skills docs (see the README)
+          files: dist/*.skill
+          fail_on_unmatched_files: true

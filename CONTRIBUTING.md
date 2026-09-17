@@ -37,3 +37,19 @@ and review outputs in its viewer. Trigger accuracy is tuned with its `run_loop` 
 python3 scripts/sync_skill_copies.py --check
 python3 -m unittest discover -s tests -v
 ```
+
+## Releasing
+
+1. Bump the version in `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`,
+   `.cursor-plugin/plugin.json` and `agents/openai.yaml` (the tests check they agree)
+   and merge it to `main`.
+2. Tag that commit and push the tag:
+
+   ```bash
+   git tag v1.1.0 && git push origin v1.1.0
+   ```
+
+The `Release` workflow (`.github/workflows/release.yml`) refuses a tag that does not
+match the plugin version, re-runs the checks, builds one `.skill` archive per skill
+with `scripts/package_skills.py`, and publishes a GitHub release with the archives and
+generated notes.

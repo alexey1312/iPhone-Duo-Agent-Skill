@@ -23,7 +23,8 @@ This repository contains Agent Skills that advise on and change iOS app code.
   improvement; `scripts/package_skills.py` leaves `evals/` out of release archives.
 - Keep the plugin version identical in `.claude-plugin/plugin.json`,
   `.claude-plugin/marketplace.json`, `.cursor-plugin/plugin.json` and
-  `agents/openai.yaml`.
+  `agents/openai.yaml`. A GitHub release is cut by pushing a matching `vX.Y.Z` tag;
+  the `Release` workflow builds the `.skill` archives (`CONTRIBUTING.md` › Releasing).
 - Run before completing a change:
 
   ```bash
