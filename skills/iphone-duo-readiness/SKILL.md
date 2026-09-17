@@ -18,10 +18,10 @@ gate and the final report; the specialists own the details.
 
 | Specialist | Owns |
 | --- | --- |
-| `iphone-duo-adaptivity-audit` | Scene lifecycle, main screen, idiom, orientation, screen bounds, global window state |
-| `iphone-duo-bars` | Vertical bars: containers, ordering, titles and symbols, axis, overflow, priority, opt-out |
+| `iphone-duo-adaptivity-audit` | Scene lifecycle, main screen, idiom, orientation, screen bounds, global window state, Face ID assumptions |
+| `iphone-duo-bars` | Vertical bars: containers, ordering, titles and symbols, axis, overflow, priority, sheets, opt-out |
 | `iphone-duo-layout` | Size classes, standard navigation, safe areas, corners, reserved regions, displacement, arrangements |
-| `iphone-duo-displays` | Hinge, Split View multitasking, multiple scenes, scene accessories |
+| `iphone-duo-displays` | Hinge, Split View multitasking, multiple scenes, scene accessories, cameras, StandBy presence |
 
 ## Contract
 
@@ -47,6 +47,11 @@ xcodebuild -version
 xcrun --sdk iphoneos --show-sdk-version
 xcrun simctl list devicetypes | grep -i duo     # empty: no iPhone Duo simulator in this Xcode
 ```
+
+As of 2026-09-17 the Xcode 27.1 beta — the first with the iPhone Duo simulator and
+the 27.1 APIs — is "coming later this month", while Apple's *Preparing your app for
+iPhone Duo* guide is already published; `references/api-availability.md` says what
+each linked SDK gets on the device and `references/sources.md` keeps the calendar.
 
 Identify the app targets, UI framework mix (SwiftUI, UIKit, both), deployment target,
 and how the project is generated (Xcode project, Tuist, XcodeGen, SwiftPM). Read the
@@ -83,9 +88,9 @@ layout work (how many toolbars, split views, custom bar items, camera sessions).
 | Tier | Contents | Why first |
 | --- | --- | --- |
 | 0 — Blockers | App lifecycle without scenes (`DUO005`) | The app does not launch when built with the latest SDK. |
-| 1 — Correctness | Main screen, screen bounds, orientation and idiom layout forks, symmetric safe-area math, global window state (`DUO001–004`, `006`, `009`) | Wrong layout on the inner display, in Split View, in iPhone Mirroring and on iPad. |
+| 1 — Correctness | Main screen, screen bounds, orientation and idiom layout forks, symmetric safe-area math, global window state, Face ID copy (`DUO001–004`, `006`, `009`, `013`) | Wrong layout on the inner display, in Split View, in iPhone Mirroring and on iPad; wrong words on a Touch ID device. |
 | 2 — Bars | Standalone bars, titles/symbols, ordering, overflow, priority (`DUO007`, `DUO011`, inventory) | Bars move to the side on the inner display with the 27.1 SDK; items without titles or with text-only labels land badly. |
-| 3 — Richer adoption | Sidebar placement, reserved regions for top custom controls, arrangements, hinge effects, scene accessories, multiple windows | Makes the app good on iPhone Duo rather than merely correct; much of it needs the 27.1 SDK. |
+| 3 — Richer adoption | Sidebar placement, reserved regions for top custom controls, arrangements, hinge effects, scene accessories, camera direction handling, multiple windows, a widget or Live Activity for StandBy on the outer display, App Store screenshots for both displays (`references/device-geometry.md`) | Makes the app good on iPhone Duo rather than merely correct; much of it needs the 27.1 SDK. |
 
 Inside every tier, put items that compile with the installed SDK first and mark the
 rest *blocked*. A toolchain upgrade is a prerequisite note on the blocked items, not a

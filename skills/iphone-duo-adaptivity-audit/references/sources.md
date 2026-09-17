@@ -2,9 +2,11 @@
 
 Every recommendation in these skills traces to one of the sessions or pages below.
 Cite the session and chapter timestamp when you recommend a change, so the developer
-can watch the exact passage. The Human Interface Guidelines have no timestamps: cite
-the page and section (for example *HIG, Designing for iPhone Duo › Vertical
-controls*).
+can watch the exact passage. The Human Interface Guidelines and Apple's documentation
+articles have no timestamps: cite the page and section (for example *HIG, Designing
+for iPhone Duo › Vertical controls* or *Preparing your app for iPhone Duo › Optimize
+bars for vertical presentation*). Hardware facts cite the tech specs or App Store
+Connect (`device-geometry.md`).
 
 Chapter summaries and code samples are published on each session page. When a
 code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
@@ -19,9 +21,13 @@ code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
 | 1:17 | Get started in Xcode | Xcode 27.1, iPhone Duo simulator in Device Hub, on-screen controls to open, close, rotate and fold. |
 | 1:33 | Adopt flexible layouts | No assumptions about display size or capability from the user interface idiom; design across a continuum of sizes. |
 | 2:46 | Use size classes | Outer display behaves like other iPhones; inner display is regular × regular. The inner display does not honor supported interface orientations. |
+| 2:30 | Adaptive across a continuum | The best layouts avoid assumptions about display sizes or device capabilities based on user interface idioms — on iPhone Duo that also covers biometrics (Touch ID, not Face ID; see `device-geometry.md`). |
+| 3:30 | Orientation per display | The outer display rotates like any iPhone — a reason to support landscape, since people set the device down like a tent. The inner display does not honor supported interface orientations. |
 | 3:57 | Avoid screen assumptions | Don't reference the main screen (ambiguous, being deprecated). Use environment, trait collection, scene bounds, `window?.windowScene?.screen`. Concentricity APIs fit the screen corners. |
+| 4:37 | `UIRequiresFullScreen` | Still honored, but the app resizes anyway when the device opens or closes; supported orientations are respected, but the app scales on the inner display, including in Split View multitasking. |
 | 5:01 | Adopt standard navigation | `NavigationSplitView`, `UISplitViewController`, `TabView`, `UITabBarController` adapt across every pose; sidebar placement on the inner display; sheets, popovers, context menus and alerts adapt. |
 | 6:06 | Respect safe areas | Bars sit outside the safe area; interactive content inside it; backgrounds extend past it. Insets are often asymmetric — handle each side, test Split View. |
+| 7:44 | Test Split View in Device Hub | Preview on the inner display, drag the app by the home indicator to one side of the screen, then to the other: vertical content can appear on either side of the app. |
 | 8:08 | Use reserved regions | iOS 27.1 `ReservedRegion` (SwiftUI) / `UIViewReservedRegion` (UIKit) let custom UI claim space without colliding with system UI. |
 | 9:12 | Next steps | Xcode's app modernization skill is called App Resizability in Xcode 27.1 and covers SwiftUI and iPhone Duo. |
 
@@ -36,10 +42,11 @@ code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
 | 3:09 | Shared bar region | Navigation, toolbar and tab bar share one region. In split views only the detail column participates; inspectors get no bar; sheets differ per display; the bar is hardware-aligned and does not flip for right-to-left. |
 | 4:29 | Order items | Top: back or close (`.cancellationAction`; UIKit leading group with `leftItemsSupplementBackButton = false`), then prominent actions (`.topBarPinnedTrailing` / `pinnedTrailingGroup`). |
 | 5:56 | Prepare toolbar content | Fixed width, flexible height. Items with an icon go vertical, text-only items stay horizontal. Always provide a title. |
-| 8:00 | Control the axis | `axisBehavior(.verticalPreferred)` / `.horizontalOnly`; custom views stay horizontal by default. |
+| 8:00 | Control the axis | `axisBehavior(.verticalPreferred)` / `.horizontalOnly`; the system Edit button stays horizontal automatically; custom views stay horizontal by default. |
+| 10:00 | Keyboard accessory bars | Accessory bars remain attached to the keyboard rather than moving to the vertical axis. |
 | 9:00 | Prefer symbol-only items | Use badges instead of text-plus-symbol; keep text that carries standalone information (a cart total) horizontal. |
 | 10:07 | Adapt custom views | Fit the fixed width or adapt layout; read `toolbarVerticalEdge` / `verticalBarEdge`. No scroll edge effect by default; background with Reduce Transparency; flexible spacers are zero vertically. |
-| 11:40 | Manage overflow | Overflow happens more on the outer display in landscape and with the keyboard. Toolbars compress first by default; `toolbarVerticalCompressionBehavior` / `verticalBarCompressionBehavior`. Consolidate into `ToolbarOverflowMenu` / `additionalOverflowItems`; the ellipsis is for overflow only. |
+| 11:40 | Manage overflow | Overflow happens more on the outer display in landscape, with the keyboard, and with Picture in Picture in open portrait. Toolbars compress first by default; `toolbarVerticalCompressionBehavior` / `verticalBarCompressionBehavior`. Consolidate into `ToolbarOverflowMenu` / `additionalOverflowItems`; the ellipsis is for overflow only. |
 | 13:10 | Prioritize visibility | Items overflow bottom to top; `visibilityPriority` on groups first, then items. Frequent actions and badged status items overflow last. |
 | 14:21 | When to opt out | Bottom-heavy single-page apps, single-control sheets: `toolbarVerticalBehavior(.disabled)` / `preferredVerticalBarBehavior`. |
 
@@ -79,6 +86,24 @@ code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
 | 5:00 | Camera capture accessory | Outer-display UI while the main UI stays inside; requires full screen on the inner display with an active camera session; register on the camera view. |
 | 5:34 | Teleprompter example | `.sceneAccessory { CameraCaptureAccessory(isEnabled:) { … } .onAvailabilityChange { … } }`, toolbar toggle disabled while unavailable. |
 
+## Build a great camera experience for iPhone Duo — Tech Talk 111465
+
+<https://developer.apple.com/videos/play/tech-talks/111465/>
+
+| Time | Chapter | Takeaway |
+| --- | --- | --- |
+| 0:30 | Two front cameras | Both are square sensors with an ultrawide field of view: the outer ultrawide camera and the inner ultrawide camera, the first under-display camera on iPhone. |
+| 1:01 | Virtual Front Camera | An `AVCaptureDevice.DiscoverySession` with position `.front` and the wide or ultra wide device type returns the Virtual Front Camera, an `AVCaptureDevice` that switches between the inner camera (device open) and the outer camera (closed) by itself. Existing front-camera code works unchanged. |
+| 1:53 | Physical device types | `builtInOuterUltraWideCamera` and `builtInInnerUltraWideCamera` expose each camera fully: inner 1080p up to 60 fps, outer up to 4K at 120 fps. The virtual camera offers only the common subset (1080p, 60 fps); depth only through the individual cameras. With individual cameras, switching on open/close is the app's job. |
+| 2:53 | Direction coordinator | `AVCaptureDeviceDirectionCoordinator` reports which cameras face the user. `position` still says where a camera sits (both front cameras are `.front`), not where it points: a front camera can face away, and the rear cameras become a selfie camera when the open device is turned around. |
+| 4:02 | Create a coordinator | Needs the app's `UIView`, the device types to monitor and a change handler. As the app moves between displays the forward- and backward-facing sets flip. |
+| 4:49 | Two displays at once | An app showing UI on both displays (scene accessories) creates one coordinator per view; each reports directions relative to its own view. |
+| 5:37 | Main actor and descriptors | The coordinator is tied to a view and main-actor isolated; the handler must not call AVFoundation directly. It hands out `AVCaptureDeviceDescriptor`, a Sendable representation to pass to the camera actor. |
+| 6:16 | In the change handler | Reconfigure the `AVCaptureSession` to keep streaming from the forward-facing camera, decide preview mirroring from direction (mirror a forward-facing rear camera), update the UI. |
+| 7:03 | Polished preview | A full-field-of-view rear preview on the inner display leaves extra space: offset the preview and group controls there, or fill with `videoGravity`. `dynamicAspectRatio` on `AVCaptureDevice` picks a landscape ratio from the square front sensors. |
+| 8:08 | Rotation | Adopt `AVCaptureDevice.RotationCoordinator`; it updates when the app moves displays. Then disable camera-sensor-orientation compensation (enabled on every front camera on iPhone Duo) for performance. |
+| 8:49 | Next steps | Build with the iOS 27.1 SDK; decide how to switch cameras on open/close; adopt the direction coordinator to go beyond the virtual camera; test the preview on iPhone Duo. |
+
 ## Design for iPhone Duo — Tech Talk 111466
 
 <https://developer.apple.com/videos/play/tech-talks/111466/>
@@ -87,10 +112,10 @@ code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
 | --- | --- | --- |
 | 0:28 | Design principles | Many poses; controls move to the outer edge of the display to maximize vertical space; folded, content moves away from the center; Split View multitasking and video PiP put apps at other aspect ratios, so support resizability. |
 | 3:42 | Adapting your design | No custom layout per pose — design for compact and regular; layout margins and safe area insets; a bespoke pose layout must keep functionality and hierarchy. |
-| 5:07 | Positioning controls | Toolbars, tab bars and controls along the side, sharing that space with Live Activities and the status bar; overflow when it runs out; controls too wide for the vertical space are the exception. |
+| 5:07 | Positioning controls | Toolbars, tab bars and controls along the side, sharing that space with Live Activities and the status bar; overflow when it runs out; controls too wide for the vertical space (a text button, a segmented control) stay in the navigation bar. |
 | 6:33 | Designing for the outer display | Most content needs an offset so controls don't hide it — safe areas provide it; immersive, non-scrolling UIs may center on the full display; a full-width background can hold inset text. |
 | 7:34 | Designing for the inner display | Use the width: split views surface more hierarchy, or rearrange into two columns. |
-| 8:36 | Sheet behavior | Outer display: sheets can present with vertical controls. Inner display: horizontal bars. Folded: sheets slide over to avoid resting in the fold. |
+| 8:36 | Sheet behavior | Outer display: sheet controls move to the side by default; disabling the vertical bar suits single-button sheets, and the sheet then stops short of the camera while the status bar repositions. Inner display: horizontal bars in both orientations. Folded: sheets slide over to avoid resting in the fold. |
 | 9:28 | Fold avoidance | System components nudge interactive elements away from the center when partially folded; except for scrollable content, keep interactive elements away from the hinge. |
 
 ## Designing for iPhone Duo — Human Interface Guidelines
@@ -98,7 +123,9 @@ code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
 <https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo>
 — new page, change log September 9, 2026. The page renders with JavaScript; its text is
 in <https://developer.apple.com/tutorials/data/design/human-interface-guidelines/designing-for-iphone-duo.json>.
-It links Tech Talks 111466, 111462 and 111463.
+It links Tech Talks 111466, 111462 and 111463, the developer guide *Preparing your app
+for iPhone Duo*, and the API pages for `ReservedRegion`, `UIView.ReservedRegion`,
+`ArrangementView` and `UIArrangementViewController` (checked 2026-09-17).
 
 | Section | Guidance |
 | --- | --- |
@@ -118,7 +145,7 @@ Displays, dimensions, cameras, hinge position and poses — with Apple's
 [tech specs](https://www.apple.com/iphone-duo/specs/) and
 [newsroom announcement](https://www.apple.com/newsroom/2026/09/apple-unveils-iphone-duo/)
 kept apart from diagram measurements and third-party claims — are in
-`device-geometry.md`, shipped with the readiness, bars, layout and displays skills.
+`device-geometry.md`, shipped with every skill.
 
 ## Modernize your UIKit app — WWDC26 session 278
 
@@ -140,5 +167,53 @@ kept apart from diagram measurements and third-party claims — are in
 | 12:37 | Menus | `preferredImageVisibility`. |
 | 14:07 | Agentic coding | Xcode's modernization skill; export with `xcrun agent skills export`. |
 
-Related: *Get the most out of Device Hub* (WWDC26), *Build a great camera experience
-for iPhone Duo* (Tech Talk 111465), *Make your UIKit app more flexible* (WWDC25).
+Related: *Get the most out of Device Hub* (WWDC26), *Make your UIKit app more
+flexible* (WWDC25), *Support the Center Stage front camera in your iOS app* (WWDC26).
+
+## Preparing your app for iPhone Duo — Apple documentation
+
+<https://developer.apple.com/documentation/technologyoverviews/preparing-your-app-for-iphone-duo>
+— published by 2026-09-17, while Apple's *Get ready for iPhone Duo* page still lists
+it as "coming later this month". No timestamps: cite by section.
+
+| Section | Guidance |
+| --- | --- |
+| Overview | Resizing is the key feature; apps that already resize on iPad, Mac or in iPhone Mirroring are well on their way. Build with Xcode 27.1 to use all of the screen — with earlier SDKs the app doesn't extend under the status bar and camera. The iPhone Duo simulator in Device Hub requires Xcode 27.1. |
+| Address common layout and resizing considerations | Check every view, sheet and popover on both displays — closed, open, partially folded — and rotate in each pose. Prefer system containers (split views, tab bars, arrangement views, navigation stacks); size views relative to their container, not fixed iPhone dimensions; compute from the scene's or view's bounds, not the screen; Auto Layout; automatic trait tracking of `horizontalSizeClass` / `verticalSizeClass`; no `userInterfaceIdiom` or `UIInterfaceOrientation` for layout. |
+| Optimize bars for vertical presentation | Bars go vertical on the outer display when closed and for some leading/trailing views on the inner display. Use container-provided bars (`toolbar(content:)` on `NavigationStack` / `NavigationSplitView`; toolbar items on a view controller inside a navigation controller), never a custom `UIToolbar`, `UINavigationBar` or `UITabBar`. Inspectors: horizontal. Split views: horizontal for sidebar and content, vertical for detail. Sheets: vertical by default on the outer display (`toolbarVerticalBehavior(_:)` / `preferredVerticalBarBehavior` disable it); on the inner display horizontal for centered or leading placement, vertical for trailing (`presentationPlacement(_:)` / `UISheetPresentationController.preferredPlacement`). Read `toolbarVerticalEdge` / `verticalBarEdge` in custom views; extend a hero or background image under a vertical bar with `backgroundExtensionEffect()` / `UIBackgroundExtensionView`. |
+| Organize items in your bars | Top: primary navigation (Back/Close — automatic with a navigation controller; custom via `cancellationAction` / `leadingItemGroups`), then prominent actions (`topBarPinnedTrailing` / `pinnedTrailingGroup`). `axisBehavior` decides inclusion in vertical bars; `visibilityPriority` the overflow order; `ToolbarOverflowMenu` / `additionalOverflowItems` put items straight into the overflow menu. Representation: vertical → icon; horizontal → icon or title, preferring the icon; overflow → icon and title; a title-only item and a custom-view item are never presented vertically. |
+| Arrange views in different poses | `ArrangementView` / `UIArrangementViewController` with split and overlay styles. Split: side by side when the container is wider than tall, primary on top otherwise, adjusted around the folding region. Overlay: layered while no division region is active (closed or fully open); partially open, the primary view goes to the trailing or bottom side of the fold and the secondary to the leading or top side. Limit axes with `.split.axes(.horizontal)` / `updateArrangement(.split.axes(.horizontal))`. Don't place an arrangement view inside a navigation split view, list or scroll view. |
+| Adapt to reserved regions in your views | Divisions (the fold) and occlusions (the inner camera while active; the outer camera always). SwiftUI: `GeometryProxy.reservedRegions(kind:options:layoutDirectionBehavior:)`; UIKit: `UIView.reservedRegions(kind:options:)`; inspect `frame`. A region can be active or inactive — the fold is active only when the device is partially open. |
+| Improve your app's camera handling | Capture from the outer, inner and rear cameras; the camera in use may point the other way after the device opens, closes or rotates (*Choosing a camera by the direction it faces*). Fully open and capturing with the rear camera, the app can show content on the outer display (*Registering a camera capture accessory on iPhone Duo*). |
+
+## Apple documentation pages
+
+Cite by page and section. Availability annotations as published on 2026-09-17.
+
+- [Choosing a camera by the direction it faces](https://developer.apple.com/documentation/avkit/choosing-a-camera-by-the-direction-it-faces) (AVKit) — the virtual front camera is a virtual device (`isVirtualDevice`; `activePrimaryConstituent` names the streaming camera). `AVCaptureDeviceDirectionCoordinator(view:deviceTypes:)` lists every built-in camera the app captures from, rear cameras included (the virtual front camera is left out; list the two physical front types instead); keep it alive while the view is on screen; one coordinator per preview view. `AVCaptureDeviceDirectionMap.forwardFacingDeviceDescriptors` is the set to pick from; resolve a descriptor with `AVCaptureDevice(uniqueID:)` on the session actor and handle a `nil` result. Mirroring: set `automaticallyAdjustsVideoMirroring = false` before `isVideoMirrored`, and only when position and direction disagree; reapply after reconnecting an input. Create a new `RotationCoordinator` for each device.
+- [Registering a camera capture accessory on iPhone Duo](https://developer.apple.com/documentation/avfoundation/registering-a-camera-capture-accessory-on-iphone-duo) (AVFoundation) — SwiftUI `sceneAccessory { CameraCaptureAccessory(isEnabled:) { … } .onAvailabilityChange { … } }` on the capture view. UIKit `UISceneAccessory.cameraCapture(sceneConfiguration:userInfo:)` + `registerSceneAccessory(_:)` → `UISceneAccessoryRegistration` (`isAvailable`, observable; `isEnabled`), `unregisterSceneAccessory(_:)`; the accessory scene's session role is `windowCameraCaptureAccessory`; `connectionOptions.sceneAccessoryUserInfo` carries the shared model. The system presents the top-most registration of a kind; content goes away when capture stops, the app leaves the foreground or the device closes; different accessory kinds never compete. Simulator has no camera — test on a device.
+- [TN3192: Migrating your iPad app from the deprecated UIRequiresFullScreen key](https://developer.apple.com/documentation/technotes/tn3192-migrating-your-app-from-the-deprecated-uirequiresfullscreen-key) (revised 2026-08-13) — from iOS 27 the key no longer opts out of resizing; the scene resizes discretely instead (`effectiveGeometry.coordinateSpace.bounds` changes when the drag ends). `UIRequiresFullScreenIgnoredStartingWithVersion` keeps the old behavior on earlier iOS. `isInteractivelyResizing` / `onInteractiveResizeChange(_:)`, `UISceneSizeRestrictions` / `windowResizability(_:)`, `prefersInterfaceOrientationLocked`. A launch screen is required for App Store submission on iOS 27.
+- API reference (iOS 27.1 beta unless noted): [`ReservedRegion`](https://developer.apple.com/documentation/swiftui/reservedregion) (`frame` includes `margins`; `isActive`; `kind` `.division` / `.occlusion`; `id`; `QueryOptions.includeInactive`; regions are mirrored for right-to-left by default, `layoutDirectionBehavior: .fixed` opts out), [`UIView.ReservedRegion`](https://developer.apple.com/documentation/uikit/uiview/reservedregion), [`ArrangementView`](https://developer.apple.com/documentation/swiftui/arrangementview) (`arrangementViewStyle`, `splitArrangementLayoutRatio`, `splitArrangementLayoutSize`, `splitArrangementFixedLayoutSize`, `overlayArrangementEdge`, environment `splitArrangementAxis` and `overlayArrangementZIndex`), [`UIArrangementViewController`](https://developer.apple.com/documentation/uikit/uiarrangementviewcontroller) (`UISplitArrangement` / `UIOverlayArrangement`, `ViewState.isHidden` / `splitAxis` / `zIndex`, `placement(for:)`), [`UIHinge`](https://developer.apple.com/documentation/uikit/uihinge) / [`UIHingeInteraction`](https://developer.apple.com/documentation/uikit/uihingeinteraction) (`angle` in radians; `Status` `.closed`, `.partiallyOpen`, `.fullyOpen`, `.unknown`; `update.hinge == nil` outside a hinge hierarchy; `isEnabled`), [`CameraCaptureAccessory`](https://developer.apple.com/documentation/swiftui/cameracaptureaccessory), [`UISceneAccessory`](https://developer.apple.com/documentation/uikit/uisceneaccessory) (iOS 27.0), [`ToolbarItemVisibilityPriority`](https://developer.apple.com/documentation/swiftui/toolbaritemvisibilitypriority) (iOS 27.0; `.automatic` / `.low` / `.high`, `init(higherThan:)` / `init(lowerThan:)`), [`ToolbarItemAxisBehavior`](https://developer.apple.com/documentation/swiftui/toolbaritemaxisbehavior), [`toolbarVerticalBehavior(_:)`](https://developer.apple.com/documentation/swiftui/view/toolbarverticalbehavior(_:)) (resolved per window or presentation: `NavigationStack` by its top view, `TabView` by the selected tab, `NavigationSplitView` by the trailing-most column; a stable choice, not a per-state toggle), [`ToolbarVerticalCompressionBehavior`](https://developer.apple.com/documentation/swiftui/toolbarverticalcompressionbehavior) (`.prefersTabBar` / `.prefersToolbarItems`), [`toolbarVerticalEdge`](https://developer.apple.com/documentation/swiftui/environmentvalues/toolbarverticaledge) (`HorizontalEdge?`, `nil` where no vertical bar exists), [`UIVerticalBarEdge`](https://developer.apple.com/documentation/uikit/uiverticalbaredge), [`preferredVerticalBarBehavior`](https://developer.apple.com/documentation/uikit/uiviewcontroller/preferredverticalbarbehavior) (with `childForPreferredVerticalBarBehavior`, `setNeedsUpdateOfVerticalBarConfiguration()`), [`presentationPlacement(_:)`](https://developer.apple.com/documentation/swiftui/view/presentationplacement(_:)) (iOS 27.0; sheets only), [`backgroundExtensionEffect()`](https://developer.apple.com/documentation/swiftui/view/backgroundextensioneffect()) (iOS 26), [`builtInOuterUltraWideCamera`](https://developer.apple.com/documentation/avfoundation/avcapturedevice/devicetype-swift.struct/builtinouterultrawidecamera) / `builtInInnerUltraWideCamera` (discoverable only through a discovery session), [Device Hub](https://developer.apple.com/documentation/xcode/device-hub).
+- [App Store Connect screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) — iPhone Duo sizes; uploads "later this year". Numbers in `device-geometry.md`.
+- [Apple unveils iPhone Duo](https://www.apple.com/newsroom/2026/09/apple-unveils-iphone-duo/) (newsroom, 2026-09-09) — Split View with two apps and two windows of one app on iPhone for the first time; StandBy on either display "even when it's not charging", with new Calendar and Weather faces; the Dock, Lock Screen controls and app navigation move to the side; both displays share the same aspect ratio; ships October 23 on iOS 27.1.
+
+## Release calendar (as of 2026-09-17)
+
+| Date | Event |
+| --- | --- |
+| September 9 | iPhone Duo announced; *Get ready for iPhone Duo* page, six Tech Talks (111461–111466) and *Designing for iPhone Duo* published; App Store Connect adds iPhone Duo screenshot sizes. |
+| September 14 | Xcode 27 (27A266a) and iOS 27.0 (24A437) ship. Neither release-notes page mentions iPhone Duo; the 27.0 SDK has no Duo-specific API. |
+| September 16–17 | Online Group Labs. September 23: developer-forum Q&As (Photos & Camera, SwiftUI, UIKit). |
+| "Later this month" | Xcode 27.1 beta with the iOS 27.1 SDK and the iPhone Duo simulator in Device Hub; in-person workshops. Not released as of 2026-09-17; *Preparing your app for iPhone Duo* is already live. |
+| October 16 | Pre-orders. |
+| October 23 | iPhone Duo ships on iOS 27.1. App Store Connect asset uploads for iPhone Duo "later this year". |
+
+## Background reading (not a citation source)
+
+Blake Crosley, [*iPhone Duo for Developers: The 1.42 Problem and the SDK Gap*](https://blakecrosley.com/blog/iphone%2Dduo-for-developers)
+(September 9, 2026, updated September 15) — the point-size arithmetic from App Store
+Connect, the SDK-tier summary of the talks, the release calendar and the Touch ID
+observation. Every fact it contributes to these skills is re-attributed to the Apple
+artifact it rests on (tech specs, App Store Connect, the talks, TN3192); what remains
+inference is labelled so in `device-geometry.md`. Do not cite the post itself in a
+recommendation.

@@ -10,14 +10,16 @@
 [![GitHub Stars](https://img.shields.io/github/stars/alexey1312/iPhone-Duo-Agent-Skill?style=flat&color=brightgreen)](https://github.com/alexey1312/iPhone-Duo-Agent-Skill/stargazers)
 
 **Five coordinated Agent Skills that get SwiftUI and UIKit apps ready for iPhone Duo** —
-the outer display, the regular-by-regular inner display, vertical bars, the hinge, and
-multiple displays and windows. They work in any AI coding tool that supports the
-[Agent Skills open format](https://agentskills.io/home).
+the outer display, the regular-by-regular inner display, vertical bars, the hinge,
+multiple displays and windows, and the two front cameras. They work in any AI coding
+tool that supports the [Agent Skills open format](https://agentskills.io/home).
 
-The skills turn Apple's four iPhone Duo tech talks and *Modernize your UIKit app*
-(WWDC26) into a repeatable workflow: measure the project, check what the installed SDK
-can actually compile, propose a tiered plan where every item cites the session and
-timestamp it comes from, and change code only after you approve it.
+The skills turn Apple's six iPhone Duo tech talks, the *Designing for iPhone Duo*
+guidelines, the *Preparing your app for iPhone Duo* guide and *Modernize your UIKit
+app* (WWDC26) into a repeatable workflow: measure the project, check what the installed
+SDK can actually compile, propose a tiered plan where every item cites the session and
+timestamp (or documentation section) it comes from, and change code only after you
+approve it.
 
 ## Who this is for
 
@@ -41,8 +43,13 @@ timestamp it comes from, and change code only after you approve it.
   regions, split and overlay arrangements
 - **Displays and scenes** — hinge-driven interactions, Split View multitasking, scene
   requests that fail on the outer display, scene and camera capture accessories
-- **SDK reality** — which of those APIs exist in the Xcode you have, and where Apple's
-  sample code and the SDK disagree
+- **Cameras** — the virtual front camera, cameras that change direction when the
+  device opens or closes, preview mirroring and rotation
+- **Device assumptions** — hard-coded Face ID copy and symbols (iPhone Duo has Touch
+  ID), and whether the app exists in StandBy on the outer display at all (it needs a
+  widget or Live Activity)
+- **SDK reality** — which of those APIs exist in the Xcode you have, what each linked
+  SDK gets on iPhone Duo, and where Apple's sample code and the SDK disagree
 
 Every automated rule is listed with its source in [READINESS-CHECKS.md](READINESS-CHECKS.md).
 
@@ -102,10 +109,10 @@ agent reasons over structured JSON instead of ad-hoc grep output.
 | Skill | What it does |
 | --- | --- |
 | [`iphone-duo-readiness`](skills/iphone-duo-readiness/SKILL.md) | Orchestrator: preflight, scan, SDK check, tiered plan, approval gate, apply through specialists, pose verification |
-| [`iphone-duo-adaptivity-audit`](skills/iphone-duo-adaptivity-audit/SKILL.md) | Scene lifecycle, main screen, screen bounds, idiom, orientation, global window state |
+| [`iphone-duo-adaptivity-audit`](skills/iphone-duo-adaptivity-audit/SKILL.md) | Scene lifecycle, main screen, screen bounds, idiom, orientation, global window state, Face ID assumptions |
 | [`iphone-duo-bars`](skills/iphone-duo-bars/SKILL.md) | Vertical bars: containers, ordering, titles and symbols, axis, overflow, priority, opt-out |
 | [`iphone-duo-layout`](skills/iphone-duo-layout/SKILL.md) | Size classes, navigation containers, safe areas, corners, reserved regions, displacement, arrangements |
-| [`iphone-duo-displays`](skills/iphone-duo-displays/SKILL.md) | Hinge interactions, Split View multitasking, multiple scenes, scene and camera capture accessories |
+| [`iphone-duo-displays`](skills/iphone-duo-displays/SKILL.md) | Hinge interactions, Split View multitasking, multiple scenes, scene and camera capture accessories, camera direction, StandBy presence |
 
 Start with `iphone-duo-readiness` for a whole app; call a specialist directly for a
 focused question. Every skill carries its own copy of the shared references and scripts,
@@ -254,9 +261,13 @@ READINESS-CHECKS.md             Every automated and manual check, with sources
 - [Raise the bar with iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111462/) — Tech Talk
 - [Strike a pose with adaptive layouts on iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111463/) — Tech Talk
 - [Leverage multiple displays and scenes on iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111464/) — Tech Talk
+- [Build a great camera experience for iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111465/) — Tech Talk
 - [Design for iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111466/) — Tech Talk
 - [Designing for iPhone Duo](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo) — Human Interface Guidelines
-- [iPhone Duo tech specs](https://www.apple.com/iphone-duo/specs/) — hardware facts in `references/device-geometry.md`
+- [Preparing your app for iPhone Duo](https://developer.apple.com/documentation/technologyoverviews/preparing-your-app-for-iphone-duo) — Apple documentation, with the API pages it links (reserved regions, arrangements, hinge, vertical bars, scene accessories)
+- [Choosing a camera by the direction it faces](https://developer.apple.com/documentation/avkit/choosing-a-camera-by-the-direction-it-faces) and [Registering a camera capture accessory on iPhone Duo](https://developer.apple.com/documentation/avfoundation/registering-a-camera-capture-accessory-on-iphone-duo) — Apple documentation
+- [TN3192: Migrating from the deprecated UIRequiresFullScreen key](https://developer.apple.com/documentation/technotes/tn3192-migrating-your-app-from-the-deprecated-uirequiresfullscreen-key) — Apple technote
+- [iPhone Duo tech specs](https://www.apple.com/iphone-duo/specs/) and [App Store Connect screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) — hardware facts and display sizes in `references/device-geometry.md`
 - [Modernize your UIKit app](https://developer.apple.com/videos/play/wwdc2026/278/) — WWDC26
 
 Chapter-level notes: [references/sources.md](references/sources.md).

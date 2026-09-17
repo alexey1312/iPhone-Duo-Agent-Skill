@@ -4,7 +4,7 @@
     "should_trigger": true
   },
   {
-    "query": "drive a guitar pitch bend from how far the iPhone Duo is folded \u2014 onHingeChange or UIHingeInteraction?",
+    "query": "drive a guitar pitch bend from how far the iPhone Duo is folded — onHingeChange or UIHingeInteraction?",
     "should_trigger": true
   },
   {
@@ -28,7 +28,7 @@
     "should_trigger": true
   },
   {
-    "query": "hinge status closed/partially open/fully open \u2014 reset our effect when not partially open?",
+    "query": "hinge status closed/partially open/fully open — reset our effect when not partially open?",
     "should_trigger": true
   },
   {
@@ -36,11 +36,23 @@
     "should_trigger": true
   },
   {
+    "query": "which camera does AVCaptureDevice.default(position: .front) give us on iPhone Duo when it's open vs closed?",
+    "should_trigger": true
+  },
+  {
+    "query": "rear camera preview comes out mirrored the wrong way after the user opens iPhone Duo and turns it around for a selfie",
+    "should_trigger": true
+  },
+  {
+    "query": "we have no widget; ship one so the app shows up in StandBy on iPhone Duo's outer screen?",
+    "should_trigger": true
+  },
+  {
     "query": "my SwiftUI List jumps to the top every time I pop back from the detail view, NavigationStack with a path binding, iOS 27. how do i keep the scroll position",
     "should_trigger": false
   },
   {
-    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent\u2026 for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
+    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent… for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
     "should_trigger": false
   },
   {
@@ -77,6 +89,10 @@
   },
   {
     "query": "CoreMotion attitude for a spirit level app, handle device orientation",
+    "should_trigger": false
+  },
+  {
+    "query": "how do I build a WidgetKit widget with a TimelineProvider and a medium family",
     "should_trigger": false
   }
 ]

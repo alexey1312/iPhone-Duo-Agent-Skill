@@ -163,6 +163,39 @@ class SourceRuleTests(ScanTestCase):
     def test_custom_ellipsis(self) -> None:
         self.assertRules('Image(systemName: "ellipsis.circle")\n', ["DUO011"])
 
+    def test_face_id_copy(self) -> None:
+        self.assertRules('Text("Unlock with Face ID")\n', ["DUO013"])
+        self.project.close()
+        self.project = ProjectFixture()
+        self.assertRules('label.text = @"Use FaceID to continue";\n', ["DUO013"], name="Sources/Unlock.m")
+        self.project.close()
+        self.project = ProjectFixture()
+        self.assertRules('Image(systemName: "faceid")\n', ["DUO013"])
+
+    def test_face_id_copy_branched_on_biometry_is_clean(self) -> None:
+        self.assertRules('let name = context.biometryType == .faceID ? "Face ID" : "Touch ID"\n', [])
+        self.project.close()
+        self.project = ProjectFixture()
+        source = "\n".join(
+            [
+                "switch context.biometryType {",
+                "case .faceID:",
+                '    title = "Face ID"',
+                "case .touchID:",
+                '    title = "Touch ID"',
+                "default:",
+                '    title = "Passcode"',
+                "}",
+            ]
+        )
+        self.assertRules(source + "\n", [])
+
+    def test_face_id_suppression_is_per_file(self) -> None:
+        self.project.write("Sources/Unlock.swift", "let kind = LAContext().biometryType\n")
+        self.project.write("Sources/Strings.swift", 'static let unlock = "Unlock with Face ID"\n')
+        findings = self.project.scan()["findings"]
+        self.assertEqual([(f["rule"], f["file"]) for f in findings], [("DUO013", "Sources/Strings.swift")])
+
 
 class CommentAndStringTests(ScanTestCase):
     def test_line_and_block_comments_are_ignored(self) -> None:
@@ -271,6 +304,21 @@ class TraversalTests(ScanTestCase):
         self.project.write("DerivedData/Screen.swift", "let s = UIScreen.main.scale\n")
         self.assertEqual(self.project.rules(), [])
         self.assertEqual(self.project.rules(include_dependencies=True), ["DUO001"])
+
+    def test_inventory_counts_capabilities(self) -> None:
+        self.project.write("Sources/Unlock.swift", "import LocalAuthentication\nlet kind = LAContext().biometryType\n")
+        self.project.write("Sources/Widget.swift", "import WidgetKit\n")
+        self.project.write(
+            "Sources/Camera.swift",
+            "let coordinator = AVCaptureDeviceDirectionCoordinator(view: view, deviceTypes: []) { _ in }\n"
+            "connection.isVideoMirrored = true\n",
+        )
+        inventory = self.project.scan()["inventory"]
+        self.assertEqual(inventory["biometryType reads"], 1)
+        self.assertEqual(inventory["WidgetKit"], 1)
+        self.assertEqual(inventory["direction coordinator"], 1)
+        self.assertEqual(inventory["video mirroring"], 1)
+        self.assertNotIn("Live Activities", inventory)
 
     def test_inventory_counts_containers(self) -> None:
         self.project.write(

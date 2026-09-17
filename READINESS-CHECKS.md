@@ -3,8 +3,11 @@
 Automated rules run by `scripts/duo_scan.py`, followed by the manual checks each skill
 performs. Session abbreviations: **111461** Prepare your app for iPhone Duo, **111462**
 Raise the bar, **111463** Strike a pose, **111464** Leverage multiple displays and
-scenes, **111466** Design for iPhone Duo, **278** Modernize your UIKit app (WWDC26),
-**HIG** Designing for iPhone Duo (Human Interface Guidelines, cited by section).
+scenes, **111465** Build a great camera experience for iPhone Duo, **111466** Design
+for iPhone Duo, **278** Modernize your UIKit app (WWDC26), **HIG** Designing for iPhone
+Duo (Human Interface Guidelines, cited by section), **PREP** Preparing your app for
+iPhone Duo (Apple documentation, cited by section), **TN3192** the `UIRequiresFullScreen`
+technote, **Spec** iPhone Duo tech specs, **Newsroom** Apple's iPhone Duo announcement.
 
 ## Automated rules
 
@@ -22,13 +25,15 @@ scenes, **111466** Design for iPhone Duo, **278** Modernize your UIKit app (WWDC
 | DUO010 | medium | Scene activation with `errorHandler: nil` | displays | 111464 3:38 |
 | DUO011 | low | Custom `ellipsis` symbol buttons | bars | 111462 11:40 |
 | DUO012 | low | Scene delegate but no scene manifest found | adaptivity-audit | 278 2:10 |
-| DUO020 | info | `UIRequiresFullScreen` in Info.plist or build settings | adaptivity-audit | 278 5:46 |
+| DUO013 | medium | String literals naming Face ID or the `faceid` symbol, in files that never read `biometryType` | adaptivity-audit | 111461 2:34; Spec |
+| DUO020 | info | `UIRequiresFullScreen` in Info.plist or build settings | adaptivity-audit | 278 5:46; 111461 4:37 |
 | DUO021 | info | Portrait-only supported orientations | layout | 111461 2:46; 278 6:50 |
 
 Limits: logical-line matching (Swift member chains that continue on a line starting with
 `.` are joined; other expressions split across lines can be missed), no macro or
-build-time generated sources, no Tuist/XcodeGen manifest parsing, no `#if 0` awareness.
-Every finding needs the code read before it becomes a recommendation.
+build-time generated sources, no Tuist/XcodeGen manifest parsing, no `#if 0` awareness,
+no `.strings` / `.xcstrings` catalogs (grep them for Face ID copy). Every finding needs
+the code read before it becomes a recommendation.
 
 ## Manual checks
 
@@ -43,7 +48,8 @@ Every finding needs the code read before it becomes a recommendation.
 - Layout decisions use size classes or container size, never idiom or orientation. (111461 2:46)
 - No cached screen-derived values survive a display change. (111461 3:57)
 - Sensor data uses `deviceMotionBody` / `headingBody`. (278 7:55)
-- Games relying on `UIRequiresFullScreen` understand discrete resizing. (278 5:46)
+- Games relying on `UIRequiresFullScreen` understand discrete resizing, and that iPhone Duo still resizes them on open and close. (278 5:46; 111461 4:37; TN3192)
+- Biometric copy, symbols and onboarding branch on `LAContext.biometryType`; nothing assumes Face ID. (111461 2:34; Spec)
 
 ### Bars
 
@@ -59,6 +65,9 @@ Every finding needs the code read before it becomes a recommendation.
 - Opt-out only for bottom-heavy single-page apps and single-control sheets. (111462 14:21)
 - Outer display: content offset by the safe area so side controls don't hide it. (111466 6:33; HIG Vertical controls)
 - Related items grouped with `ToolbarItemGroup` / `UIBarButtonItemGroup`, no manual spacing; controls stay next to the content they affect. (HIG Vertical controls)
+- Sheets: vertical bar disabled only for single-control sheets on the outer display; placement on the inner display chosen with `presentationPlacement` / `preferredPlacement`. (PREP Optimize bars for vertical presentation; 111466 8:36)
+- Hero or background images extend under the vertical bar with `backgroundExtensionEffect` / `UIBackgroundExtensionView`. (PREP Optimize bars for vertical presentation)
+- Keyboard accessory bars stay with the keyboard; segmented controls and text buttons stay horizontal. (111462 10:00; 111466 5:07)
 
 ### Layout
 
@@ -72,14 +81,21 @@ Every finding needs the code read before it becomes a recommendation.
 - Same functionality and state on both displays; an extra hierarchy level on the inner display where it fits. (HIG Best practices; 111466 7:34)
 - Small adjustments, not rearrangement, while folding. (HIG Reserved regions)
 - Games playable in every pose, changing aspect ratio rather than letterboxing or pillarboxing. (HIG Best practices)
+- Manually positioned content around reserved regions respects right-to-left mirroring (regions mirror by default; `layoutDirectionBehavior: .fixed` only for deliberate absolute placement). (Apple documentation, `ReservedRegion`)
+- Video players design the letterbox area on the inner display rather than leaving it black; landscape supported because people set the device down like a tent. (111461 3:30; `device-geometry.md` aspect consequences, derived)
 
 ### Displays and scenes
 
 - Hinge effects filter partially open and reset otherwise; never essential. (111464 1:18)
 - Split View multitasking works at every width, including the stacked video layout. (111464 2:59)
 - Scene requests handle failure on the outer display. (111464 3:38)
-- Scene accessories observe availability; camera capture accessory registered on the camera view. (111464 4:22–6:25)
+- Scene accessories observe availability; camera capture accessory registered on the camera view, and tested on a device — Simulator has no camera. (111464 4:22–6:25; Apple documentation, Registering a camera capture accessory)
+- Camera apps keep streaming from a forward-facing camera as the device opens and closes: virtual front camera, or a direction coordinator per preview view with descriptors handed to the session actor. (111465 1:01–6:16)
+- Preview mirroring follows the direction a camera faces, not its position; a new rotation coordinator per device; sensor-orientation compensation disabled after adopting it. (111465 6:34–8:44)
+- The app has a widget or Live Activity, so it exists in StandBy on the outer display. (Newsroom; HIG Live Activities)
+- Apps that set `UIApplicationSupportsMultipleScenes` to false have a reason that still holds now that iPhone shows multiple windows. (111464 3:38)
 
 ### Verification
 
-- Pose matrix P1–P12 run or reported as not run. (111461 1:17; 278 8:19)
+- Pose matrix P1–P13 run or reported as not run; without an iPhone Duo simulator, resize mode at the derived shapes 669 × 951, 951 × 669, 466 × 678 and 678 × 466 pt. (111461 1:17, 7:44; 278 8:19)
+- App Store screenshots for both displays planned (sizes in `device-geometry.md`). (App Store Connect)

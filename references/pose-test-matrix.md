@@ -1,10 +1,10 @@
 # Pose test matrix
 
 iPhone Duo is several devices in one. Test the states people actually use, not
-just "it launches". Sources: Tech Talk 111461 1:17 and 6:06, 111462 0:28 and 11:40,
-111463 1:29–5:12, 111464 2:59–5:00, 111466 5:07–9:28, WWDC26 278 8:19, and HIG
-*Designing for iPhone Duo*. Which way each pose faces, and where the cameras and fold
-sit: `device-geometry.md`.
+just "it launches". Sources: Tech Talk 111461 1:17, 6:06 and 7:44, 111462 0:28 and
+11:40, 111463 1:29–5:12, 111464 2:59–5:00, 111465 2:53–8:08, 111466 5:07–9:28, WWDC26
+278 8:19, and HIG *Designing for iPhone Duo*. Which way each pose faces, and where the
+cameras and fold sit: `device-geometry.md`.
 
 ## Tooling
 
@@ -14,9 +14,17 @@ sit: `device-geometry.md`.
   Xcode cannot simulate iPhone Duo — say so in the report instead of claiming the
   pose was tested.
 - **Resize mode** in Device Hub and Xcode Previews (Xcode 27): drag the device edges
-  to test continuous sizes.
+  to test continuous sizes. Until the iPhone Duo simulator exists, resize to the
+  shapes App Store Connect's screenshot sizes imply (derived, `device-geometry.md`):
+  **669 × 951** and **951 × 669** pt for the inner display, **466 × 678** and
+  **678 × 466** pt for the outer display, plus half the inner width (≈ 475 × 669)
+  for Split View. Resizable Canvas in Previews reaches all of them today.
+- **Split View in Device Hub** (Tech Talk 111461, 7:50): preview on the inner
+  display, drag the app by the home indicator to one side of the screen until a drop
+  area appears, then to the other side — vertical bars can end up on either side.
 - **Real devices** remain the check for iPhone Mirroring on the Mac and iPhone apps
-  on iPad.
+  on iPad, and the only check for anything that depends on a camera: Simulator has
+  none.
 
 ## Matrix
 
@@ -34,6 +42,7 @@ sit: `device-geometry.md`.
 | P10 | Camera app with a capture accessory | Accessory appears on the outer display only while full screen on the inner display with an active session; toggle disabled when unavailable. |
 | P11 | Right-to-left language on the inner display | Vertical bar stays on the same hardware side; content mirrors as usual. |
 | P12 | Reduce Transparency on | Vertical bars gain a background; custom bar views remain legible. |
+| P13 | Camera direction changes (camera apps, device only) | Open and close while capturing: the preview keeps streaming from a forward-facing camera; the rear camera works as a selfie camera when the open device is turned around; mirroring follows the direction the camera faces, not its position; the preview and captured media stay upright after every switch (a new rotation coordinator per device); the virtual front camera falls back cleanly to the common feature set. |
 
 ## Reporting
 

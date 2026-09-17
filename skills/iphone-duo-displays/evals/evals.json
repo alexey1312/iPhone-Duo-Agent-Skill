@@ -19,6 +19,25 @@
         "States that CameraCaptureAccessory is absent from the installed 27.0 SDK and needs the iOS 27.1 SDK.",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 2,
+      "name": "camera-direction-on-open",
+      "prompt": "Our recorder (evals/files/ClipRecorder) streams from the rear camera. On iPhone Duo, when the person opens the phone, or flips it around to film themselves with the rear camera, which camera should we stream from, and how do we keep the preview mirrored and upright? Plan only, don't change files.",
+      "expected_output": "A plan built on AVCaptureDeviceDirectionCoordinator: created with the preview view and every built-in camera the app uses, descriptors handed to the session actor, mirroring and rotation decided per direction change, the virtual front camera named as the simpler alternative, all marked blocked on the iOS 27.1 SDK and verified on a device.",
+      "files": [
+        "evals/files/ClipRecorder"
+      ],
+      "expectations": [
+        "Recommends AVCaptureDeviceDirectionCoordinator created with the preview view, listing the rear camera type(s) and the two physical front types builtInOuterUltraWideCamera / builtInInnerUltraWideCamera rather than the virtual front camera.",
+        "States that on iPhone Duo AVCaptureDevice.position reports where a camera sits, not which way it faces, and that the camera to stream from comes from the coordinator's forwardFacingDeviceDescriptors.",
+        "The change handler runs on the main actor and hands an AVCaptureDeviceDescriptor to the actor that owns the session, which resolves it with AVCaptureDevice(uniqueID:) and swaps the video input; no AVFoundation calls in the handler.",
+        "Mirroring is decided from the direction map (mirror a forward-facing rear camera), with automaticallyAdjustsVideoMirroring set to false before isVideoMirrored and reapplied after reconnecting an input.",
+        "A new AVCaptureDevice.RotationCoordinator is created for each camera switch.",
+        "Mentions the virtual front camera as the zero-effort option for front capture and its common-subset limits (1080p at 60 fps, no depth).",
+        "States that the direction coordinator and the physical front camera types are absent from the installed 27.0 SDK and need the iOS 27.1 SDK, citing Tech Talk 111465 with timestamps or the AVKit article by section.",
+        "No file in the project copy was modified, and testing is called out as device-only because Simulator has no camera."
+      ]
     }
   ]
 }

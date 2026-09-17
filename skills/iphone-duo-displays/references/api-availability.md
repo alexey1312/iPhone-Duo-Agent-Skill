@@ -32,6 +32,30 @@ the compiler uses) and reports which symbols exist. It changes nothing.
    in iOS 27.1 needs `if #available(iOS 27.1, *)` (SwiftUI modifiers: an
    availability-gated `ViewModifier`) when the deployment target is lower.
 
+## What each linked SDK gets on iPhone Duo
+
+Apps run on iPhone Duo without a rebuild; the SDK they link decides how much screen
+they get (Tech Talk 111461, 0:30–1:11; *Preparing your app for iPhone Duo* ›
+Overview):
+
+| Linked SDK | Closed (outer display) | Open (inner display) | Bars |
+| --- | --- | --- | --- |
+| Before iOS 27 | The space to the left of the status bar and camera | A familiar size and aspect ratio | Horizontal |
+| iOS 27 | Same | Extends to the left of the status bar area | Horizontal |
+| iOS 27.1 | Edge to edge | Edge to edge | Standard navigation and toolbar buttons lay out vertically under the status bar |
+
+Resizing behavior follows the same split (TN3192; Tech Talk 111461, 4:37): built with
+the iOS 27 SDK and without `UIRequiresFullScreen`, the scene resizes continuously;
+with the key, or with an older SDK, it resizes discretely when the drag ends. iPhone
+Duo honors the key but still resizes the app when the device opens or closes, and
+scales it on the inner display, including in Split View multitasking.
+`UIRequiresFullScreenIgnoredStartingWithVersion` keeps the old behavior on earlier
+iOS versions while the app adapts.
+
+Status on 2026-09-17: Xcode 27 (27A266a) shipped on September 14 with the iOS 27.0
+SDK; the Xcode 27.1 beta is "coming later this month". *Preparing your app for iPhone
+Duo* is already published. Calendar: `sources.md`.
+
 ## Measured snapshot
 
 Checked on **Xcode 27.0 beta 6 (27A5252f), iPhoneOS 27.0 SDK**. Re-run the script;
@@ -49,9 +73,25 @@ this table ages.
 So with Xcode 27.0 you can already: remove legacy screen/orientation/idiom code,
 adopt scene lifecycle, fix asymmetric safe-area math, move items into container
 bars, give every item a title and symbol, set `visibilityPriority`, consolidate
-overflow into `ToolbarOverflowMenu`, and place close/prominent items correctly.
-Vertical-bar axis tuning, reserved regions, arrangements, the hinge and the camera
-capture accessory wait for the 27.1 SDK.
+overflow into `ToolbarOverflowMenu`, place close/prominent items correctly, branch
+biometric copy on `LAContext.biometryType`, and ship a widget or Live Activity for
+StandBy. Vertical-bar axis tuning, reserved regions, arrangements, the hinge, the
+camera capture accessory and the camera direction coordinator wait for the 27.1 SDK.
+
+**Documented, not yet measured** (added 2026-09-17 from Apple's documentation pages;
+the script checks them, nobody has run it against a 27.1 SDK yet):
+
+| Area | Symbol | Documented availability |
+| --- | --- | --- |
+| Bars | `ToolbarItemAxisBehavior`, `ToolbarVerticalBehavior`, `UIVerticalBarBehavior`, `UIVerticalBarEdge` | iOS 27.1 |
+| Bars | `presentationPlacement` (SwiftUI), `UISheetPresentationController.preferredPlacement` | iOS 27.0 |
+| Bars | `backgroundExtensionEffect`, `UIBackgroundExtensionView` | iOS 26 |
+| Layout | `splitArrangementAxis`, `overlayArrangementEdge`, `splitArrangementLayoutRatio`, `splitArrangementLayoutSize`, `UISplitArrangement`, `UIOverlayArrangement` | iOS 27.1 |
+| Displays | `UIHinge`, `UIHingeInteraction.Update` | iOS 27.1 |
+| Displays | `UISceneAccessory`, `registerSceneAccessory`, `UISceneAccessoryRegistration` | iOS 27.0 |
+| Cameras | `AVCaptureDeviceDirectionCoordinator`, `AVCaptureDeviceDirectionMap`, `AVCaptureDeviceDescriptor` (AVKit), `builtInOuterUltraWideCamera`, `builtInInnerUltraWideCamera` | iOS 27.1 (Tech Talk 111465; the device types are annotated 27.1 beta) |
+| Cameras | `dynamicAspectRatio`, `AVCaptureDevice.RotationCoordinator` | iOS 26 / iOS 17 |
+| Adaptivity | `LAContext.biometryType` (LocalAuthentication) | iOS 11 |
 
 ## Known talk-versus-SDK mismatch
 
@@ -83,11 +123,14 @@ every sample in `sources.md`.
 ## Swift spellings of Objective-C names
 
 Talks and headers often use Objective-C class names. Swift may nest them:
-`UIWindowSceneActivationAction` is `UIWindowScene.ActivationAction`, and
-`UIWindowSceneActivationConfiguration` is `UIWindowScene.ActivationConfiguration` —
-the flat names fail with "has been renamed". `sdk_api_check.py` searches both
-headers and Swift interfaces, so a symbol can be *found* under its Objective-C name;
-the compiler is the final word on the Swift spelling.
+`UIWindowSceneActivationAction` is `UIWindowScene.ActivationAction`,
+`UIWindowSceneActivationConfiguration` is `UIWindowScene.ActivationConfiguration`,
+and the `UIViewReservedRegion` the first Tech Talk names is documented as
+`UIView.ReservedRegion` (with `UIView.ReservedRegion.Kind` and `.QueryOptions`); the
+hinge update type is `UIHingeInteraction.Update`. The flat names fail with "has been
+renamed". `sdk_api_check.py` searches both headers and Swift interfaces, so a symbol
+can be *found* under its Objective-C name; the compiler is the final word on the
+Swift spelling.
 
 ## Typechecked samples
 
@@ -96,4 +139,5 @@ The skills' code samples that use iOS 26/27.0 APIs were typechecked with
 replacements, bar placements, badges, `visibilityPriority`, `ToolbarOverflowMenu`,
 `additionalOverflowItems`, `navigationBarMinimization`, sidebar placement,
 `prominentTabIdentifier`, safe-area insets, `ConcentricRectangle`, scene activation.
-Samples using 27.1 APIs could not be checked and are reproduced from the session pages.
+Samples using 27.1 APIs could not be checked and are reproduced from the session pages
+or from Apple's documentation (each sample says which).

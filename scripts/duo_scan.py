@@ -21,7 +21,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 SEVERITIES = ["critical", "high", "medium", "low", "info"]
 SOURCE_EXTENSIONS = {".swift", ".m", ".mm", ".h"}
@@ -43,6 +43,7 @@ S_BARS = "Tech Talk 111462 Raise the bar with iPhone Duo"
 S_POSE = "Tech Talk 111463 Strike a pose with adaptive layouts on iPhone Duo"
 S_SCENES = "Tech Talk 111464 Leverage multiple displays and scenes on iPhone Duo"
 S_MODERNIZE = "WWDC26 278 Modernize your UIKit app"
+S_SPEC = "Apple iPhone Duo tech specs"
 
 
 @dataclass(frozen=True)
@@ -55,6 +56,9 @@ class Rule:
     advice: str
     pattern: str
     supersedes: tuple[str, ...] = ()
+    # When this regex matches anywhere in the (comment-stripped) file, the rule is
+    # skipped for that file: the code has already considered the case.
+    unless_in_file: str = ""
 
 
 RULES: list[Rule] = [
@@ -221,6 +225,23 @@ RULES: list[Rule] = [
         ),
         pattern=r"systemName\s*:\s*\"ellipsis(?:\.circle)?(?:\.fill)?\"|systemImageNamed\s*:\s*@\"ellipsis(?:\.circle)?(?:\.fill)?\"",
     ),
+    Rule(
+        id="DUO013",
+        title="Hard-coded Face ID copy or symbol",
+        severity="medium",
+        skill="iphone-duo-adaptivity-audit",
+        source=f"{S_PREPARE} 2:34; {S_SPEC} (Touch ID)",
+        advice=(
+            "iPhone Duo unlocks with Touch ID in the side button and has no Face ID, so "
+            "copy, symbols and onboarding that name Face ID are wrong on it. Branch on "
+            "LAContext.biometryType (.faceID, .touchID, .none) after canEvaluatePolicy "
+            "for strings and SF Symbols (faceid / touchid). Keep NSFaceIDUsageDescription "
+            "for Face ID devices. Localizable .strings and .xcstrings files are not scanned; "
+            "grep them too."
+        ),
+        pattern=r"\"[^\"\n]*\bFace ?ID\b[^\"\n]*\"|\"faceid\"",
+        unless_in_file=r"\bbiometryType\b|\.faceID\b|\.touchID\b|\bLABiometryType",
+    ),
 ]
 
 INVENTORY_PATTERNS: dict[str, str] = {
@@ -246,6 +267,14 @@ INVENTORY_PATTERNS: dict[str, str] = {
     # Scenes and displays.
     "multiple scene requests": r"\b(?:requestSceneSessionActivation|activateSceneSession|openWindow)\b",
     "camera capture session": r"\bAVCaptureSession\b",
+    "front camera discovery": r"position\s*:\s*\.front\b",
+    "video mirroring": r"\bisVideoMirrored\b|\bautomaticallyAdjustsVideoMirroring\b",
+    "rotation coordinator": r"\bRotationCoordinator\b",
+    "direction coordinator": r"\bAVCaptureDeviceDirectionCoordinator\b",
+    # Device capabilities and presence on the outer display.
+    "biometryType reads": r"\bbiometryType\b",
+    "WidgetKit": r"\bimport\s+WidgetKit\b|\bWidgetConfiguration\b|\bStaticConfiguration\b|\bAppIntentConfiguration\b",
+    "Live Activities": r"\bimport\s+ActivityKit\b|\bActivityAttributes\b|\bActivityConfiguration\b",
     # iPhone Duo APIs already adopted (announced for iOS 27.1).
     "axisBehavior": r"\baxisBehavior\b",
     "visibilityPriority": r"\bvisibilityPriority\b",
@@ -412,12 +441,22 @@ def logical_lines(stripped: str) -> list[tuple[int, str]]:
     return joined
 
 
-def scan_source(path: Path, rel: str, text: str, compiled: list[tuple[Rule, re.Pattern[str]]]) -> list[Finding]:
+def scan_source(
+    path: Path,
+    rel: str,
+    text: str,
+    compiled: list[tuple[Rule, re.Pattern[str], re.Pattern[str] | None]],
+) -> list[Finding]:
     stripped = strip_comments(text, nested_block_comments=path.suffix == ".swift")
     original_lines = text.splitlines()
     findings: list[Finding] = []
+    active = [
+        (rule, regex)
+        for rule, regex, unless in compiled
+        if unless is None or not unless.search(stripped)
+    ]
     for number, code in logical_lines(stripped):
-        matched = [rule for rule, regex in compiled if regex.search(code)]
+        matched = [rule for rule, regex in active if regex.search(code)]
         superseded = {rid for rule in matched for rid in rule.supersedes}
         for rule in matched:
             if rule.id in superseded:
@@ -459,11 +498,14 @@ PROJECT_RULES = {
         title="UIRequiresFullScreen is set",
         severity="info",
         skill="iphone-duo-adaptivity-audit",
-        source=f"{S_MODERNIZE} 5:46",
+        source=f"{S_MODERNIZE} 5:46; {S_PREPARE} 4:37",
         advice=(
-            "Starting in iOS 27 this key is honored on iPhone in resizable environments "
-            "and enables discrete resizing that respects supported orientations. It is "
-            "meant for games; other apps should adapt to any size instead."
+            "Starting in iOS 27 this key no longer opts an app out of resizing: the scene "
+            "resizes discretely, and iPhone Duo still resizes the app when it opens or "
+            "closes and scales it on the inner display, including in Split View. It is "
+            "meant for games; other apps should remove the key and adapt to any size "
+            "(UIRequiresFullScreenIgnoredStartingWithVersion keeps the old behavior on "
+            "earlier iOS versions)."
         ),
         pattern="",
     ),
@@ -498,7 +540,10 @@ def line_of(text: str, index: int) -> int:
 
 def scan(root: Path, include_dependencies: bool = False) -> dict:
     root = root.resolve()
-    compiled = [(rule, re.compile(rule.pattern)) for rule in RULES]
+    compiled = [
+        (rule, re.compile(rule.pattern), re.compile(rule.unless_in_file) if rule.unless_in_file else None)
+        for rule in RULES
+    ]
     inventory_regex = {name: re.compile(pattern) for name, pattern in INVENTORY_PATTERNS.items()}
     inventory = {name: 0 for name in INVENTORY_PATTERNS}
     findings: list[Finding] = []

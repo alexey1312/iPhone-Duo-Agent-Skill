@@ -1,7 +1,8 @@
 # Layout — code
 
-Samples as published on the session pages of Tech Talks 111461 and 111463. APIs marked
-**27.1** were absent from the iOS 27.0 SDK; confirm with `scripts/sdk_api_check.py`.
+Samples as published on the session pages of Tech Talks 111461 and 111463, plus a few
+reproduced from Apple's documentation (marked). APIs marked **27.1** were absent from
+the iOS 27.0 SDK; confirm with `scripts/sdk_api_check.py`.
 
 ## Size classes (111461, 2:59)
 
@@ -114,6 +115,25 @@ struct FloatingControls: View {
 Treat the sketch as a pattern, not API truth: the region's coordinate space and type
 come from the SDK.
 
+From the `ReservedRegion` documentation — the full signature, and a custom `Layout`
+that keeps its subviews clear of any occlusion (the camera). Frames arrive mirrored
+for right-to-left languages unless you ask for `.fixed`:
+
+```swift
+func reservedRegions(kind: ReservedRegion.Kind,
+                     options: ReservedRegion.QueryOptions = [],
+                     layoutDirectionBehavior: LayoutDirectionBehavior = .mirrors) -> [ReservedRegion]
+
+GeometryReader { proxy in
+    RegionAvoidingLayout(regions: proxy.reservedRegions(kind: .occlusion)) {
+        ForEach(items) { item in
+            ItemView(item)
+        }
+    }
+}
+// Each region: id, kind (.division / .occlusion), frame (includes margins), margins, isActive
+```
+
 ## ArrangementView — 27.1 (111463, 11:23–13:07)
 
 ```swift
@@ -161,4 +181,41 @@ struct UpNextView: View {
 // UIKit
 let primaryState = arrangementVC.state(for: .primary)
 myModel.minimization = (primaryState?.zIndex ?? 0) > 0 ? .collapsed : .expanded
+```
+
+## Tuning an arrangement — 27.1 (`ArrangementView` documentation)
+
+```swift
+// A 30 / 70 split; the view with the highest layoutPriority is sized first
+ArrangementView {
+    ConversationView()
+        .splitArrangementLayoutRatio(0.3)
+} secondary: {
+    PhotosView()
+}
+.arrangementViewStyle(.split.axes(.horizontal))
+
+// Where the overlay's primary view lands when the fold makes the layers side by side
+ArrangementView {
+    ControlsView()
+        .overlayArrangementEdge(.trailing)
+} secondary: {
+    ContentView()
+}
+.arrangementViewStyle(.overlay)
+
+// A child re-lays itself out for the split's axis (nil outside a split arrangement)
+struct DetailsView: View {
+    @Environment(\.splitArrangementAxis) var axis
+
+    var body: some View {
+        let layout: AnyLayout = axis == .horizontal
+            ? AnyLayout(VStackLayout())
+            : AnyLayout(HStackLayout())
+        layout {
+            Artwork()
+            Metadata()
+        }
+    }
+}
 ```

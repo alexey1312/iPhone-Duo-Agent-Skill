@@ -17,7 +17,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 
 @dataclass(frozen=True)
@@ -72,6 +72,27 @@ DEFAULT_SYMBOLS: list[Symbol] = [
     Symbol("sceneAccessory", "displays", "iOS 27"),
     Symbol("CameraCaptureAccessory", "displays", "iOS 27.1"),
     Symbol("onAvailabilityChange", "displays", "iOS 27"),
+    # Added 2026-09-17 from Apple's documentation pages (see api-availability.md);
+    # documented availability, not yet measured against a 27.1 SDK.
+    Symbol("ToolbarItemAxisBehavior", "bars", "iOS 27.1"),
+    Symbol("presentationPlacement", "bars", "iOS 27.0", "SwiftUI sheet placement; UIKit: UISheetPresentationController.preferredPlacement"),
+    Symbol("backgroundExtensionEffect", "bars", "iOS 26", "extend a background under a vertical bar"),
+    Symbol("UIBackgroundExtensionView", "bars", "iOS 26"),
+    Symbol("splitArrangementAxis", "layout", "iOS 27.1"),
+    Symbol("overlayArrangementEdge", "layout", "iOS 27.1"),
+    Symbol("splitArrangementLayoutRatio", "layout", "iOS 27.1"),
+    Symbol("UIHinge", "displays", "iOS 27.1", "angle in radians; status closed / partiallyOpen / fullyOpen / unknown"),
+    Symbol("UISceneAccessory", "displays", "iOS 27.0", "UIKit scene accessories; cameraCapture(sceneConfiguration:userInfo:)"),
+    Symbol("registerSceneAccessory", "displays", "iOS 27.0"),
+    # Cameras (Tech Talk 111465; AVKit article "Choosing a camera by the direction it faces").
+    Symbol("AVCaptureDeviceDirectionCoordinator", "cameras", "iOS 27.1", "AVKit"),
+    Symbol("AVCaptureDeviceDescriptor", "cameras", "iOS 27.1", "AVKit"),
+    Symbol("builtInOuterUltraWideCamera", "cameras", "iOS 27.1", "discoverable only through AVCaptureDevice.DiscoverySession"),
+    Symbol("builtInInnerUltraWideCamera", "cameras", "iOS 27.1", "discoverable only through AVCaptureDevice.DiscoverySession"),
+    Symbol("dynamicAspectRatio", "cameras", "iOS 26"),
+    Symbol("RotationCoordinator", "cameras", "iOS 17", "AVCaptureDevice.RotationCoordinator; recreate per device"),
+    # Device capabilities.
+    Symbol("biometryType", "adaptivity", "iOS 11", "LocalAuthentication; iPhone Duo reports .touchID"),
 ]
 
 AVAILABILITY = re.compile(r"(API_AVAILABLE\([^)]*\)|API_DEPRECATED\([^)]*\)|@available\([^)]*\))")

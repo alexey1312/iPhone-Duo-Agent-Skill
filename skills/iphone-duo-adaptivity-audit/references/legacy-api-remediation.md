@@ -196,9 +196,66 @@ With several windows on iPhone Duo, "the first scene" is whichever the system li
 first. If code has no view (a service presenting UI), pass the presenting view
 controller or scene in.
 
+## DUO013 — Biometric copy and symbols
+
+iPhone Duo has Touch ID in its side button and no Face ID (Apple tech specs), and
+Tech Talk 111461 (2:34) asks apps not to assume device capabilities. `LAContext`
+already reports what the device has; the words, the SF Symbol and the onboarding
+text should come from it. Written against LocalAuthentication's long-standing API
+(iOS 11); typecheck it in the project when you apply it.
+
+```swift
+// Before
+Button("Unlock with Face ID", systemImage: "faceid") { unlock() }
+
+// After — ask LocalAuthentication, then pick words and symbol
+import LocalAuthentication
+
+struct Biometry {
+    let name: String
+    let symbol: String
+
+    /// `biometryType` is only meaningful after `canEvaluatePolicy` has run.
+    static var current: Biometry? {
+        let context = LAContext()
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) else {
+            return nil
+        }
+        switch context.biometryType {
+        case .faceID: return Biometry(name: "Face ID", symbol: "faceid")
+        case .touchID: return Biometry(name: "Touch ID", symbol: "touchid")
+        default: return nil          // .none, and .opticID on visionOS
+        }
+    }
+}
+
+if let biometry = Biometry.current {
+    Button("Unlock with \(biometry.name)", systemImage: biometry.symbol) { unlock() }
+} else {
+    Button("Unlock with passcode") { unlockWithPasscode() }
+}
+```
+
+UIKit: the same `Biometry.current` feeds `UIButton.Configuration.title` and
+`.image = UIImage(systemName: biometry.symbol)`; `localizedReason` for
+`evaluatePolicy` and error alerts take the name the same way.
+
+Keep `NSFaceIDUsageDescription` in Info.plist — Face ID devices still require it and
+Touch ID needs no usage string. Sentences that hard-code the words ("Enable Face ID"
+in onboarding, a settings toggle, an error alert) often live in `.strings` or
+`.xcstrings` catalogs the scanner does not read: grep them and turn the sentence into
+a format string that takes `biometry.name`. `DUO013` is suppressed in a file that
+reads `biometryType` at all, so a flagged file is one that never asked.
+
 ## DUO020 — UIRequiresFullScreen
 
-Non-game apps: remove the key and adapt. Games: keep it — iOS 27 honors it on iPhone
-in resizable environments with discrete resizing that respects supported orientations,
-so the game renders at full quality at each size (278, 5:46). It is not an exemption
-from iPhone Duo's inner display layout.
+Non-game apps: remove the key and adapt. Games: keep it — from iOS 27 the key no
+longer opts out of resizing but gives discrete resizing that respects supported
+orientations, so the game renders at full quality at each size and the scene only
+changes size when a drag ends (278, 5:46; TN3192). iPhone Duo still resizes the game
+when the device opens or closes and scales it on the inner display, including in
+Split View (111461, 4:37). It is not an exemption from iPhone Duo's inner display
+layout. Games that update expensive assets per size should read
+`windowScene.effectiveGeometry.isInteractivelyResizing` (SwiftUI:
+`onInteractiveResizeChange`) and `UIRequiresFullScreenIgnoredStartingWithVersion`
+lets an app keep the old behavior on earlier iOS while it adapts.

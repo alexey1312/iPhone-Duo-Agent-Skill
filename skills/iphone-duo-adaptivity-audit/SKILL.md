@@ -7,8 +7,9 @@ description: >-
   UIScreen.main or mainScreen, screen bounds or scale, interfaceOrientation or
   UIDevice orientation checks, userInterfaceIdiom layout forks, keyWindow or
   connectedScenes.first, migrating from app lifecycle to UIScene lifecycle
-  (required with the latest SDK), UIRequiresFullScreen, or portrait-only apps.
-  Covers SwiftUI and UIKit, ships a read-only scanner, and delegates bulk UIKit
+  (required with the latest SDK), UIRequiresFullScreen, portrait-only apps, or
+  hard-coded Face ID strings and symbols (iPhone Duo has Touch ID; branch on
+  LAContext.biometryType). Covers SwiftUI and UIKit, ships a read-only scanner, and delegates bulk UIKit
   rewrites to Xcode's own modernization skill when available. Not for app features
   that merely touch UIScreen or orientation, such as screen brightness,
   deliberately locking a game to one orientation, or camera and sensor setup.
@@ -33,8 +34,15 @@ begins.
   phone idiom while fully resizable. (111461 1:33; 278 6:17)
 - **UIScene lifecycle is required** when building with the latest SDKs; without it
   the app no longer launches. (278 2:10)
-- `UIRequiresFullScreen` is honored on iPhone in resizable environments from iOS 27
-  and gives discrete resizing — meant for games. (278 5:46)
+- `UIRequiresFullScreen` no longer opts an app out of resizing from iOS 27: it gives
+  discrete resizing, and iPhone Duo still resizes the app when it opens or closes and
+  scales it on the inner display, including in Split View — meant for games.
+  `UIRequiresFullScreenIgnoredStartingWithVersion` keeps the old behavior on earlier
+  iOS. (278 5:46; 111461 4:37; TN3192)
+- **iPhone Duo has Touch ID in the side button and no Face ID** (Apple tech specs;
+  `references/device-geometry.md`). Adaptive apps make no assumptions about device
+  capabilities (111461 2:34): copy, symbols and onboarding that name Face ID are
+  wrong on it.
 
 ## Workflow
 
@@ -45,7 +53,8 @@ begins.
    ```
    Rules owned here: `DUO001` main screen, `DUO002` screen bounds, `DUO003` idiom,
    `DUO004` orientation, `DUO005` app lifecycle, `DUO009` global window state,
-   `DUO012` scene delegate without manifest, `DUO020` `UIRequiresFullScreen`.
+   `DUO012` scene delegate without manifest, `DUO013` Face ID copy, `DUO020`
+   `UIRequiresFullScreen`.
    Member chains split across lines (`connectedScenes` … `.first`) are joined before
    matching; other multi-line expressions, macros and generated code are not seen, so
    follow up with targeted searches when the inventory suggests more.
@@ -56,6 +65,9 @@ begins.
      alignment before body protocols) → **kept** if documented; otherwise ask.
    - *Non-layout behavior* keyed off idiom (feature availability, analytics) → kept,
      with a comment naming why.
+   - *Capability assumption* (Face ID in strings, `faceid` symbols, onboarding) →
+     derive from `LAContext.biometryType`; `DUO013` skips files that already read it,
+     so read the ones it flags for the switch that is missing.
 3. **Check Xcode's skill.** Export into a temporary directory — without
    `--output-dir` the command writes into the current directory:
    ```bash
@@ -83,6 +95,7 @@ Full before/after code for SwiftUI and UIKit: `references/legacy-api-remediation
 | Orientation to align sensor data | `motionManager.deviceMotionBody = view`, `locationManager.headingBody = view` | same, on a hosting view |
 | `UIApplication.shared.keyWindow` / `windows` / `connectedScenes.first` | `view.window`, `view.window?.windowScene` | the view's own context; `openWindow`/`dismissWindow` environment actions |
 | App lifecycle only | `UIApplicationSceneManifest` + `UIWindowSceneDelegate`; move window setup to `scene(_:willConnectTo:options:)` | `@main struct …: App` is already scene-based |
+| `"Face ID"` in copy, `faceid` symbols | A `switch context.biometryType` (`.faceID`, `.touchID`, default) after `canEvaluatePolicy`, feeding titles and `UIImage(systemName:)` | The same switch in a small model feeding `Label` / `Button(_:systemImage:)` |
 
 ## Applying changes
 
@@ -113,3 +126,7 @@ Full before/after code for SwiftUI and UIKit: `references/legacy-api-remediation
   Xcode's `scene-lifecycle-task.md` reference when available.
 - Leave `UIRequiresFullScreen` alone in games that need discrete resizing; for other
   apps recommend removing it and adapting instead.
+- **Localization catalogs hide biometric copy.** The scanner reads Swift and
+  Objective-C only; grep `.strings` and `.xcstrings` for "Face ID" and build those
+  sentences from the biometry name instead. Keep `NSFaceIDUsageDescription`: Face ID
+  devices still need it.

@@ -46,7 +46,7 @@ approve, and nothing is changed until they do.
 ```markdown
 # iPhone Duo readiness — <app>
 
-Toolchain: Xcode <version> (<build>), iOS <sdk> SDK · Scan: duo_scan 1.0.0, <n> files
+Toolchain: Xcode <version> (<build>), iOS <sdk> SDK · Scan: duo_scan 1.1.0, <n> files
 Lifecycle: <swiftui-app | scene | app-delegate-only>
 
 ## Summary

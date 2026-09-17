@@ -18,6 +18,24 @@
         "The edited Swift files typecheck: the transcript shows swiftc -typecheck or a build succeeding after the edits.",
         "The replacement for the main-screen/orientation layout cites 111461 2:46 or 3:57, or WWDC26 278 2:51 or 6:50."
       ]
+    },
+    {
+      "id": 2,
+      "name": "face-id-copy",
+      "prompt": "Get the unlock flow in evals/files/VaultLock ready for iPhone Duo. Plan first, then apply what's safe.",
+      "expected_output": "A plan item citing Apple's tech specs (Touch ID) and Tech Talk 111461 2:34, then UnlockScreen's Face ID wording and symbol replaced by values derived from LAContext.biometryType with a Touch ID and a passcode path, NSFaceIDUsageDescription kept, and a note that string catalogs must be grepped.",
+      "files": [
+        "evals/files/VaultLock"
+      ],
+      "expectations": [
+        "The plan states that iPhone Duo has Touch ID and no Face ID, citing Apple's iPhone Duo tech specs and 111461 2:34 (no device capability assumptions).",
+        "UnlockScreen no longer hard-codes the words \"Face ID\" or the faceid symbol in its button, title or messages; they come from a switch on LAContext.biometryType that handles .touchID and a non-biometric fallback.",
+        "biometryType is read only after canEvaluatePolicy has run.",
+        "NSFaceIDUsageDescription is kept in Info.plist, neither removed nor renamed.",
+        "The response says that Localizable strings catalogs are not scanned and must be checked for Face ID copy.",
+        "The edited Swift files typecheck (swiftc -typecheck or a build in the transcript), or the response says why typechecking was not possible.",
+        "No edit happens before the plan item is approved: the transcript shows the plan, then approval, then the change."
+      ]
     }
   ]
 }

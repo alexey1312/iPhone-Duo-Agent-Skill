@@ -8,7 +8,7 @@
     "should_trigger": true
   },
   {
-    "query": "we branch layouts on `traitCollection.userInterfaceIdiom == .pad`. an iPhone-only app on iPad is now resizable in 27 \u2014 what should that code become?",
+    "query": "we branch layouts on `traitCollection.userInterfaceIdiom == .pad`. an iPhone-only app on iPad is now resizable in 27 — what should that code become?",
     "should_trigger": true
   },
   {
@@ -20,7 +20,7 @@
     "should_trigger": true
   },
   {
-    "query": "lint flagged windowScene.interfaceOrientation as deprecated in Sources/Player/FullscreenController.swift \u2014 what's the replacement and is size class enough?",
+    "query": "lint flagged windowScene.interfaceOrientation as deprecated in Sources/Player/FullscreenController.swift — what's the replacement and is size class enough?",
     "should_trigger": true
   },
   {
@@ -36,11 +36,15 @@
     "should_trigger": true
   },
   {
+    "query": "our onboarding says \"Enable Face ID\" everywhere — is that wrong on iPhone Duo? I heard it only has Touch ID",
+    "should_trigger": true
+  },
+  {
     "query": "my SwiftUI List jumps to the top every time I pop back from the detail view, NavigationStack with a path binding, iOS 27. how do i keep the scroll position",
     "should_trigger": false
   },
   {
-    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent\u2026 for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
+    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent… for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
     "should_trigger": false
   },
   {
@@ -77,6 +81,10 @@
   },
   {
     "query": "Swift 6 strict concurrency errors in our AppDelegate: 'main actor-isolated property window can not be referenced'",
+    "should_trigger": false
+  },
+  {
+    "query": "implement Face ID login with LAContext evaluatePolicy in SwiftUI, show an error alert on failure",
     "should_trigger": false
   }
 ]
