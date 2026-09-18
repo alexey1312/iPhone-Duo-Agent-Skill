@@ -280,14 +280,17 @@ INVENTORY_PATTERNS: dict[str, str] = {
     "WidgetKit": r"\bimport\s+WidgetKit\b|\bWidgetConfiguration\b|\bStaticConfiguration\b|\bAppIntentConfiguration\b",
     "Live Activities": r"\bimport\s+ActivityKit\b|\bActivityAttributes\b|\bActivityConfiguration\b",
     # iPhone Duo APIs already adopted. Measured present in the iOS 27.1 SDK
-    # (Xcode 27.1, 27A9269) on 2026-09-19; see references/api-availability.md.
+    # (Xcode 27.1, 27A9269) on 2026-09-19; see references/api-availability.md for
+    # which of these need 27.1 and which are older -- `additionalOverflowItems` is
+    # iOS 16 and `ToolbarOverflowMenu` and `visibilityPriority` are iOS 27.0, so a
+    # hit here is evidence of adoption, not evidence of a 27.1 deployment target.
     "axisBehavior": r"\baxisBehavior\b",
     "visibilityPriority": r"\bvisibilityPriority\b",
     "vertical bar behavior": r"\b(?:toolbarVerticalBehavior|preferredVerticalBarBehavior|toolbarVerticalEdge|verticalBarEdge)\b",
     "vertical bar compression": r"\b(?:toolbarVerticalCompressionBehavior|verticalBarCompressionBehavior)\b",
     "overflow menu": r"\b(?:ToolbarOverflowMenu|additionalOverflowItems)\b",
     "reservedRegions": r"\b(?:reservedRegions|ReservedRegion|UIViewReservedRegion)\b",
-    "arrangements": r"\b(?:ArrangementView|UIArrangementViewController|UISplitArrangement|UIOverlayArrangement)\b",
+    "arrangements": r"\b(?:ArrangementView|UIArrangementViewController|UISplitArrangement\w*|UIOverlayArrangement\w*|UIArrangementViewState)\b",
     "arrangement tuning": r"\b(?:arrangementViewStyle|splitArrangementLayoutRatio|splitArrangementLayoutSize|splitArrangementFixedLayoutSize|overlayArrangementEdge|splitArrangementAxis|overlayArrangementZIndex)\b",
     "hinge": r"\b(?:onHingeChange|UIHingeInteraction|UIHinge|DeviceHinge)\b",
     "scene accessories": r"\b(?:sceneAccessory|CameraCaptureAccessory)\b",

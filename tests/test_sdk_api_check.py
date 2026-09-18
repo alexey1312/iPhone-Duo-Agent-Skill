@@ -140,7 +140,11 @@ class SdkApiCheckTests(unittest.TestCase):
         self.assertEqual(row["declaration"]["availability"], "API_AVAILABLE(ios(27.1)")
 
     def test_swift_name_alone_would_miss_it(self) -> None:
-        """The guard for the above: without `also`, the symbol is not found."""
+        """Documents *why* `also` is needed; it passes with or without the fix.
+
+        The real guards are `test_objective_c_spelling_proves_a_swift_name` and
+        `test_camera_device_types_carry_their_objective_c_spelling`.
+        """
         symbol = sdk_api_check.Symbol("builtInOuterUltraWideCamera", "cameras", "iOS 27.1")
         row = sdk_api_check.check(self.sdk, [symbol])["symbols"][0]
         self.assertFalse(row["found"])
@@ -169,9 +173,85 @@ class SdkApiCheckTests(unittest.TestCase):
             with self.subTest(name):
                 self.assertTrue(by_name[name].also, "AVFoundation ships no Swift interface")
 
+    def test_unbalanced_comment_opener_does_not_hide_later_declarations(self) -> None:
+        """One stray `/*` must not mark the rest of a file as commented out.
+
+        A `rfind("/*")` heuristic reports every later symbol in the file as
+        absent, and absent means "do not write this code" -- the worst thing
+        this tool can get wrong. Both fixtures are shapes that occur in shipped
+        SDK headers: a `/*` inside a `//` line, and one inside a string literal.
+        """
+        root = Path(self._directory.name) / "poison.sdk"
+        headers = root / "System/Library/Frameworks/Foo.framework/Headers"
+        headers.mkdir(parents=True)
+        (headers / "Foo.h").write_text(
+            "// Block comments open with /* and close with a star-slash\n"
+            "FOO_EXTERN int FooBarBaz API_AVAILABLE(ios(27.1));\n",
+            encoding="utf-8",
+        )
+        module = root / "System/Library/Frameworks/Bar.framework/Modules/Bar.swiftmodule"
+        module.mkdir(parents=True)
+        (module / "arm64-apple-ios.swiftinterface").write_text(
+            'public let commentOpener: String = "/*"\n'
+            "@available(iOS 27.1, *)\npublic func quuxCorge()\n",
+            encoding="utf-8",
+        )
+        rows = {
+            row["symbol"]: row
+            for row in sdk_api_check.check(
+                root,
+                [
+                    sdk_api_check.Symbol("FooBarBaz", "t", "iOS 27.1"),
+                    sdk_api_check.Symbol("quuxCorge", "t", "iOS 27.1"),
+                ],
+            )["symbols"]
+        }
+        self.assertTrue(rows["FooBarBaz"]["found"], "a /* inside a // line poisoned the file")
+        self.assertEqual(rows["FooBarBaz"]["declaration"]["availability"], "API_AVAILABLE(ios(27.1)")
+        self.assertTrue(rows["quuxCorge"]["found"], "a /* inside a string literal poisoned the file")
+        self.assertEqual(rows["quuxCorge"]["declaration"]["availability"], "@available(iOS 27.1, *)")
+
+    def test_comment_only_mention_is_not_a_declaration(self) -> None:
+        """A symbol named only in prose does not compile, so it is not present."""
+        root = Path(self._directory.name) / "prose.sdk"
+        headers = root / "System/Library/Frameworks/Foo.framework/Headers"
+        headers.mkdir(parents=True)
+        (headers / "Foo.h").write_text(
+            "/*!\n @discussion Superseded by FooLegacyThing; do not use.\n */\n"
+            "FOO_EXTERN int FooReplacement API_AVAILABLE(ios(27.1));\n",
+            encoding="utf-8",
+        )
+        row = sdk_api_check.check(root, [sdk_api_check.Symbol("FooLegacyThing", "t", "?")])["symbols"][0]
+        self.assertFalse(row["found"])
+        self.assertEqual(row["frameworks"], [])
+        self.assertEqual(row["matched_as"], [])
+
+    def test_matched_as_only_names_spellings_that_really_declared(self) -> None:
+        """`matched_as` drives the "yes (as ...)" hint, so prose must not enter it."""
+        root = Path(self._directory.name) / "mixed.sdk"
+        headers = root / "System/Library/Frameworks/Foo.framework/Headers"
+        headers.mkdir(parents=True)
+        (headers / "Foo.h").write_text(
+            "FOO_EXTERN int FooTypeWidget API_AVAILABLE(ios(27.1));\n"
+            "/*! @discussion In Swift this is spelled widget. */\n",
+            encoding="utf-8",
+        )
+        symbol = sdk_api_check.Symbol("widget", "t", "iOS 27.1", also=("FooTypeWidget",))
+        row = sdk_api_check.check(root, [symbol])["symbols"][0]
+        self.assertTrue(row["found"])
+        self.assertEqual(row["matched_as"], ["FooTypeWidget"], "the prose mention must not count")
+
     def test_default_symbols_are_unique(self) -> None:
         names = [symbol.name for symbol in sdk_api_check.DEFAULT_SYMBOLS]
         self.assertEqual(len(names), len(set(names)))
+
+    def test_no_spelling_is_claimed_by_two_symbols(self) -> None:
+        """An `also` entry colliding with another symbol would silently rebind it."""
+        spellings: dict[str, str] = {}
+        for symbol in sdk_api_check.DEFAULT_SYMBOLS:
+            for spelling in (symbol.name, *symbol.also):
+                self.assertNotIn(spelling, spellings, f"{spelling} already claimed by {spellings.get(spelling)}")
+                spellings[spelling] = symbol.name
 
 
 if __name__ == "__main__":

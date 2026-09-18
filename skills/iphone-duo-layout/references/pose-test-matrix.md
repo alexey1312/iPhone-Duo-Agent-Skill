@@ -59,7 +59,7 @@ cameras and fold sit: `device-geometry.md`.
 
 | # | State | What to look for |
 | --- | --- | --- |
-| P1 | Closed, outer display, portrait | Compact width × regular height, but toolbar, tab bar and navigation controls sit on the side below the corner camera; content is offset by the safe area, not hidden behind them; sheets can present with vertical controls. Measured on the simulator with no app bars: 466 × 678 pt, safe-area insets top 0 / leading 0 / bottom 34 / trailing 84, `verticalBarEdge == .trailing` — so a layout that halves a horizontal inset loses 84 pt of width. |
+| P1 | Closed, outer display, portrait | Compact width × regular height, but toolbar, tab bar and navigation controls sit on the side below the corner camera; content is offset by the safe area, not hidden behind them; sheets can present with vertical controls. Read from a booted simulator with no app bars (`device-geometry.md`, *Booted*): 466 × 678 pt, safe-area insets top 0 / leading 0 / bottom 34 / trailing 84, `verticalBarEdge == .trailing` — so a layout that halves a horizontal inset loses 84 pt of width. |
 | P2 | Closed, outer display, landscape | Toolbar and tab bar overflow sooner; the right items stay visible; keyboard up makes it worse. |
 | P3 | Open flat, inner display, landscape | Regular × regular; vertical bars on the side; sidebar if opted in; content uses the width (no centered phone column); no layout keyed off orientation. |
 | P4 | Open flat, inner display, portrait | Bars horizontal — the one state where the system keeps horizontal bars (HIG); layout still uses size classes. |

@@ -72,6 +72,10 @@ Measured on **Xcode 27.1 (27A9269), iPhoneOS 27.1 SDK (version 27.1, build 24A94
 Swift 6.4, on 2026-09-19, by `scripts/sdk_api_check.py` across 4574 interface files.
 Re-run the script; this table ages.
 
+Dates, ship schedules and radar numbers below come from Apple's release-notes and
+news pages as read on 2026-09-19. They are **not** reproducible from this machine the
+way the symbol table is — treat them as citations, not measurements.
+
 **Every symbol below is present in the 27.1 SDK**, with one deliberate exception
 (`barMinimizationBehavior`, which exists in no SDK — see the mismatch section).
 The category *documented but not measured*, which this file carried while the 27.1
@@ -143,7 +147,8 @@ Gate the factory, not the role.
 
 ## Xcode 27.1 known issues that change what you can verify
 
-From the Xcode 27.1 beta release notes, cited by radar number:
+From the Xcode 27.1 beta release notes, cited by radar number. Read on 2026-09-19;
+not reproduced here, except where noted:
 
 - **187708663** — StandBy is unavailable in the iPhone Duo Simulator runtime.
   The StandBy readiness check cannot be satisfied there.
@@ -286,6 +291,9 @@ the 27.1 SDK — it compiles:
 ```bash
 xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios18.0-simulator gate.swift
 ```
+
+Both probes are committed under [`scripts/probes/`](../scripts/probes/README.md)
+with the commands that ran them.
 
 Not verified: the two Mac Catalyst known issues above are reported as Apple's, by
 radar number. A bare `swiftc -target arm64-apple-ios27.1-macabi` did not resolve

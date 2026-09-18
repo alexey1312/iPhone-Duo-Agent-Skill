@@ -17,6 +17,7 @@ Every fact carries its provenance. Never present a lower grade as a higher one.
 | **Diagram** | Read off the HIG illustrations; approximate (a few percent), not dimensions |
 | **Simulator** | Read from the iPhone Duo simulator that ships with Xcode 27.1 (27A9269) — the device profile at `/Library/Developer/CoreSimulator/Profiles/DeviceTypes/iPhone Duo.simdevicetype/Contents/Resources/`, or `xcrun simctl io <udid> enumerate` on a booted device. Describes the *simulated* device, which is not the hardware in every respect |
 | **Booted** | Read at runtime by an app running on a booted iPhone Duo simulator; the entry says which pose |
+| **Release notes** | Stated on an Apple release-notes or news page, cited by radar number or headline; read on the date given, not reproduced on this machine |
 | **Unverified** | Third-party claim; replace it with what an iPhone Duo simulator reports |
 
 ## Displays
@@ -72,7 +73,9 @@ superseded.
 
 *Booted* grade. A bare SwiftUI app — one `GeometryReader`, no toolbar, no tab bar —
 on the booted iPhone Duo simulator (Xcode 27.1, runtime iOS 27.1), **outer display,
-portrait**:
+portrait**. The probe and the exact commands are in
+[`scripts/probes/`](../scripts/probes/README.md), so these are re-derivable rather
+than taken on trust:
 
 | | Value |
 | --- | --- |
@@ -174,16 +177,20 @@ Bezel around the inner display ≈ 3.4 mm per side (derived: body minus active a
 
 - **Closed, outer display facing you:** the hinge spine is on the **left** edge. The
   outer display's corners are tight on the hinge side and large on the free side —
-  the simulator gives the exact radii, **8 pt** upper- and lower-leading against
-  **59 pt** upper- and lower-trailing, which is the ≈ 2 % against ≈ 15 % of body width
-  the illustrations suggest, and independently fixes the spine on the leading edge.
-  (*Simulator*; the percentages are *Diagram*.) The camera is a **round hole at the
+  the simulator gives exact radii — **8** upper- and lower-leading against **59**
+  upper- and lower-trailing (*Simulator*; the plist gives no unit, and points are
+  assumed from the display's scale, and the leading/trailing reading assumes a
+  left-to-right layout). That the small pair marks the spine is *Inference*: the
+  plist says nothing about a hinge, and the illustrations are what tie the tight
+  corners to it. As a cross-check the ratio is the right order — 59 of 466 pt is
+  ≈ 13 % of the display's width against the ≈ 15 % of *body* width the drawings
+  suggest, which is close but not the same measure. The camera is a **round hole at the
   top right**, centre
   ≈ (88.5 % W, 8 % H) of the outer display, diameter ≈ 7.7 % of its width — not a
   Dynamic Island pill.
 - **Open flat, landscape, inner display facing you:** uniform rounded corners —
-  **55 pt on all four** (*Simulator*), the ≈ 7 % of body width the illustrations
-  suggest. The folding region is a vertical band at the centre,
+  **55 on all four** (*Simulator*) — ≈ 8 % of the display's width, against the
+  ≈ 7 % of body width the illustrations suggest; the same near-miss of measures. The folding region is a vertical band at the centre,
   ≈ 2.8 % of the display width (≈ 4 mm, derived from that estimate). The inner camera,
   drawn only when active, sits in the **right half**, centre ≈ (70 % W, 8 % H),
   diameter ≈ 3.5 % of the width.

@@ -10,6 +10,7 @@ Read-only: it only reads SDK files.
 from __future__ import annotations
 
 import argparse
+import bisect
 import json
 import re
 import subprocess
@@ -149,6 +150,51 @@ DEFAULT_SYMBOLS: list[Symbol] = [
 
 AVAILABILITY = re.compile(r"(API_AVAILABLE\([^)]*\)|API_DEPRECATED\([^)]*\)|@available\([^)]*\))")
 
+# `"`, `//` or `/*` -- the only places a comment or a string can begin.
+COMMENT_OR_STRING = re.compile(r'"|//|/\*')
+
+
+def comment_spans(text: str) -> list[tuple[int, int]]:
+    """Half-open ranges of `text` that are comments, skipping string literals.
+
+    A symbol that appears only in a comment is documentation, not a declaration.
+    Deciding that with `rfind("/*")` is not safe: one unbalanced `/*` inside a
+    `//` line or a string literal -- both of which occur in shipped SDK headers --
+    marks every later match in the file as a comment, and the symbol is then
+    reported as absent. For this tool that is the worst possible failure, because
+    absent means "do not write this code".
+    """
+    spans: list[tuple[int, int]] = []
+    end = len(text)
+    position = 0
+    while (match := COMMENT_OR_STRING.search(text, position)) is not None:
+        start = match.start()
+        token = match.group()
+        if token == '"':
+            index = start + 1
+            while index < end:
+                character = text[index]
+                if character == "\\":
+                    index += 2
+                    continue
+                if character == '"':
+                    index += 1
+                    break
+                if character == "\n":  # unterminated; don't run past the line
+                    break
+                index += 1
+            position = max(index, start + 1)
+            continue
+        if token == "//":
+            stop = text.find("\n", start)
+            stop = end if stop == -1 else stop
+        else:
+            stop = text.find("*/", start + 2)
+            stop = end if stop == -1 else stop + 2
+        spans.append((start, stop))
+        position = stop
+    return spans
+
 
 def run(command: list[str]) -> str | None:
     try:
@@ -175,12 +221,19 @@ def interface_files(sdk: Path) -> list[Path]:
     return files
 
 
+def in_comment(spans: list[tuple[int, int]], position: int) -> bool:
+    index = bisect.bisect_right(spans, (position, len(spans) and spans[-1][1] or 0)) - 1
+    return index >= 0 and spans[index][0] <= position < spans[index][1]
+
+
 def check(sdk: Path, symbols: list[Symbol]) -> dict:
     spellings: dict[str, str] = {}
     for symbol in symbols:
         for spelling in (symbol.name, *symbol.also):
             spellings[spelling] = symbol.name
-    # Longest first, so an Objective-C constant wins over a shorter name inside it.
+    # Longest first is not what makes an Objective-C constant win over a shorter
+    # name inside it -- the trailing `\b` already forces that. It only keeps the
+    # alternation stable and readable.
     ordered = sorted(spellings, key=len, reverse=True)
     combined = re.compile(r"\b(" + "|".join(re.escape(s) for s in ordered) + r")\b")
     results = {
@@ -194,35 +247,33 @@ def check(sdk: Path, symbols: list[Symbol]) -> dict:
         except OSError:
             continue
         framework = next((part[: -len(".framework")] for part in path.parts if part.endswith(".framework")), path.name)
+        spans = comment_spans(text)
         seen: set[str] = set()
         for match in combined.finditer(text):
             spelling = match.group(1)
             if spelling in seen:
                 continue
-            seen.add(spelling)
-            name = spellings[spelling]
-            entry = results[name]
-            entry["frameworks"].add(framework)
-            entry["matched"].add(spelling)
-            if entry["declaration"] is not None:
-                continue
             start = text.rfind("\n", 0, match.start()) + 1
             end = text.find("\n", match.end())
             end = len(text) if end == -1 else end
             line = text[start:end].strip()
-            # HeaderDoc blocks (`/*! @constant Foo ... */`) have no leading `*`, so a
-            # prefix test alone reads the doc line as the declaration and then scrapes
-            # availability from the lines above it -- which belong to the *previous*
-            # symbol. That reported AVCaptureDeviceTypeBuiltInOuterUltraWideCamera,
-            # an ios(27.1) API, as ios(13.0). Track the block instead.
-            opened = text.rfind("/*", 0, match.start())
-            in_block_comment = opened != -1 and opened > text.rfind("*/", 0, match.start())
-            if in_block_comment or line.startswith(("*", "//", "/*", "#")):
-                # Documentation mentions the symbol; keep looking for the declaration.
-                seen.discard(spelling)
-                entry["matched"].discard(spelling)
-                if not entry["matched"]:
-                    entry["frameworks"].discard(framework)
+            # A comment mention is documentation, not a declaration. HeaderDoc blocks
+            # (`/*! @constant Foo ... */`) carry no leading `*`, so the prefix test
+            # alone read the doc line as the declaration and then scraped availability
+            # from the lines above -- which belong to the *previous* symbol. That
+            # reported AVCaptureDeviceTypeBuiltInOuterUltraWideCamera, an ios(27.1)
+            # API, as ios(13.0). `#` is a preprocessor directive, not a comment.
+            if in_comment(spans, match.start()) or line.startswith("#"):
+                # Keep looking; the declaration may be further down the same file.
+                continue
+            seen.add(spelling)
+            name = spellings[spelling]
+            entry = results[name]
+            # Only a real declaration counts, so `matched` and `frameworks` can never
+            # disagree about why a symbol was reported present.
+            entry["frameworks"].add(framework)
+            entry["matched"].add(spelling)
+            if entry["declaration"] is not None:
                 continue
             previous = text[:start].splitlines()[-3:]
             availability = AVAILABILITY.findall(line) or AVAILABILITY.findall("\n".join(previous))
@@ -263,13 +314,13 @@ def render_markdown(report: dict) -> str:
     ]
     for row in report["symbols"]:
         found = "yes" if row["found"] else "**no**"
-        note = row["note"]
         other = [s for s in row.get("matched_as", []) if s != row["symbol"]]
         if row["found"] and row["symbol"] not in row.get("matched_as", []) and other:
-            found = f"yes (as `{other[0]}`)"
+            spellings = ", ".join(f"`{s}`" for s in other)
+            found = f"yes (as {spellings})"
         lines.append(
             f"| `{row['symbol']}` | {row['area']} | {row['announced']} | {found} | "
-            f"{', '.join(row['frameworks'])} | {note} |"
+            f"{', '.join(row['frameworks'])} | {row['note']} |"
         )
     missing = [row["symbol"] for row in report["symbols"] if not row["found"]]
     if missing:
