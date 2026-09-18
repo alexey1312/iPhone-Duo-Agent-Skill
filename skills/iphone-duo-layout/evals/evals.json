@@ -14,7 +14,7 @@
         "States that the continuously scrolling article content should not be displaced around the fold.",
         "Does not propose splitting or paginating the article into two pages at the crease.",
         "Proposes moving the floating Listen button off the fold using reservedRegions(kind: .division) (or ReservedRegion).",
-        "States that reservedRegions is absent from the installed iOS 27.0 SDK and needs the iOS 27.1 SDK.",
+        "Reports the installed Xcode and SDK version and classifies reservedRegions correctly for it: blocked on an iOS 27.0 SDK; available on an iOS 27.1 SDK, with the if #available(iOS 27.1, *) gate named when the deployment target is lower.",
         "Mentions that the fold's division region is inactive / zero width when the device is flat (or uses includeInactive deliberately).",
         "The no-displacement claim cites Tech Talk 111463 at 2:26 (or the fold-region claim cites 111463 7:50).",
         "No file in the project copy was modified."
@@ -34,7 +34,7 @@
         "Proposes a split arrangement for the chapter list beside the player instead of an overlay that covers it, restricted to the horizontal axis and sized with splitArrangementLayoutRatio (or a NavigationSplitView), citing 111463 12:00 or the ArrangementView documentation.",
         "States that interactive controls must not sit in the fold in book pose and that the arrangement or the division reserved region keeps them clear, citing 111463 1:29–5:12 or 111466 9:28.",
         "Keeps the NavigationStack and its toolbar outside the arrangement view (navigation containers around it, not inside).",
-        "Marks ArrangementView, its modifiers and reservedRegions as blocked on the iOS 27.1 SDK with the installed 27.0 SDK, and offers the size-class or GeometryReader fallback that compiles today.",
+        "Classifies ArrangementView, its modifiers and reservedRegions against the installed SDK: blocked on an iOS 27.0 SDK, available on an iOS 27.1 SDK. When they are blocked, offers the size-class or GeometryReader fallback that compiles today.",
         "No file in the project copy was modified."
       ]
     }

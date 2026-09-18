@@ -46,12 +46,15 @@ gate and the final report; the specialists own the details.
 xcodebuild -version
 xcrun --sdk iphoneos --show-sdk-version
 xcrun simctl list devicetypes | grep -i duo     # empty: no iPhone Duo simulator in this Xcode
+xcrun simctl list runtimes | grep -i "iOS 27.1" # the device type needs the 27.1 runtime
 ```
 
-As of 2026-09-17 the Xcode 27.1 beta — the first with the iPhone Duo simulator and
-the 27.1 APIs — is "coming later this month", while Apple's *Preparing your app for
-iPhone Duo* guide is already published; `references/api-availability.md` says what
-each linked SDK gets on the device and `references/sources.md` keeps the calendar.
+Xcode 27.1 (27A9269) ships the iOS 27.1 SDK, the `iPhone Duo` simulator device type
+(`iPhone19,4`) and the iOS 27.1 runtime, so the 27.1 APIs are ordinarily available
+rather than blocked — the question becomes the deployment target, not the toolchain.
+If either command above matches nothing, the installed Xcode is older: say so in the
+report and plan accordingly. `references/api-availability.md` says what each linked
+SDK gets on the device and `references/sources.md` keeps the calendar.
 
 Identify the app targets, UI framework mix (SwiftUI, UIKit, both), deployment target,
 and how the project is generated (Xcode project, Tuist, XcodeGen, SwiftPM). Read the
@@ -65,9 +68,13 @@ careful UIKit rewrites (`UIScreen.main`, orientation, scene lifecycle, safe area
 out="$(mktemp -d)" && xcrun agent skills export --output-dir "$out" >/dev/null 2>&1; ls "$out"
 ```
 
-Xcode 27.0 exports it as `uikit-app-modernization`; Xcode 27.1 renames it App
-Resizability and adds SwiftUI and iPhone Duo. Note what exists and remove the
-temporary directory when done.
+Xcode 27.0 exports it as `uikit-app-modernization`. Xcode 27.1 ships it as
+`app-resizability`, with task references for idiom, orientation, safe areas, scene
+lifecycle and `UIScreen` — its safe-area task already points at
+`traitCollection.verticalBarEdge` and `@Environment(\.toolbarVerticalEdge)`.
+Xcode 27.1 also ships `device-interaction`, a subagent skill for driving a simulator
+or device, which complements the pose matrix rather than replacing it. Note what
+exists and remove the temporary directory when done.
 
 ### 2. Scan
 
@@ -90,12 +97,18 @@ layout work (how many toolbars, split views, custom bar items, camera sessions).
 | 0 — Blockers | App lifecycle without scenes (`DUO005`) | The app does not launch when built with the latest SDK. |
 | 1 — Correctness | Main screen, screen bounds, orientation and idiom layout forks, symmetric safe-area math, global window state, Face ID copy (`DUO001–004`, `006`, `009`, `013`) | Wrong layout on the inner display, in Split View, in iPhone Mirroring and on iPad; wrong words on a Touch ID device. |
 | 2 — Bars | Standalone bars, titles/symbols, ordering, overflow, priority (`DUO007`, `DUO011`, inventory) | Bars move to the side on the inner display with the 27.1 SDK; items without titles or with text-only labels land badly. |
-| 3 — Richer adoption | Sidebar placement, reserved regions for top custom controls, arrangements, hinge effects, scene accessories, camera direction handling, multiple windows, a widget or Live Activity for StandBy on the outer display, App Store screenshots for both displays (`references/device-geometry.md`) | Makes the app good on iPhone Duo rather than merely correct; much of it needs the 27.1 SDK. |
+| 3 — Richer adoption | Sidebar placement, reserved regions for top custom controls, arrangements, hinge effects, scene accessories, camera direction handling, multiple windows, a widget or Live Activity for StandBy on the outer display, App Store screenshots for both displays (`references/device-geometry.md`) | Makes the app good on iPhone Duo rather than merely correct; most of it compiles on Xcode 27.1 and is blocked only on Xcode 27.0. StandBy cannot be verified in the iPhone Duo simulator (Xcode 27.1 known issues 187708663, 187708767). |
 
 Inside every tier, put items that compile with the installed SDK first and mark the
 rest *blocked*. A toolchain upgrade is a prerequisite note on the blocked items, not a
 step in front of work the team can ship today — waiting for Xcode 27.1 should never
 delay removing `UIScreen.main` or adopting scene lifecycle.
+
+If the app ships a Mac Catalyst target, adopting any 27.1 API is a Tier 1 build risk:
+iOS 27.1 APIs do not compile for Catalyst (Xcode 27.1 known issue 185924957) and a
+target on iOS 27.1 loses its Catalyst run destination (187046347). Plan the
+`#if !targetEnvironment(macCatalyst)` or the Catalyst 27.0 minimum deployment with
+the item, not after it.
 
 Hand each tier to its specialist skill for the detailed recommendations. Classify
 legitimate uses as **kept** with the reason (for example an orientation read that

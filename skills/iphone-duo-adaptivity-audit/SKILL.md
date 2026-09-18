@@ -30,6 +30,9 @@ begins.
   iPhone Mirroring always reports portrait. (111461 2:46; WWDC26 278 6:50)
 - Referencing the **main screen is ambiguous on a two-display device** and deprecated
   (the iOS 27 SDK header marks `mainScreen` deprecated). (111461 3:57; 278 2:51)
+  Concretely: the iPhone Duo simulator's own profile names the **outer** display as
+  `main-screen-*`, so an app that asks for the main screen gets the smaller of the
+  two whichever display it is actually on. (`references/device-geometry.md`, measured)
 - The **user interface idiom is not meaningful for layout**: an iPhone app stays in the
   phone idiom while fully resizable. (111461 1:33; 278 6:17)
 - **UIScene lifecycle is required** when building with the latest SDKs; without it

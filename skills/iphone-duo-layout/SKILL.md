@@ -25,9 +25,10 @@ cameras that occlude part of it. Start from system containers — most of the be
 comes for free — and add custom work only where a container cannot express it.
 
 Code: `references/layout-code.md`. Availability: `references/api-availability.md`
-(reserved regions and arrangements need the **iOS 27.1 SDK**). Physical facts —
-display sizes, where the cameras and fold sit, poses, drawing mockups:
-`references/device-geometry.md` (never a layout input).
+(reserved regions, arrangements and `ContentMarginGuide` need the **iOS 27.1 SDK**,
+which ships with Xcode 27.1 — on that toolchain they need a deployment-target gate,
+not a blocked entry). Physical facts — display sizes, where the cameras and fold sit,
+poses, drawing mockups: `references/device-geometry.md` (never a layout input).
 
 ## 1. Size classes, not devices (Tech Talk 111461, 2:46)
 

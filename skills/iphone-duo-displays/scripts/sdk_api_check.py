@@ -17,15 +17,24 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 
 @dataclass(frozen=True)
 class Symbol:
+    """One API name to look for, plus any other spelling that proves it exists.
+
+    `also` carries alternate spellings of the same declaration. A symbol whose
+    Swift name is synthesized by the Objective-C importer never appears as text
+    in any file the compiler ships, so searching for it alone reports a symbol
+    that compiles fine as missing. List the Objective-C constant there.
+    """
+
     name: str
     area: str
     announced: str
     note: str = ""
+    also: tuple[str, ...] = ()
 
 
 DEFAULT_SYMBOLS: list[Symbol] = [
@@ -72,8 +81,8 @@ DEFAULT_SYMBOLS: list[Symbol] = [
     Symbol("sceneAccessory", "displays", "iOS 27"),
     Symbol("CameraCaptureAccessory", "displays", "iOS 27.1"),
     Symbol("onAvailabilityChange", "displays", "iOS 27"),
-    # Added 2026-09-17 from Apple's documentation pages (see api-availability.md);
-    # documented availability, not yet measured against a 27.1 SDK.
+    # Measured against the iOS 27.1 SDK (Xcode 27.1, 27A9269) on 2026-09-19;
+    # every entry below is present. See api-availability.md for the full run.
     Symbol("ToolbarItemAxisBehavior", "bars", "iOS 27.1"),
     Symbol("ToolbarVerticalBehavior", "bars", "iOS 27.1"),
     Symbol("UIVerticalBarBehavior", "bars", "iOS 27.1"),
@@ -92,12 +101,46 @@ DEFAULT_SYMBOLS: list[Symbol] = [
     Symbol("UISceneAccessory", "displays", "iOS 27.0", "UIKit scene accessories; cameraCapture(sceneConfiguration:userInfo:)"),
     Symbol("registerSceneAccessory", "displays", "iOS 27.0"),
     Symbol("UISceneAccessoryRegistration", "displays", "iOS 27.0", "isAvailable (observable), isEnabled"),
+    # Measured on the iOS 27.1 SDK 2026-09-19: declared there, absent from the 27.0 SDK.
+    # Arrangements, beyond the entry points above.
+    Symbol("AutomaticArrangementViewStyle", "layout", "iOS 27.1", "SwiftUI .automatic arrangement style"),
+    Symbol("ArrangementViewStyleConfiguration", "layout", "iOS 27.1", "primary / secondary content of a custom arrangement style"),
+    Symbol("splitArrangementFixedLayoutSize", "layout", "iOS 27.1"),
+    Symbol("UISplitArrangementDimension", "layout", "iOS 27.1", "automatic / intrinsic / fractional / absolute"),
+    Symbol("UISplitArrangementDimensionRange", "layout", "iOS 27.1", "minimum / preferred / maximum"),
+    Symbol("UISplitArrangementViewProperties", "layout", "iOS 27.1", "width, height, layoutPriority"),
+    Symbol("UIOverlayArrangementViewProperties", "layout", "iOS 27.1", "edge the view takes when the overlay goes side by side"),
+    Symbol("UIArrangementViewState", "layout", "iOS 27.1", "zIndex, splitAxis, isHidden"),
+    Symbol("arrangementViewController", "layout", "iOS 27.1", "UIViewController property: nearest ancestor arrangement"),
+    Symbol("UIViewReservedRegionKind", "layout", "iOS 27.1", "occlusionRegionKind / divisionRegionKind"),
+    Symbol("ContentMarginGuide", "layout", "iOS 27.1", "the 27.1 overloads are contentMargins(for:edges:alignment:) and GeometryProxy.contentMargins(for:edges:); bare contentMargins(_:_:for:) is iOS 17 and would always match"),
+    # Vertical bars, beyond the entry points above.
+    Symbol("systemTraitsAffectingVerticalBarEdge", "bars", "iOS 27.1", "verticalBarEdge is derived and has no UITrait class; register for these traits to observe it"),
+    Symbol("childForPreferredVerticalBarBehavior", "bars", "iOS 27.1", also=("childViewControllerForPreferredVerticalBarBehavior",)),
+    Symbol("setNeedsUpdateOfVerticalBarConfiguration", "bars", "iOS 27.1"),
+    Symbol("layoutRegionForBarOnEdge", "bars", "iOS 27.1", "Swift: UIView.LayoutRegion.bar(onEdge:extent:)"),
+    Symbol("windowCameraCaptureAccessory", "displays", "iOS 27.1", "accessory scene session role", also=("UIWindowSceneSessionRoleCameraCaptureAccessory",)),
+    # Present in the 27.0 SDK, relevant to multiple windows and resizing.
+    Symbol("UISceneClosureConfirmation", "displays", "iOS 27.0", "UIWindowScene.closureConfirmation"),
+    Symbol("UITraitSystemPrefersReducedResourceUsage", "adaptivity", "iOS 27.0"),
     # Cameras (Tech Talk 111465; AVKit article "Choosing a camera by the direction it faces").
     Symbol("AVCaptureDeviceDirectionCoordinator", "cameras", "iOS 27.1", "AVKit"),
     Symbol("AVCaptureDeviceDescriptor", "cameras", "iOS 27.1", "AVKit"),
     Symbol("AVCaptureDeviceDirectionMap", "cameras", "iOS 27.1", "AVKit; forwardFacingDeviceDescriptors / backwardFacingDeviceDescriptors"),
-    Symbol("builtInOuterUltraWideCamera", "cameras", "iOS 27.1", "discoverable only through AVCaptureDevice.DiscoverySession"),
-    Symbol("builtInInnerUltraWideCamera", "cameras", "iOS 27.1", "discoverable only through AVCaptureDevice.DiscoverySession"),
+    Symbol(
+        "builtInOuterUltraWideCamera",
+        "cameras",
+        "iOS 27.1",
+        "discoverable only through AVCaptureDevice.DiscoverySession; AVFoundation ships no Swift interface, so only the Objective-C constant appears as text",
+        also=("AVCaptureDeviceTypeBuiltInOuterUltraWideCamera",),
+    ),
+    Symbol(
+        "builtInInnerUltraWideCamera",
+        "cameras",
+        "iOS 27.1",
+        "discoverable only through AVCaptureDevice.DiscoverySession; AVFoundation ships no Swift interface, so only the Objective-C constant appears as text",
+        also=("AVCaptureDeviceTypeBuiltInInnerUltraWideCamera",),
+    ),
     Symbol("dynamicAspectRatio", "cameras", "iOS 26"),
     Symbol("RotationCoordinator", "cameras", "iOS 17", "AVCaptureDevice.RotationCoordinator; recreate per device"),
     # Device capabilities.
@@ -133,8 +176,17 @@ def interface_files(sdk: Path) -> list[Path]:
 
 
 def check(sdk: Path, symbols: list[Symbol]) -> dict:
-    combined = re.compile(r"\b(" + "|".join(re.escape(symbol.name) for symbol in symbols) + r")\b")
-    results = {symbol.name: {"frameworks": set(), "declaration": None} for symbol in symbols}
+    spellings: dict[str, str] = {}
+    for symbol in symbols:
+        for spelling in (symbol.name, *symbol.also):
+            spellings[spelling] = symbol.name
+    # Longest first, so an Objective-C constant wins over a shorter name inside it.
+    ordered = sorted(spellings, key=len, reverse=True)
+    combined = re.compile(r"\b(" + "|".join(re.escape(s) for s in ordered) + r")\b")
+    results = {
+        symbol.name: {"frameworks": set(), "declaration": None, "matched": set()}
+        for symbol in symbols
+    }
     files = interface_files(sdk)
     for path in files:
         try:
@@ -144,21 +196,33 @@ def check(sdk: Path, symbols: list[Symbol]) -> dict:
         framework = next((part[: -len(".framework")] for part in path.parts if part.endswith(".framework")), path.name)
         seen: set[str] = set()
         for match in combined.finditer(text):
-            name = match.group(1)
-            if name in seen:
+            spelling = match.group(1)
+            if spelling in seen:
                 continue
-            seen.add(name)
+            seen.add(spelling)
+            name = spellings[spelling]
             entry = results[name]
             entry["frameworks"].add(framework)
+            entry["matched"].add(spelling)
             if entry["declaration"] is not None:
                 continue
             start = text.rfind("\n", 0, match.start()) + 1
             end = text.find("\n", match.end())
             end = len(text) if end == -1 else end
             line = text[start:end].strip()
-            if line.startswith(("*", "//", "/*", "#")):
+            # HeaderDoc blocks (`/*! @constant Foo ... */`) have no leading `*`, so a
+            # prefix test alone reads the doc line as the declaration and then scrapes
+            # availability from the lines above it -- which belong to the *previous*
+            # symbol. That reported AVCaptureDeviceTypeBuiltInOuterUltraWideCamera,
+            # an ios(27.1) API, as ios(13.0). Track the block instead.
+            opened = text.rfind("/*", 0, match.start())
+            in_block_comment = opened != -1 and opened > text.rfind("*/", 0, match.start())
+            if in_block_comment or line.startswith(("*", "//", "/*", "#")):
                 # Documentation mentions the symbol; keep looking for the declaration.
-                seen.discard(name)
+                seen.discard(spelling)
+                entry["matched"].discard(spelling)
+                if not entry["matched"]:
+                    entry["frameworks"].discard(framework)
                 continue
             previous = text[:start].splitlines()[-3:]
             availability = AVAILABILITY.findall(line) or AVAILABILITY.findall("\n".join(previous))
@@ -170,6 +234,7 @@ def check(sdk: Path, symbols: list[Symbol]) -> dict:
     rows = []
     for symbol in symbols:
         entry = results[symbol.name]
+        matched = sorted(entry["matched"])
         rows.append(
             {
                 "symbol": symbol.name,
@@ -178,6 +243,7 @@ def check(sdk: Path, symbols: list[Symbol]) -> dict:
                 "note": symbol.note,
                 "found": bool(entry["frameworks"]),
                 "frameworks": sorted(entry["frameworks"]),
+                "matched_as": matched,
                 "declaration": entry["declaration"],
             }
         )
@@ -197,9 +263,13 @@ def render_markdown(report: dict) -> str:
     ]
     for row in report["symbols"]:
         found = "yes" if row["found"] else "**no**"
+        note = row["note"]
+        other = [s for s in row.get("matched_as", []) if s != row["symbol"]]
+        if row["found"] and row["symbol"] not in row.get("matched_as", []) and other:
+            found = f"yes (as `{other[0]}`)"
         lines.append(
             f"| `{row['symbol']}` | {row['area']} | {row['announced']} | {found} | "
-            f"{', '.join(row['frameworks'])} | {row['note']} |"
+            f"{', '.join(row['frameworks'])} | {note} |"
         )
     missing = [row["symbol"] for row in report["symbols"] if not row["found"]]
     if missing:

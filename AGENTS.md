@@ -8,9 +8,11 @@ This repository contains Agent Skills that advise on and change iOS app code.
 - **Every recommendation cites a session and timestamp.** New scanner rules need a
   `source` matching `Tech Talk 1114xx … m:ss` or `WWDC26 278 … m:ss`; the metadata test
   enforces it.
-- **The SDK outranks the talks.** Do not add code samples using an API without either
-  typechecking them against an SDK that declares it or marking them as reproduced from
-  a session page and requiring a 27.1 SDK.
+- **The SDK outranks the talks.** Typecheck every code sample against the installed
+  SDK before adding it (`xcrun --sdk iphonesimulator swiftc -typecheck`). The iOS 27.1
+  SDK ships with Xcode 27.1, so "reproduced from a session page" is no longer reason
+  enough for a 27.1 API. A sample that cannot be typechecked must say so, and say why —
+  that it is a fragment, or that the machine lacks the SDK.
 - **Shared files have one source.** Edit `references/*.md` and `scripts/*.py` at the
   root, then run `python3 scripts/sync_skill_copies.py`. Never edit the copies under
   `skills/*/references` or `skills/*/scripts` that the sync script owns.

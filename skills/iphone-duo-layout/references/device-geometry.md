@@ -14,7 +14,9 @@ Every fact carries its provenance. Never present a lower grade as a higher one.
 | **App Store Connect** | [Screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications), iPhone Duo row added September 9, 2026, checked 2026-09-17 |
 | **Derived** | Arithmetic on Apple's figures; exact only as far as the inputs are |
 | **Inference** | A reading of Apple's figures that Apple has not stated; the entry says what it rests on |
-| **Measured** | Read off the HIG illustrations; approximate (a few percent), not dimensions |
+| **Diagram** | Read off the HIG illustrations; approximate (a few percent), not dimensions |
+| **Simulator** | Read from the iPhone Duo simulator that ships with Xcode 27.1 (27A9269) — the device profile at `/Library/Developer/CoreSimulator/Profiles/DeviceTypes/iPhone Duo.simdevicetype/Contents/Resources/`, or `xcrun simctl io <udid> enumerate` on a booted device. Describes the *simulated* device, which is not the hardware in every respect |
+| **Booted** | Read at runtime by an app running on a booted iPhone Duo simulator; the entry says which pose |
 | **Unverified** | Third-party claim; replace it with what an iPhone Duo simulator reports |
 
 ## Displays
@@ -40,62 +42,106 @@ rectangle; the viewable area is smaller than the rectangle.
 
 ### Points
 
-Apple has not published point sizes, but App Store Connect has published screenshot
-sizes for both displays, and those are the closest thing to one.
+The iPhone Duo simulator publishes them. Its device profile declares both displays,
+their pixel sizes and their scale, so the point sizes are read, not inferred.
 
 | | Inner display | Outer display | Source |
 | --- | --- | --- | --- |
-| Screenshot pixels | 2007 × 2853 (2853 × 2007 landscape) | 1398 × 2034 (2034 × 1398 landscape) | App Store Connect |
-| Points at @3x | **669 × 951** | **466 × 678** | Derived: screenshot ÷ 3. Apple has not published a scale for iPhone Duo; @3x is assumed because every current iPhone renders at @3x. Device Hub's `displayScale` will confirm or correct it |
+| Native pixels | 2007 × 2853 | 1398 × 2034 | **Simulator** (`capabilities.plist`; `xcrun simctl io <udid> enumerate` on a booted device reports the same framebuffers) |
+| Scale | @3x | @3x | **Simulator** |
+| Points | **669 × 951** | **466 × 678** | **Simulator** (pixels ÷ scale) |
+| Screenshot pixels | 2007 × 2853 (2853 × 2007 landscape) | 1398 × 2034 (2034 × 1398 landscape) | App Store Connect — identical to the simulator's framebuffers |
 | Relation to the panel | ≈ 6.9 % more than 1878 × 2670 in each dimension | equal to the panel | Derived |
-| Rendering | 669 × 951 pt rendered and scaled down ≈ 6.4 % to the panel, as the 5.5-inch Plus iPhones were (414 × 736 pt at @3x, 1242 × 2208 screenshots on a 1080 × 1920 panel — App Store Connect still asks for that size) | 1:1 | Inference |
-| Density in points | ≈ 153 pt/in on both displays, so text and controls keep one physical size as the device opens | | Inference |
+| Rendering | 669 × 951 pt rendered and scaled down ≈ 6.4 % to the panel, as the 5.5-inch Plus iPhones were (414 × 736 pt at @3x, 1242 × 2208 screenshots on a 1080 × 1920 panel) | 1:1 | **Inference, corroborated**: the panel size is Apple spec and the render buffer is Simulator-measured, so the gap is a fact; the Plus-iPhone explanation for it is still a reading |
+| Density in points | ≈ 153 pt/in on both displays, so text and controls keep one physical size as the device opens | | Inference (rests on Apple's ppi, not the simulator's) |
 
-The product bezel pack on [Apple Design Resources](https://developer.apple.com/design/resources/)
-reportedly agrees: its inner-display cutout is 2853 × 2007 px inside a 3093 × 2247
-frame, the App Store Connect size to the pixel (third-party measurement of the PNG
-alpha channel; *Unverified*).
+Until Xcode 27.1 shipped, the point sizes here were *Derived* — screenshot pixels
+divided by an assumed @3x — and this file said to replace them once a simulator
+reported a scale. The simulator reports exactly those numbers, so the arithmetic
+stands and the grade moves up. The point arithmetic was first published by Blake
+Crosley ([*iPhone Duo for developers*](https://blakecrosley.com/blog/iphone%2Dduo-for-developers));
+the inputs were Apple's, the inference was his and ours, and the simulator has now
+settled it.
 
 The earlier third-party figure of **626 × 890 pt** for the inner display (the panel
 divided by 3; [MacRumors roundup](https://www.macrumors.com/roundup/iphone-duo/),
-Wikipedia) contradicts the App Store Connect sizes and is superseded. The point
-arithmetic above was first published by Blake Crosley
-([*iPhone Duo for developers*](https://blakecrosley.com/blog/iphone%2Dduo-for-developers));
-the inputs are Apple's, the inference is his and ours.
+Wikipedia) contradicts both the App Store Connect sizes and the simulator, and is
+superseded.
 
-Use 669 × 951 and 466 × 678 as the working shapes for Device Hub resize mode
-(`pose-test-matrix.md`) until an iPhone Duo simulator (Xcode 27.1) reports scene
-bounds and `displayScale`, then replace them. Code must not care either way: layout
-comes from size classes, safe areas and reserved regions.
+### Measured at runtime
 
-## Aspect-ratio consequences
+*Booted* grade. A bare SwiftUI app — one `GeometryReader`, no toolbar, no tab bar —
+on the booted iPhone Duo simulator (Xcode 27.1, runtime iOS 27.1), **outer display,
+portrait**:
 
-Derived from the pixel counts above unless labelled otherwise. None of this is a
-layout input; it explains what a screen shape does to content.
+| | Value |
+| --- | --- |
+| `screen.bounds` | 466 × 678 pt |
+| `displayScale` | **3.0** |
+| Size inside the safe area | 382 × 644 pt |
+| `safeAreaInsets` | top **0**, leading **0**, bottom **34**, trailing **84** |
+| `horizontalSizeClass` / `verticalSizeClass` | compact / regular |
+| `verticalBarEdge` | `.trailing` |
 
-- **Both displays have nearly the same aspect ratio** — 1.42 inner, 1.45 outer,
-  about 2 % apart. Apple: "Both displays share the same aspect ratio, so content
-  scales proportionally" ([newsroom](https://www.apple.com/newsroom/2026/09/apple-unveils-iphone-duo/)).
-  An image or video frame composed for one display fits the other with a sliver of
-  margin. Layout does not carry over, because the displays report different size
-  classes.
-- **1.42 is within half a percent of √2**, the A-series paper ratio that keeps its
-  proportions when halved. Folded like a book, each half of the inner display has
-  ≈ 1.41 : 1 proportions, the shape of the whole display rotated.
-- **16:9 video in landscape on the inner display** fills the width and leaves
-  1 − (9⁄16) × 1.42 ≈ 20 % of the height as letterbox (≈ 134 of 669 pt if the point
-  inference holds), while the picture is ≈ 6.2 in wide against ≈ 4.7 in on an
-  iPhone 18 Pro in landscape, about 77 % more area. Video apps get a bigger picture
-  and a bigger border at once: design the letterbox area (controls, metadata,
-  artwork) instead of leaving it black. Games should change their aspect ratio
-  instead (HIG › Best practices).
-- **Neither shape exists on another iPhone** (Inference, from the point figures
-  above). Against iPhone 18 Pro (1206 × 2622 px, 402 × 874 pt) the outer display is
-  ≈ 64 pt wider and ≈ 196 pt shorter, a short wide slab. The inner display in
-  portrait is ≈ 229 pt wider than an iPhone 18 Pro Max (440 × 956 pt), and in
-  landscape it is taller than any iPhone is in landscape; its 1.42 ratio is nowhere
-  near the 2.17 of the Pro line. A phone-width column centered on it wastes most of
-  the screen.
+This is the asymmetry the talks describe, with numbers:
+**84 pt on the trailing edge against 0 on the leading edge, and 0 on top.**
+The top inset is zero because the status bar is not at the top — it has moved to the
+side, into that 84 pt. Any layout that halves a horizontal inset and applies it to
+both sides loses 84 pt of width here, which is rule `DUO006` made concrete.
+The 34 pt bottom inset is the home indicator.
+
+The 84 pt is the *system* region — the app under test had no bars of its own. An app
+with a toolbar or tab bar gets more, because its bars share that edge.
+
+> **The command line cannot change poses.** `simctl` has no fold, pose or hinge
+> subcommand, and an app launched with `simctl launch` comes up on the outer display.
+> Opening, folding and rotating are Device Hub's on-screen controls, so the inner
+> display and the folded poses are measured by hand, not scripted
+> (`pose-test-matrix.md`).
+
+### What the simulator reports
+
+*Simulator* grade throughout — Xcode 27.1 (27A9269), runtime iOS 27.1 (24A94401).
+
+| | Value |
+| --- | --- |
+| Device type | `iPhone Duo` (`com.apple.CoreSimulator.SimDeviceType.iPhone-Duo`) |
+| Model identifier | `iPhone19,4` (product class `V68`) |
+| Minimum runtime | **27.1** — a 27.0 runtime will not pair with it |
+| Outer display | `screenID 1`, `deviceName primary`, 1398 × 2034 @3x, `nativeOrientation 0`, P3, corner radii 8 / 59 / 8 / 59 (upper-leading, upper-trailing, lower-leading, lower-trailing) |
+| Inner display | `screenID 3`, `deviceName primary-1`, 2007 × 2853 @3x, `nativeOrientation 270`, sRGB, corner radii 55 on all four |
+| `main-screen-*` | the **outer** display (1398 × 2034, scale 3) |
+| Other | `DeviceCornerRadius 59`, `MainScreenClass 18`; `supportedFeatures` include `com.apple.display.integrated` and `com.apple.touch-id` |
+
+Three of these are worth stating as consequences rather than data:
+
+- **The simulator's own metadata calls the outer display the main screen.** An app
+  that asks for "the main screen" on iPhone Duo gets the smaller of the two, whichever
+  display it is actually on. That is rule `DUO001` made concrete.
+- **The inner display's native orientation is landscape** (270). Its portrait is the
+  rotated case, not the other way round.
+- **`com.apple.touch-id` appears in `supportedFeatures`, and no Face ID feature does** —
+  a second, independent confirmation of the biometric fact rule `DUO013` rests on.
+
+Quote `deviceName` (`primary`, `primary-1`) rather than `displayName` (`LCD`, `LCD-1`)
+when citing these: the display names are placeholders and say nothing about the panel.
+
+> **The simulator's physical numbers are not the hardware's.** It reports
+> `hdpi`/`vdpi` **460 on both** displays and `refreshRate 60` on both. Apple's tech
+> specs say **430 ppi inner / 460 ppi outer**, and ProMotion up to **120 Hz**. Keep
+> ppi and refresh rate attributed to the spec, never to the simulator. Point sizes,
+> scale, corner radii, orientation and the model identifier are simulator facts.
+
+Apple Design Resources now ships an official **iPhone Duo product bezel**
+(Photoshop and PNG, `Bezel-iPhone-Duo.dmg`) next to the iOS & iPadOS 27 UI Kit in
+Figma and Sketch (Apple news, 2026-09-18, *Build for iPhone Duo with new resources*).
+Use it rather than measuring a third-party mockup; the earlier *Unverified*
+third-party reading of the bezel's alpha channel is dropped.
+
+Use 669 × 951 and 466 × 678 as the shapes to expect. On Xcode 27.1, boot the
+simulator instead of guessing (`pose-test-matrix.md`); on Xcode 27.0, resize mode at
+those shapes is the fallback. Code must not care either way: layout comes from size
+classes, safe areas and reserved regions.
 
 ## Body
 
@@ -124,20 +170,25 @@ Bezel around the inner display ≈ 3.4 mm per side (derived: body minus active a
   its region appears and the UI moves aside. (HIG; occlusion region, Tech Talk 111463
   7:50)
 
-### Where they are (measured from the HIG illustrations)
+### Where they are (read off the HIG illustrations, and confirmed by the simulator)
 
 - **Closed, outer display facing you:** the hinge spine is on the **left** edge. The
-  outer display's corners are tight on the hinge side (≈ 2 % of body width) and large
-  on the free side (≈ 15 %). The camera is a **round hole at the top right**, centre
+  outer display's corners are tight on the hinge side and large on the free side —
+  the simulator gives the exact radii, **8 pt** upper- and lower-leading against
+  **59 pt** upper- and lower-trailing, which is the ≈ 2 % against ≈ 15 % of body width
+  the illustrations suggest, and independently fixes the spine on the leading edge.
+  (*Simulator*; the percentages are *Diagram*.) The camera is a **round hole at the
+  top right**, centre
   ≈ (88.5 % W, 8 % H) of the outer display, diameter ≈ 7.7 % of its width — not a
   Dynamic Island pill.
-- **Open flat, landscape, inner display facing you:** uniform rounded corners
-  (≈ 7 % of body width). The folding region is a vertical band at the centre,
+- **Open flat, landscape, inner display facing you:** uniform rounded corners —
+  **55 pt on all four** (*Simulator*), the ≈ 7 % of body width the illustrations
+  suggest. The folding region is a vertical band at the centre,
   ≈ 2.8 % of the display width (≈ 4 mm, derived from that estimate). The inner camera,
   drawn only when active, sits in the **right half**, centre ≈ (70 % W, 8 % H),
   diameter ≈ 3.5 % of the width.
 - **It opens like a book.** Put those together: the outer display is on the back of
-  the **left** half, the inner camera is in the **right** half. (Measured + derived)
+  the **left** half, the inner camera is in the **right** half. (Diagram + derived)
 
 ## Poses
 
@@ -192,7 +243,7 @@ are a Tier 3 item in the readiness report, not a code change.
    the left half. In laptop pose with the camera half on top, the lifting half's
    outside is the device back — a lid-lift shot cannot show outer-display content on
    the lid while the camera sits in the same lid.
-7. **Label estimates.** Numbers from the *Measured* and *Unverified* rows are good
+7. **Label estimates.** Numbers from the *Diagram* and *Unverified* rows are good
    enough for a drawing, not for a spec sheet or code.
 
 Apple's own artwork is a better base than a hand-drawn frame: the HIG illustrations

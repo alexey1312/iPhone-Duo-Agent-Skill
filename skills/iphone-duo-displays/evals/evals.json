@@ -16,7 +16,7 @@
         "Recommends observing availability (onAvailabilityChange) and disabling the Script toggle when unavailable.",
         "States that recording itself must not depend on the accessory being available.",
         "Flags a camera-session prerequisite missing from the fixture: NSCameraUsageDescription / authorization request, the swallowed input error, or the missing movie output.",
-        "States that CameraCaptureAccessory is absent from the installed 27.0 SDK and needs the iOS 27.1 SDK.",
+        "Reports the installed Xcode and SDK version and classifies CameraCaptureAccessory correctly for it: it needs the iOS 27.1 SDK, so it is blocked on an iOS 27.0 SDK.",
         "No file in the project copy was modified."
       ]
     },
@@ -35,7 +35,7 @@
         "Mirroring is decided from the direction map (mirror a forward-facing rear camera), with automaticallyAdjustsVideoMirroring set to false before isVideoMirrored and reapplied after reconnecting an input.",
         "A new AVCaptureDevice.RotationCoordinator is created for each camera switch.",
         "Mentions the virtual front camera as the zero-effort option for front capture and its common-subset limits (1080p at 60 fps, no depth).",
-        "States that the direction coordinator and the physical front camera types are absent from the installed 27.0 SDK and need the iOS 27.1 SDK, citing Tech Talk 111465 with timestamps or the AVKit article by section.",
+        "Classifies the direction coordinator and the physical front camera types against the installed SDK -- both need the iOS 27.1 SDK -- citing Tech Talk 111465 with timestamps or the AVKit article by section. Does not report the camera device types as missing from an iOS 27.1 SDK: AVFoundation declares them only as the Objective-C constants AVCaptureDeviceTypeBuiltIn{Outer,Inner}UltraWideCamera.",
         "No file in the project copy was modified, and testing is called out as device-only because Simulator has no camera."
       ]
     }

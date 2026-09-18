@@ -20,8 +20,12 @@ description: >-
 
 Code: `references/displays-code.md`. Availability: `references/api-availability.md` —
 the hinge APIs, `CameraCaptureAccessory`, the direction coordinator and the physical
-front camera types need the **iOS 27.1 SDK**; `sceneAccessory`, `onAvailabilityChange`,
-`UISceneAccessory` and `UIWindowScene.ActivationAction` exist earlier. Which half
+front camera types need the **iOS 27.1 SDK**, which ships with Xcode 27.1;
+`sceneAccessory`, `onAvailabilityChange`, `UISceneAccessory` and
+`UIWindowScene.ActivationAction` exist earlier. The hinge reaches you only through
+`UIHingeInteraction` / `onHingeChange`: there is no trait, no notification and no
+`UIDevice` property. StandBy cannot be verified in the iPhone Duo simulator
+(Xcode 27.1 known issues 187708663, 187708767). Which half
 carries the outer display and the inner camera, how each pose faces, and what each
 camera can do: `references/device-geometry.md`.
 

@@ -40,8 +40,11 @@ the code read before it becomes a recommendation.
 ### Build and tooling
 
 - Build with the latest SDK; report Xcode and SDK versions. (111461 0:30)
-- Run `sdk_api_check.py` before proposing 27.1 APIs; mark missing ones *blocked*.
-- Look for Xcode's exported modernization skill. (111461 9:12; 278 14:07)
+- Run `sdk_api_check.py` before proposing 27.1 APIs; report the availability annotation it
+  found, mark missing ones *blocked*, and give present ones the `#available` gate they
+  need when the deployment target is below 27.1.
+- Look for Xcode's exported modernization skill — `app-resizability` in Xcode 27.1. (111461 9:12; 278 14:07)
+- Mac Catalyst targets still build after adopting 27.1 APIs. (Xcode 27.1 known issues 185924957, 187046347)
 
 ### Adaptivity
 
@@ -58,7 +61,7 @@ the code read before it becomes a recommendation.
 - Every item has a title and, where possible, a symbol. (111462 5:56)
 - Text-plus-symbol items become symbol plus badge unless the text carries information. (111462 9:00)
 - Axis behavior set for items that change shape and for custom views with a vertical form. (111462 8:00)
-- Custom bar views fit the fixed width or adapt via `toolbarVerticalEdge`. (111462 10:07)
+- Custom bar views fit the fixed width or adapt via `toolbarVerticalEdge` / `verticalBarEdge`; UIKit observes it with `registerForTraitChanges(UITraitCollection.systemTraitsAffectingVerticalBarEdge)`, because there is no `UITrait` class for it. (111462 10:07; `UIVerticalBarEdge.h`)
 - One overflow menu; ellipsis only for overflow. (111462 11:40)
 - Compression behavior matches the app's focus. (111462 12:23)
 - Visibility priority on groups, then items. (111462 13:10)
@@ -92,10 +95,10 @@ the code read before it becomes a recommendation.
 - Scene accessories observe availability; camera capture accessory registered on the camera view, and tested on a device — Simulator has no camera. (111464 4:22–6:25; Apple documentation, Registering a camera capture accessory)
 - Camera apps keep streaming from a forward-facing camera as the device opens and closes: virtual front camera, or a direction coordinator per preview view with descriptors handed to the session actor. (111465 1:01–6:16)
 - Preview mirroring follows the direction a camera faces, not its position; a new rotation coordinator per device; sensor-orientation compensation disabled after adopting it. (111465 6:34–8:44)
-- The app has a widget or Live Activity, so it exists in StandBy on the outer display. (Newsroom; HIG Live Activities)
+- The app has a widget or Live Activity, so it exists in StandBy on the outer display — **not verifiable in the iPhone Duo simulator** (Xcode 27.1 known issues 187708663, 187708767); check the widget elsewhere and report the pose as *not run*. (Newsroom; HIG Live Activities)
 - Apps that set `UIApplicationSupportsMultipleScenes` to false have a reason that still holds now that iPhone shows multiple windows. (111464 3:38)
 
 ### Verification
 
-- Pose matrix P1–P13 run or reported as not run; without an iPhone Duo simulator, resize mode at the derived shapes 669 × 951, 951 × 669, 466 × 678 and 678 × 466 pt. (111461 1:17, 7:44; 278 8:19)
+- Pose matrix P1–P15 run or reported as not run. Xcode 27.1 ships the iPhone Duo simulator, so use it; on Xcode 27.0, resize mode at the simulator-measured shapes 669 × 951, 951 × 669, 466 × 678 and 678 × 466 pt. (111461 1:17, 7:44; 278 8:19)
 - App Store screenshots for both displays planned (sizes in `device-geometry.md`). (App Store Connect)

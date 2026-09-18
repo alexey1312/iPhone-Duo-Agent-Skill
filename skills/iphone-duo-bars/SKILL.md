@@ -26,8 +26,12 @@ iPhone Duo* › Vertical controls)
 
 Read `references/vertical-bars.md` for the code; `references/api-availability.md` for
 which parts compile with the selected SDK — `axisBehavior`, `toolbarVerticalEdge`,
-compression behavior and the opt-out need the **iOS 27.1 SDK**, while titles, symbols,
-badges, placements, `visibilityPriority` and `ToolbarOverflowMenu` work today.
+compression behavior and the opt-out need the **iOS 27.1 SDK**, which ships with
+Xcode 27.1, so on that toolchain they are a deployment-target question rather than a
+blocked one; titles, symbols, badges, placements, `visibilityPriority` and
+`ToolbarOverflowMenu` are iOS 27.0 and work on either. `verticalBarEdge` has no
+`UITrait` class — observe it with
+`registerForTraitChanges(UITraitCollection.systemTraitsAffectingVerticalBarEdge)`.
 Where the corner camera and the side controls physically sit:
 `references/device-geometry.md`.
 

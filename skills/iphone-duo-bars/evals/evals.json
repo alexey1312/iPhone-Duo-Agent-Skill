@@ -15,7 +15,7 @@
         "Reserves the ellipsis symbol for the system overflow: the custom ellipsis filter Menu is either moved into ToolbarOverflowMenu or given its own filter symbol and title.",
         "Recommends a high visibilityPriority for compose (and/or the badged inbox item).",
         "Recommends giving icon-only items (compose) a title, e.g. Label or Button(_:systemImage:).",
-        "States that axisBehavior (and toolbarVerticalEdge if mentioned) is absent from the installed 27.0 SDK / needs 27.1, while visibilityPriority, ToolbarOverflowMenu and badges work with the current SDK.",
+        "Reports the installed Xcode and SDK version and classifies axisBehavior (and toolbarVerticalEdge if mentioned) correctly for it: both need the iOS 27.1 SDK, so they are blocked on an iOS 27.0 SDK. Either way, visibilityPriority, ToolbarOverflowMenu and badges are available, because they are iOS 27.0 APIs.",
         "The Select/Done recommendation cites Tech Talk 111462 at 8:00 (or 8:36); the badge recommendation cites 111462 9:00 (or 9:27).",
         "No file in the project copy was modified."
       ]
@@ -31,7 +31,7 @@
       "expectations": [
         "Recommends backgroundExtensionEffect() (or UIBackgroundExtensionView) on the hero image so it extends under the vertical bar while the text stays inset, citing Preparing your app for iPhone Duo › Optimize bars for vertical presentation or 111466 6:33.",
         "States backgroundExtensionEffect is an iOS 26 API available with the installed SDK, not blocked.",
-        "Recommends toolbarVerticalBehavior(.disabled) for the size-guide sheet because it has a single Close control, citing 111462 14:21, and marks it blocked on the iOS 27.1 SDK.",
+        "Recommends toolbarVerticalBehavior(.disabled) for the size-guide sheet because it has a single Close control, citing 111462 14:21, and classifies it against the installed SDK: it needs the iOS 27.1 SDK.",
         "Moves the sheet's Close button to the .cancellationAction placement (111462 5:00).",
         "Points out that Size Guide and Save are text-only items that stay horizontal, and proposes a title plus symbol (for example ruler, bookmark) or explicitly accepts them as horizontal, citing 111462 5:56.",
         "Does not propose opting the whole ProductScreen out of vertical bars.",

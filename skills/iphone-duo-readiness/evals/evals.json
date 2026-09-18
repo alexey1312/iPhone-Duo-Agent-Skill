@@ -17,7 +17,7 @@
         "The response flags the symmetric safe-area arithmetic (inset * 2) in EditorViewController as wrong for asymmetric insets.",
         "The response flags the custom ellipsis.circle bar item as conflicting with the system overflow menu (or proposes ToolbarOverflowMenu/additionalOverflowItems).",
         "Recommendations carry stable item IDs, and the scene-lifecycle item cites WWDC26 'Modernize your UIKit app' (278) at 2:10 or the main-screen item cites 111461 3:57 / 278 2:51.",
-        "The response reports the installed Xcode/SDK version (27.0) and separates items that compile on it from items blocked on the iOS 27.1 SDK.",
+        "The response reports the installed Xcode and SDK version and separates items that compile on it from items blocked on a newer SDK.",
         "Upgrading to Xcode 27.1 is not sequenced as a prerequisite step before the fixes that work with the installed SDK (scene lifecycle, UIScreen.main, idiom/orientation, safe-area math).",
         "No Swift or plist file in the project copy was modified (changes.diff is empty).",
         "The response asks the developer which specific item IDs to apply."
@@ -32,8 +32,8 @@
         "evals/files/PodcastPlayer"
       ],
       "expectations": [
-        "The agent verified against the installed SDK (ran sdk_api_check.py, grepped the SDK, or compiled a probe) and reports Xcode/SDK 27.0.",
-        "The response states that ArrangementView and axisBehavior are not declared in the installed SDK and require the iOS 27.1 SDK.",
+        "The agent verified against the installed SDK (ran sdk_api_check.py, grepped the SDK, or compiled a probe) and reports the Xcode and SDK version it found, rather than assuming one.",
+        "The response states whether ArrangementView and axisBehavior are declared in the installed SDK, and is right: both require the iOS 27.1 SDK.",
         "No file in the project copy contains ArrangementView or axisBehavior after the run.",
         "The response explains that an #available check cannot make an undeclared symbol compile.",
         "The response does not propose shipping guessed 27.1 API calls behind a compile-time guard (#if compiler, #if canImport, custom flag).",

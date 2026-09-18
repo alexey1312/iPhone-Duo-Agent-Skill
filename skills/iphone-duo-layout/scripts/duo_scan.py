@@ -21,7 +21,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 SEVERITIES = ["critical", "high", "medium", "low", "info"]
 SOURCE_EXTENSIONS = {".swift", ".m", ".mm", ".h"}
@@ -279,14 +279,19 @@ INVENTORY_PATTERNS: dict[str, str] = {
     "biometryType reads": r"\bbiometryType\b",
     "WidgetKit": r"\bimport\s+WidgetKit\b|\bWidgetConfiguration\b|\bStaticConfiguration\b|\bAppIntentConfiguration\b",
     "Live Activities": r"\bimport\s+ActivityKit\b|\bActivityAttributes\b|\bActivityConfiguration\b",
-    # iPhone Duo APIs already adopted (announced for iOS 27.1).
+    # iPhone Duo APIs already adopted. Measured present in the iOS 27.1 SDK
+    # (Xcode 27.1, 27A9269) on 2026-09-19; see references/api-availability.md.
     "axisBehavior": r"\baxisBehavior\b",
     "visibilityPriority": r"\bvisibilityPriority\b",
     "vertical bar behavior": r"\b(?:toolbarVerticalBehavior|preferredVerticalBarBehavior|toolbarVerticalEdge|verticalBarEdge)\b",
+    "vertical bar compression": r"\b(?:toolbarVerticalCompressionBehavior|verticalBarCompressionBehavior)\b",
+    "overflow menu": r"\b(?:ToolbarOverflowMenu|additionalOverflowItems)\b",
     "reservedRegions": r"\b(?:reservedRegions|ReservedRegion|UIViewReservedRegion)\b",
-    "arrangements": r"\b(?:ArrangementView|UIArrangementViewController)\b",
-    "hinge": r"\b(?:onHingeChange|UIHingeInteraction)\b",
+    "arrangements": r"\b(?:ArrangementView|UIArrangementViewController|UISplitArrangement|UIOverlayArrangement)\b",
+    "arrangement tuning": r"\b(?:arrangementViewStyle|splitArrangementLayoutRatio|splitArrangementLayoutSize|splitArrangementFixedLayoutSize|overlayArrangementEdge|splitArrangementAxis|overlayArrangementZIndex)\b",
+    "hinge": r"\b(?:onHingeChange|UIHingeInteraction|UIHinge|DeviceHinge)\b",
     "scene accessories": r"\b(?:sceneAccessory|CameraCaptureAccessory)\b",
+    "container content margins": r"\bContentMarginGuide\b|\bcontentMargins\s*\(\s*for\s*:",
 }
 
 PORTRAIT_ORIENTATIONS = {"UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown"}

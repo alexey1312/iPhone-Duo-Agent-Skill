@@ -51,7 +51,8 @@ approve it.
   ID), and whether the app exists in StandBy on the outer display at all (it needs a
   widget or Live Activity)
 - **SDK reality** — which of those APIs exist in the Xcode you have, what each linked
-  SDK gets on iPhone Duo, and where Apple's sample code and the SDK disagree
+  SDK gets on iPhone Duo, where Apple's sample code and the SDK disagree, and which
+  behaviors the iPhone Duo simulator cannot verify at all
 
 Every automated rule is listed with its source in [READINESS-CHECKS.md](READINESS-CHECKS.md).
 
@@ -82,8 +83,8 @@ agent reasons over structured JSON instead of ad-hoc grep output.
 - You ask to prepare, audit or test an app for iPhone Duo or the foldable iPhone.
 - You mention vertical bars, the hinge, reserved regions, `ArrangementView`, scene
   accessories, `UIScreen.main`, orientation or idiom checks, or scene lifecycle migration.
-- A build against the iOS 27 SDK shows your layout or toolbars misbehaving on the inner
-  display.
+- A build against the iOS 27 or 27.1 SDK shows your layout or toolbars misbehaving on
+  the inner display.
 
 **What you can ask:**
 
@@ -218,8 +219,10 @@ Or download a single `.skill` archive from the
 **How to verify:**
 
 Your agent should run the bundled scan and SDK check first, present a tiered plan with
-item IDs and session timestamps, mark iOS 27.1 APIs as blocked when your Xcode lacks
-them, and wait for you to approve items before editing.
+item IDs and session timestamps, and wait for you to approve items before editing.
+With Xcode 27.0 it should mark iOS 27.1 APIs as blocked; with Xcode 27.1 it should
+report them as available and name the `if #available(iOS 27.1, *)` gate they need when
+your deployment target is lower.
 
 ## Skill Structure
 
@@ -249,7 +252,10 @@ READINESS-CHECKS.md             Every automated and manual check, with sources
 - **SDK-honest**: the installed SDK decides what can be written. Talk samples that
   disagree with it are called out — `barMinimizationBehavior` versus
   `navigationBarMinimization`, `UIWindowSceneActivationAction` versus
-  `UIWindowScene.ActivationAction`.
+  `UIWindowScene.ActivationAction`. It cuts both ways: running the bundled checker
+  against the real 27.1 SDK is what caught it reporting
+  `builtInOuterUltraWideCamera` as missing when AVFoundation declares it — under an
+  Objective-C name the importer hides.
 - **Token efficient**: one scan returns compact JSON instead of dozens of exploratory
   searches, and each skill loads only the references it needs.
 - **Respectful of your decisions**: documented, deliberate orientation or idiom reads are
@@ -271,6 +277,8 @@ READINESS-CHECKS.md             Every automated and manual check, with sources
 - [TN3192: Migrating from the deprecated UIRequiresFullScreen key](https://developer.apple.com/documentation/technotes/tn3192-migrating-your-app-from-the-deprecated-uirequiresfullscreen-key) — Apple technote
 - [iPhone Duo tech specs](https://www.apple.com/iphone-duo/specs/) and [App Store Connect screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) — hardware facts and display sizes in `references/device-geometry.md`
 - [Modernize your UIKit app](https://developer.apple.com/videos/play/wwdc2026/278/) — WWDC26
+- [Xcode 27.1 beta release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27_1-release-notes) — the iPhone Duo simulator, and the known issues that limit what it can verify
+- [Apple Design Resources](https://developer.apple.com/design/resources/) — iOS & iPadOS 27 UI Kit and the iPhone Duo product bezel
 
 Chapter-level notes: [references/sources.md](references/sources.md).
 

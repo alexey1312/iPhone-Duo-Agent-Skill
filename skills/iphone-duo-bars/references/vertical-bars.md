@@ -234,6 +234,8 @@ extension ToolbarContent {
 }
 ```
 
-The builder shape was typechecked on the iOS 27.0 SDK with `visibilityPriority`
-(an iOS 27.0 modifier) standing in, at an iOS 18 deployment target. With
-`axisBehavior` it only compiles on an SDK that declares it.
+Typechecked on 2026-09-19 with the real `axisBehavior` — no stand-in — at an iOS 18
+deployment target against the iOS 27.1 SDK
+(`xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios18.0-simulator`).
+It still only compiles on an SDK that declares `axisBehavior`, so on Xcode 27.0 the
+whole extension is blocked, not just its `if` branch.

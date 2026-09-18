@@ -16,7 +16,7 @@ approve, and nothing is changed until they do.
 - **Source:** Raise the bar with iPhone Duo (Tech Talk 111462) 2:00
 - **Change:** set `toolbarItems` on the view controller and show the navigation
   controller's toolbar; delete the manual bar and its constraints.
-- **SDK:** available in the selected SDK (iOS 27.0) · or: *blocked on iOS 27.1 SDK*
+- **SDK:** available in the selected SDK (iOS 27.1) · or, below the deployment target: *needs `if #available(iOS 27.1, *)`* · or, on an older Xcode: *blocked on iOS 27.1 SDK*
 - **Risk:** low — layout-only; one screen.
 - **Verify:** Device Hub, iPhone Duo outer display and inner display in landscape:
   actions appear in the vertical bar; inner display in portrait: horizontal.
@@ -30,9 +30,11 @@ approve, and nothing is changed until they do.
 - **One source per item, with a timestamp** (or, for the Human Interface Guidelines,
   the page section). No source, no recommendation — if the advice is your own
   inference, label it *inference* and say what it rests on.
-- **Say what you did not verify.** "Builds with Xcode 27.0" is not "works on iPhone
-  Duo". If no iPhone Duo simulator was available, the *Verify* line is a step for the
-  developer, not a claim.
+- **Say what you did not verify.** "Builds with Xcode 27.1" is not "works on iPhone
+  Duo". Xcode 27.1 ships an iPhone Duo simulator, so a pose can usually be run — but
+  poses are Device Hub controls, not a command, and StandBy and app extensions do not
+  work in that runtime at all. If a pose was not run, the *Verify* line is a step for
+  the developer, not a claim.
 - **Group by tier** (see the orchestrator): blockers, correctness, bars, richer
   adoption. Inside a tier, order by user impact, not by file.
 - **Status values:** `proposed`, `approved`, `applied`, `verified`, `blocked`
@@ -46,11 +48,11 @@ approve, and nothing is changed until they do.
 ```markdown
 # iPhone Duo readiness — <app>
 
-Toolchain: Xcode <version> (<build>), iOS <sdk> SDK · Scan: duo_scan 1.1.0, <n> files
+Toolchain: Xcode <version> (<build>), iOS <sdk> SDK · Scan: duo_scan <version>, <n> files
 Lifecycle: <swiftui-app | scene | app-delegate-only>
 
 ## Summary
-<3–5 sentences: what breaks today, what is cheap, what waits for 27.1.>
+<3–5 sentences: what breaks today, what is cheap, what the deployment target gates.>
 
 ## Tier 0 — Blockers
 ## Tier 1 — Correctness on the inner display
