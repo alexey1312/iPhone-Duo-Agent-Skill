@@ -120,14 +120,26 @@ not a blocked one.
 
 ## Platform reach
 
-The iPhone Duo family is **not iPhone-only**. Hinge, arrangements, reserved regions
-and the vertical-bar APIs are all declared
+The iPhone Duo family is **not iPhone-only**. Hinge (`UIHinge`, `UIHingeInteraction`),
+arrangements (`UIArrangementViewController`, `UISplitArrangement`, `UIOverlayArrangement`)
+and reserved regions (`UIViewReservedRegion`) are all declared
 `API_AVAILABLE(ios(27.1), tvos(27.1), visionos(27.1))` with `API_UNAVAILABLE(watchos)`,
 so wrapping them in `#if os(iOS)` hides them from a tvOS or visionOS target that
 could compile them.
-Two exceptions, both `API_UNAVAILABLE(macCatalyst, tvos, visionos, watchos)`:
-`UIWindowSceneSessionRoleCameraCaptureAccessory` and
-`+[UISceneAccessory cameraCaptureSceneAccessoryWithConfiguration:]`.
+
+The vertical-bar APIs are the one place to read the annotation carefully rather than
+assume. In `UIVerticalBarEdge.h` the *type* and the trait are
+`ios(27.1), tvos(27.1), visionos(27.1)`, but the two cases that carry the meaning —
+`UIVerticalBarEdgeLeading` and `UIVerticalBarEdgeTrailing` — are `API_AVAILABLE(ios(27.1))`
+with `API_UNAVAILABLE(visionos)` and `API_UNAVAILABLE(watchos, tvos)`. So a tvOS or
+visionOS target can name the type but cannot name a side.
+The camera capture accessory is the exception, and only partly:
+`+[UISceneAccessory cameraCaptureSceneAccessoryWithConfiguration:]` is
+`API_AVAILABLE(ios(27.1))` with `API_UNAVAILABLE(macCatalyst, tvos, visionos, watchos)`,
+so the factory really is iOS-only — but the session role it produces,
+`UIWindowSceneSessionRoleCameraCaptureAccessory`, is
+`API_AVAILABLE(ios(27.1), tvos(27.1), visionos(27.1))` like the rest of the family.
+Gate the factory, not the role.
 
 ## Xcode 27.1 known issues that change what you can verify
 
