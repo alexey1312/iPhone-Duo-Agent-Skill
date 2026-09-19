@@ -113,7 +113,12 @@ struct FloatingControls: View {
 ```
 
 Treat the sketch as a pattern, not API truth: the region's coordinate space and type
-come from the SDK.
+come from the SDK — measured proxy-local on the simulator, see `device-geometry.md`.
+`.first` holds here only because a closed or flat device reports at most one division.
+The order of the array is undocumented,
+and the same query for `.occlusion` on the outer display comes back with two regions —
+a camera hole and the bar strip — so pick by a property that means something
+rather than by position.
 
 From the `ReservedRegion` documentation — the full signature, and a custom `Layout`
 that keeps its subviews clear of any occlusion (the camera). Frames arrive mirrored

@@ -1,11 +1,12 @@
 import SwiftUI
 import UIKit
 
-// `print` goes to a stdout that nothing collects once `simctl launch` returns, so this uses NSLog and
-// the numbers are read back out of the simulator's log. Two readers, one inset 50 pt inside the other,
-// so a proxy-local coordinate space can be told from a display one. `pass` counts body evaluations:
-// the reserved regions are empty for the first few layout passes, so a probe that samples only
-// `onAppear` reports `occlusions=[]` and misses them entirely.
+// NSLog rather than print, so the numbers carry timestamps and survive a plain `simctl launch`, which
+// returns straight away. `print` reaches the console too, for as long as `--console-pty` stays attached.
+// Two readers, one inset 50 pt inside the other, so a proxy-local coordinate space can be told from a
+// display one. `pass` counts body evaluations across both readers — they alternate — and the reserved
+// regions are empty for the first few, so a probe that samples only `onAppear` reports `occlusions=[]`
+// and misses them entirely.
 
 @MainActor enum Pass { static var n = 0 }
 

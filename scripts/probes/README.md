@@ -46,8 +46,12 @@ xcrun simctl spawn booted log show --last 1m --style compact \
   --predicate 'eventMessage CONTAINS "DUOPROBE"'
 ```
 
-Read the log rather than the console: `print` goes to a stdout that nothing collects
-once `simctl launch` returns, which is why this probe uses `NSLog`.
+This probe uses `NSLog`, not `print`:
+the numbers then carry timestamps and survive a plain `simctl launch`,
+which returns as soon as the app is up.
+`print` is not lost — with `--console-pty` attached it delivers every pass,
+populated regions included — so the empty list the earlier run recorded
+was the `onAppear` sampling alone, not a console that went away.
 
 On the **outer display in portrait**, re-measured 2026-09-19 on Xcode 27.1 (27A9269):
 
@@ -64,10 +68,13 @@ DUOPROBE pass=8 inset+50 size=282.0x544.0 safeArea(t:0.0 l:0.0 b:0.0 tr:0.0)
          global=(50.0, 50.0, 282.0, 544.0) divisions=[]
          occlusions=[(349.667, -20.667, 37.0, 37.0)|active=true,
                      (332.0, -50.0, 84.0, 170.0)|active=true]
+…                                          (passes 9–10: both stay populated)
 ```
 
-The two readers alternate, so each gets every other pass: the outer reader's four
-passes are 1, 3, 5 and 7.
+The two readers alternate, so each gets every other pass —
+the outer reader the odd ones, the inset reader the even.
+Neither the total number of passes nor the ordering within a pair is fixed;
+this run logged ten.
 
 `verticalBarEdge=2` is `.trailing`; `hSize=1`/`vSize=2` are compact/regular.
 
@@ -77,11 +84,14 @@ Three results, two of which an earlier version of this probe got wrong:
    hole at (399.7, 29.3) and an 84 × 170 strip at (382, 0) for the status bar and
    Dynamic Island. The earlier probe sampled `onAppear` and reported `occlusions=[]`,
    which was a timing artefact: each reader is **empty for its first three layout
-   passes and populated on its fourth**, about a millisecond later. An app that wants
-   one specific region — the lens, say — must not take `.first`; the order is not
-   documented and a bar strip is on the list. Area separates them.
+   passes and populated on its fourth** — about 9 ms after its first pass,
+   and in the same millisecond as its third.
+   An app that wants one specific region — the lens, say — must not take `.first`;
+   the order is not documented and a bar strip is on the list.
+   Area separates them.
 2. **SwiftUI re-lays out by itself when the regions arrive**, so nothing needs
-   observing. That is what pass 3 → pass 4 shows.
+   observing. That is what the outer reader's third pass → its fourth shows —
+   5 → 7 in the log's numbering, which counts both readers.
 3. **Frames are in the querying proxy's own coordinate space.** The reader inset 50 pt
    inside the first reports every frame shifted by exactly (−50, −50) — the camera hole
    at (349.7, −20.7), the strip at (332, −50). Regions outside the proxy give negative
