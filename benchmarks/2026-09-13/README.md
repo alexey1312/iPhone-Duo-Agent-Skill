@@ -3,6 +3,22 @@
 Run with Anthropic's [skill-creator](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/skill-creator)
 workflow on Claude Opus 5, Xcode 27.0 beta 6 (iOS 27.0 SDK), one run per configuration.
 
+> **These numbers are a record of that day, not a current measurement.**
+> They were scored against the eval assertions as they stood on 2026-09-13.
+> Six of those assertions have since been rewritten: they hard-coded
+> "the installed 27.0 SDK", which on a 27.1 machine scores a correct agent *wrong*.
+> The toolchain moved too — Xcode 27.1 ships the iOS 27.1 SDK and the iPhone Duo
+> simulator, so the "blocked on 27.1" answers the baseline was penalised for missing
+> are no longer the right answers.
+> Treat the 100 % against 56 % as historical. Re-run before citing it:
+>
+> ```bash
+> claude plugin eval . --trust-plugin
+> ```
+>
+> Write a new dated directory next to this one rather than editing this one —
+> it is evidence of a run, and editing it destroys that.
+
 ## Task evals (with skill vs. without skill)
 
 Each eval gives an agent a small fixture project from `skills/<skill>/evals/files/` and a

@@ -104,6 +104,10 @@ agent reasons over structured JSON instead of ad-hoc grep output.
 - `scripts/sdk_api_check.py` — reads the selected SDK's public headers and Swift
   interfaces and reports which iPhone Duo symbols exist, with their availability
   annotations. Code is never written against a symbol the compiler cannot see.
+- `scripts/probes/` — the programs that produced the measured numbers: a typecheck of
+  every iPhone Duo API shape these skills teach, and a geometry probe that reports what
+  a booted iPhone Duo simulator actually returns. Committed so the figures in
+  `references/` can be re-derived rather than trusted.
 - Xcode's own modernization skill (`xcrun agent skills export`) is used for bulk UIKit
   rewrites when present; these skills cover SwiftUI, bars, the fold and displays.
 
@@ -240,6 +244,8 @@ skills/
     evals/                      skill-creator evals and fixture projects
 references/                     Canonical shared references
 scripts/                        Canonical scripts and sync_skill_copies.py
+  probes/                       Throwaway programs behind the measured numbers
+evals/                          `claude plugin eval` suite for the plugin as a whole
 tests/                          Deterministic unit tests
 benchmarks/                     skill-creator benchmark results
 READINESS-CHECKS.md             Every automated and manual check, with sources
