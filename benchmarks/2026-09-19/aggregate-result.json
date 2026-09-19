@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.278",
+  "startedAt": "2026-09-19T04:54:09.573Z",
+  "durationSeconds": 346,
+  "costUsd": 2.011333,
+  "partial": false,
+  "suite": {
+    "root": "/Users/ak/Developer/iPhone-Duo-Agent-Skill",
+    "ablation": "with-without",
+    "threshold": 1,
+    "concurrency": 1,
+    "plugins": [
+      {
+        "name": "iphone-duo-skills",
+        "version": "1.2.1",
+        "path": "/Users/ak/Developer/iPhone-Duo-Agent-Skill"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "sdk-availability-honesty",
+      "dir": "evals/sdk-availability-honesty",
+      "source": "prose",
+      "promptMarkdown": "I'm adding a split/overlay layout to my iPhone app for iPhone Duo, and I also need\nthe two physical front cameras so I can switch between them myself instead of using\nthe virtual front camera.\n\nCan I write `ArrangementView` and\n`AVCaptureDevice.DeviceType.builtInOuterUltraWideCamera` today, or not? Tell me what\ndetermines the answer. Don't change any code.",
+      "runsPerCase": 3,
+      "timeoutSeconds": 300,
+      "maxTurns": 12,
+      "graders": [
+        {
+          "name": "criteria",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "The response must make availability depend on the **installed toolchain**, not on a\nremembered fact. A successful response:\n\n1. Says that both symbols need the **iOS 27.1 SDK**, and that the iOS 27.1 SDK ships\n   with **Xcode 27.1** — so the answer is \"yes\" on Xcode 27.1 and \"blocked\" on\n   Xcode 27.0. It must not state flatly that these APIs are unavailable, unreleased,\n   or \"coming later this month\".\n2. Names how to check rather than asserting from memory — running\n   `scripts/sdk_api_check.py`, or reading the measured table in\n   `references/api-availability.md`.\n3. Distinguishes the **SDK** question from the **deployment target** question: with\n   the 27.1 SDK installed and a lower deployment target, the work is not blocked, it\n   needs `if #available(iOS 27.1, *)`.\n\nIt must NOT claim that `builtInOuterUltraWideCamera` is missing from the iOS 27.1\nSDK. AVFoundation declares it, but only under the Objective-C constant\n`AVCaptureDeviceTypeBuiltInOuterUltraWideCamera`, so a plain text search for the\nSwift name finds nothing. A response that mentions this Objective-C/Swift spelling\ntrap, or that simply reports the camera type as available, is correct; a response\nthat reports it as absent from a 27.1 SDK fails.\n\nPartial credit: getting (1) right but missing the deployment-target distinction in\n(3) is a pass with reservations. Asserting a hard \"no, not yet available\" is a fail\nregardless of the rest.",
+          "config": {
+            "criteria": "The response must make availability depend on the **installed toolchain**, not on a\nremembered fact. A successful response:\n\n1. Says that both symbols need the **iOS 27.1 SDK**, and that the iOS 27.1 SDK ships\n   with **Xcode 27.1** — so the answer is \"yes\" on Xcode 27.1 and \"blocked\" on\n   Xcode 27.0. It must not state flatly that these APIs are unavailable, unreleased,\n   or \"coming later this month\".\n2. Names how to check rather than asserting from memory — running\n   `scripts/sdk_api_check.py`, or reading the measured table in\n   `references/api-availability.md`.\n3. Distinguishes the **SDK** question from the **deployment target** question: with\n   the 27.1 SDK installed and a lower deployment target, the work is not blocked, it\n   needs `if #available(iOS 27.1, *)`.\n\nIt must NOT claim that `builtInOuterUltraWideCamera` is missing from the iOS 27.1\nSDK. AVFoundation declares it, but only under the Objective-C constant\n`AVCaptureDeviceTypeBuiltInOuterUltraWideCamera`, so a plain text search for the\nSwift name finds nothing. A response that mentions this Objective-C/Swift spelling\ntrap, or that simply reports the camera type as available, is correct; a response\nthat reports it as absent from a 27.1 SDK fails.\n\nPartial credit: getting (1) right but missing the deployment-target distinction in\n(3) is a pass with reservations. Asserting a hard \"no, not yet available\" is a fail\nregardless of the rest.",
+            "focus": "last_message"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 11,
+            "costUsd": 0.5233635,
+            "judgeCostUsd": 0.004188000000000001,
+            "durationSeconds": 59,
+            "startedAt": "2026-09-19T04:54:09.584Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-ed18f7/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "criteria",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "Short answer: **yes on Xcode 27.1, no on Xcode 27.0** — and if yes, both need an availability gate unless your deployment target is already 27.1.\n\nBoth symbols are iOS 27.1 API. Per the skill's measured snapshot (Xcode 27.1 / 27A9269, iPhoneOS 27.1 SDK build 24A94403, measured 2026-09-19), `ArrangementView` and `AVCaptureDevice.DeviceType.builtInOuterUltraWideCamera` are both present. The 27.1 SDK shipped as a beta on 2026-09-18, so it's installable as of today.\n\nI could not verify *your* toolchain: this session has no shell tool and the working directory is empty, so there's no project to read either. Run these yourself:\n\n```\nxcodebuild -version\nxcrun --sdk iphoneos --show-sdk-version\n```\n\n## What determines the answer\n\n**1. The SDK you build with.** This is the hard gate. On the 27.0 SDK neither symbol is declared, and `if #available` cannot rescue a missing declaration — it needs the symbol to exist. Don't reach for `#if compiler(>=…)` or `#if canImport` either; that branch compiles for nobody today, so you'd ship unverified code against a signature you're guessing at. On 27.0 these are genuinely blocked items, not gated ones.\n\n**2. Your deployment target.** On the 27.1 SDK with a target below 27.1, you need `if #available(iOS 27.1, *)` — and for SwiftUI modifiers like `splitArrangementLayoutRatio`, an availability-gated `ViewModifier` rather than an inline check. The 27.1 samples for arrangements were typechecked clean at an iOS 27.1 target, and the equivalent gate pattern was typechecked at an iOS 18 deployment target against the 27.1 SDK.\n\n**3. Spelling, for the camera one specifically.** `AVCaptureDevice.DeviceType.builtInOuterUltraWideCamera` is correct. The flat Objective-C name `AVCaptureDeviceTypeBuiltInOuterUltraWideCamera` fails with \"has been renamed\". Also: grepping the SDK for the Swift name finds **nothing** even when the API compiles fine — AVFoundation ships no `.swiftinterface`, so its Swift names are synthesized by the importer and exist in no file on disk. Don't let a failed search convince you it's absent; the compiler is the word.\n\n## Two consequences worth knowing before you commit\n\n**Taking the physical cameras means you own the switching.** The virtual front camera switches between inner and outer for you; `builtInOuterUltraWideCamera` (4K/120) and `builtInInnerUltraWideCamera` (1080p/60) give you each camera's full capability, but opening or closing the device moves your app to the other display and that handoff becomes your job. And `position` tells you where a camera *sits*, not where it *points* — both front cameras report `.front`, and a front camera can face away from the person using the app. You'll want `AVCaptureDeviceDirectionCoordinator`, which is also 27.1, so it rides on the same gate.\n\n**Mac Catalyst, if you ship it.** Adopting any 27.1 API breaks the Catalyst build (Apple's radars 185924957 and 187046347). Workarounds exist — `#if !targetEnvironment(macCatalyst)`, or a 27.0 minimum for the Catalyst target — but it's a planning-level risk, not a detail."
+              }
+            ]
+          },
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 9,
+            "costUsd": 0.4296825,
+            "judgeCostUsd": 0.004575000000000001,
+            "durationSeconds": 55,
+            "startedAt": "2026-09-19T04:55:08.390Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-HHCiZw/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "criteria",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "Both symbols land in the same bucket, so the answer is one answer for both.\n\n## Yes — if you're on Xcode 27.1\n\n`ArrangementView` and `AVCaptureDevice.DeviceType.builtInOuterUltraWideCamera` (plus `.builtInInnerUltraWideCamera` and `AVCaptureDeviceDirectionCoordinator`) are all declared `ios(27.1)`. They arrived with the iOS 27.1 SDK, which shipped as a beta on 2026-09-18 — yesterday. Nothing earlier declares them.\n\nI could not measure *your* toolchain: this session has no shell, and reading outside the working directory was denied. The availability table I'm citing was measured by the skill on **Xcode 27.1 (27A9269), iPhoneOS 27.1 SDK (27.1, build 24A94403)**. Confirm yours:\n\n```bash\nxcodebuild -version && xcrun --sdk iphoneos --show-sdk-version\n```\n\n## Two things determine it, and they fail differently\n\n**1. The SDK you compile against** — decides whether the symbol exists at all. On the 27.0 SDK these names don't compile, and `if #available` can't save you: an availability check needs the declaration to exist first. Neither can `#if compiler(>=…)` or `#if canImport` — that just ships a branch nobody can build or test, against a signature you're guessing at. On 27.0 the honest status is *blocked on Xcode 27.1*.\n\n**2. Your deployment target** — decides whether you need a gate. Below 27.1, wrap in `if #available(iOS 27.1, *)`; for SwiftUI modifiers that means an availability-gated `ViewModifier`. At 27.1 or above, just write it.\n\n## Three traps specific to these two symbols\n\n- **Don't grep the SDK for the camera type.** AVFoundation ships no `.swiftinterface` — its Swift names are synthesized by the Objective-C importer, so `builtInOuterUltraWideCamera` appears in no file on disk even though it compiles fine. The on-disk spelling is `AVCaptureDeviceTypeBuiltInOuterUltraWideCamera`. A text search here produces a false \"missing.\" The compiler is the only test that counts:\n  ```bash\n  xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios27.1-simulator probe.swift\n  ```\n- **Don't wrap the arrangement in `#if os(iOS)`.** `ArrangementView` and friends are `ios(27.1), tvos(27.1), visionos(27.1)` — the idiom check hides them from targets that could compile them.\n- **Mac Catalyst breaks the day you adopt either.** Xcode 27.1 known issues 185924957 and 187046347: a project using 27.1 APIs fails to compile for Catalyst, and a project *targeting* 27.1 gets no Catalyst run destination. If you ship Catalyst, that's a planning-level risk, not a detail.\n\n## One thing worth knowing before you take the physical cameras\n\nGoing physical is the right call for a capture-first app — the virtual front camera only offers what both cameras share (1080p60, no depth), while the outer camera does up to 4K120 and the inner up to 1080p60. But you inherit two jobs:\n\n- **Switching on open/close becomes yours.** The virtual device did that for you.\n- **`position` tells you where a camera sits, not where it points.** Both front cameras report `.front`, and a front camera can face away from the person using the app. Create an `AVCaptureDeviceDirectionCoordinator(view:deviceTypes:)` on the preview view listing *every* built-in camera you capture from — rear types included, the two physical front types in place of the virtual one — and pick from `forwardFacingDeviceDescriptors` when the active camera drops out of that set. Mirror by direction, not position.\n\nThat asymmetry in capability (4K120 vs 1080p60) also means your format-selection code has to handle both, not pick once at launch.\n\nNo code changed."
+              }
+            ]
+          },
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 9,
+            "costUsd": 0.47206299999999995,
+            "judgeCostUsd": 0.004263000000000001,
+            "durationSeconds": 45,
+            "startedAt": "2026-09-19T04:56:03.792Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-zB1h9y/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "criteria",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "Short answer: **yes on the iOS 27.1 SDK, no on anything earlier** — and the two symbols stand or fall together, since both are new in 27.1.\n\n## What determines it\n\n**1. The SDK you build against (the binary gate).**\n\n| Toolchain | `ArrangementView` / `builtInOuterUltraWideCamera` |\n|---|---|\n| Xcode 27.1 / iOS 27.1 SDK | Declared — write them |\n| Xcode 27.0 or earlier | Not declared — won't compile, and `if #available` can't rescue a symbol that doesn't exist |\n\nThat second row is the part people try to work around. Wrapping guessed calls in `#if compiler(>=…)` or `#if canImport` doesn't help: nobody can compile or test that branch, so you'd ship unverified code whose signature may not match the real SDK.\n\n**2. Your deployment target (the runtime gate).** With the 27.1 SDK installed, both are a gating question, not a blocked one. If your minimum is below iOS 27.1, wrap usage in `if #available(iOS 27.1, *)` — and for the SwiftUI side, that means an availability-gated `ViewModifier`, since you can't `#available` around a modifier chain.\n\n**3. Mac Catalyst, if you ship it.** Known issues 185924957 and 187046347: a project using 27.1 APIs fails to compile for Catalyst, and a project targeting 27.1 gets no Catalyst run destination. Workarounds are `#if !targetEnvironment(macCatalyst)` and a 27.0 minimum for the Catalyst target. Treat it as a top-tier risk, not a footnote.\n\n## Two specifics worth knowing before you write them\n\n**The camera spelling is a trap in both directions.** `AVCaptureDevice.DeviceType.builtInOuterUltraWideCamera` is correct; the flat Objective-C name `AVCaptureDeviceTypeBuiltInOuterUltraWideCamera` fails with \"has been renamed.\" And if you grep the SDK to check whether it exists, you will find nothing and conclude it's missing — AVFoundation ships no `.swiftinterface`, so its Swift names are synthesized by the importer and appear in no file on disk. The compiler is the only reliable check for that one.\n\n**Taking the physical cameras means taking the switching.** The virtual front camera switches inner↔outer for you when the device opens or closes, at the cost of only what both cameras share (1080p60, no depth). Going physical gets you 4K120 on the outer camera — and makes open/close switching your job. `position` is where a camera sits, not where it points: both front cameras report `.front`, and a front camera can face away from the person using the app. You'll want `AVCaptureDeviceDirectionCoordinator(view:deviceTypes:)` listing every built-in camera you capture from, plus a fresh `RotationCoordinator` per switch and mirroring keyed to direction rather than position.\n\n## On verification\n\nI have no shell in this session, so I could not run `xcodebuild -version` or the skill's `sdk_api_check.py` against your machine. The availability table above comes from that checker's snapshot — Xcode 27.1 (27A9269), iPhoneOS 27.1 SDK (27.1, build 24A94403), measured 2026-09-19, with both `ArrangementView` and `builtInOuterUltraWideCamera` typechecked clean. Your working directory is empty, so I also couldn't read your deployment target or whether you have a Catalyst target. Confirm your own toolchain with `xcodebuild -version` before committing to either API; that one command decides the whole question."
+              }
+            ]
+          }
+        ],
+        "without": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 4,
+            "costUsd": 0.18829899999999997,
+            "judgeCostUsd": 0.004236,
+            "durationSeconds": 55,
+            "startedAt": "2026-09-19T04:56:49.181Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-Sqxj9Q/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "criteria",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I couldn't verify this on your machine: the working directory (`/private/tmp/e-Sqxj9Q/home/cwd`) is empty — no Xcode project — and Glob was denied outside it, so I couldn't read the installed SDK headers. So here's the honest answer plus exactly how to settle it in about a minute.\n\n## I don't know these symbols\n\n`ArrangementView`, `AVCaptureDevice.DeviceType.builtInOuterUltraWideCamera`, and \"iPhone Duo\" are all past my knowledge cutoff (May 2026). I'm not going to reverse-engineer their semantics from their names — guessing that `ArrangementView` is a split/overlay container, or that \"outer ultra wide\" means the second front camera, would sound plausible and could be wrong in ways that cost you a day. Whether I've heard of an API is irrelevant to whether it compiles anyway.\n\n## What actually determines the answer\n\nThree independent gates, in order:\n\n1. **The SDK you compile against** — i.e. your Xcode version, not your Mac's OS and not your device's OS. If the symbol isn't declared in that SDK, it doesn't exist for you, full stop.\n2. **Your deployment target vs. the symbol's `@available`.** If the minimum iOS you ship is below the introduction version, you can still use it, but only inside `if #available(iOS X, *)` with a fallback path. This matters more than usual for the camera one: `AVCaptureDevice.DeviceType` values are string constants exported by AVFoundation, so touching a too-new one on an older OS is a missing-symbol problem, not a silently-nil one. Guard it.\n3. **Runtime hardware, for the camera only.** Compiling is not availability. A `DiscoverySession` for that type returns an empty array on every device that lacks the hardware, including the Simulator. Your code needs that empty-array branch regardless of what the answer to (1) is.\n\nNote these two asks are unrelated — SwiftUI and AVFoundation ship in the same SDK but one can be present while the other isn't. Check them separately.\n\n## How to check, in order of speed\n\nIn Xcode, type the symbol and Command-click it. Jumping to the declaration and reading its `@available(iOS ...)` line is ground truth and answers gates 1 and 2 at once. If it doesn't resolve, it's not in your SDK.\n\nFrom the terminal, if you'd rather not open Xcode:\n\n```sh\nxcrun --sdk iphoneos --show-sdk-version\nSDK=$(xcrun --sdk iphoneos --show-sdk-path)\ngrep -rn \"builtInOuterUltraWideCamera\" \"$SDK/System/Library/Frameworks/AVFoundation.framework/Headers/\"\ngrep -rn \"ArrangementView\" \"$SDK/System/Library/Frameworks/SwiftUI.framework/Modules/SwiftUI.swiftmodule/\"*.swiftinterface\n```\n\nA hit shows you the declaration with its availability attribute attached. No hit with a current SDK version means you need a newer Xcode — check Apple's release notes and the API diffs for the SDK that introduced the device.\n\n## One thing worth planning for on the camera side\n\nYour stated goal — driving the two physical cameras yourself rather than letting the virtual device switch — is the case where Apple's API has historically been least uniform. Even when a physical camera type exists, it isn't always openable as a standalone `AVCaptureDevice` via `DiscoverySession`; sometimes the supported route is to discover the virtual device and read its `constituentDevices`. Check both paths before committing to an architecture, and if you want both cameras live at once rather than switching, that's `AVCaptureMultiCamSession` with its own `isMultiCamSupported` gate and thermal constraints.\n\nI haven't touched any code."
+              }
+            ]
+          },
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 4,
+            "costUsd": 0.20139400000000005,
+            "judgeCostUsd": 0.007478000000000002,
+            "durationSeconds": 71,
+            "startedAt": "2026-09-19T04:57:44.257Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-aMA6d2/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "criteria",
+                "passed": false,
+                "weight": 1,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "Short answer: I don't know, and I'd be making it up if I told you either way.\n\nBoth `ArrangementView` and `AVCaptureDevice.DeviceType.builtInOuterUltraWideCamera` are symbols I don't have. My knowledge cutoff is May 2026 and today is September 19, 2026, so anything introduced in this year's WWDC cycle — which is presumably where iPhone Duo support landed — is past my horizon. The names are plausible enough that I could confidently invent signatures for them, which is exactly why I'm not going to. I also can't check this machine for you: there's no shell tool in this session, `Glob` is restricted to the working directory, and that directory is empty.\n\nHere's what actually decides it. Three independent gates, and all three have to pass.\n\n**1. Is the symbol in the SDK you compile against?**\n\nThis is determined by your Xcode version alone — not by the macOS on your Mac, not by the iOS on your test device. Compilation is purely SDK-driven.\n\n```\nxcrun --sdk iphoneos --show-sdk-version\nSDK=$(xcrun --sdk iphoneos --show-sdk-path)\ngrep -r \"OuterUltraWide\" \"$SDK/System/Library/Frameworks/AVFoundation.framework/Headers/\"\ngrep -r \"ArrangementView\" \"$SDK/System/Library/Frameworks/SwiftUI.framework/Modules/SwiftUI.swiftmodule/\"\n```\n\nAVFoundation is Objective-C so it has real greppable headers. SwiftUI doesn't — you're grepping the `.swiftinterface` inside the swiftmodule instead. Honestly the fastest version of this is to type both symbols into a scratch file and hit build; the compiler answers in seconds what I can't answer from memory.\n\n**2. Deployment target vs. the symbol's `@available`.**\n\nIf the symbol exists but your minimum target is older than its introduction, it compiles only under `if #available` / `@available`. Worth knowing that for an enum *case*, the availability attribute applies at each use site, so the check goes around where you reference it, not around the device-type declaration.\n\n**3. Runtime availability — and this is the gate that matters for your camera question.**\n\nA case existing in the enum does not mean `AVCaptureDevice.DiscoverySession` will hand you one. Discovery only vends hardware that's physically present *and* that the OS is willing to expose as a separately-openable device.\n\nThat distinction is the crux of what you're asking for. Apple's long-standing pattern has been that where a virtual device exists, the system owns switching between its constituents. You can read `constituentDevices` on a virtual camera, but opening a constituent as its own `AVCaptureDevice` and driving the switch yourself has generally not been supported. So \"I want to switch between the two physical front cameras myself instead of using the virtual front camera\" is precisely the capability that tends to be policy-restricted rather than merely API-missing — the symbol can exist and still not get you there. Test it with a real discovery session on real hardware; the Simulator has no cameras and will tell you nothing.\n\nTwo smaller flags on that symbol. \"Outer\" reads like the outer *display's* camera on a folding device, which isn't necessarily synonymous with \"front\" — front-ness may depend on fold state. And there's presumably a corresponding inner one; confirm the naming maps onto the two cameras you actually mean before building around it.\n\n**On the layout side:** SwiftUI's adaptive-layout additions are usually additive and deployment-target-gated, with an older-API fallback available. If `ArrangementView` isn't in your SDK, the generic fallback shape is size classes plus `ViewThatFits` plus scene geometry — but I don't know whether the system expects the new type specifically in order to get proper split/overlay behavior on this device, so treat that as the thing to compare against once you can see the real API, not as a recommendation.\n\nIf you paste me the `xcrun` version output and the grep results, or the header/interface declarations, I can work from that immediately. Or re-enable shell access and I'll check it myself."
+              }
+            ]
+          },
+          {
+            "score": 0,
+            "passed": false,
+            "turns": 5,
+            "costUsd": 0.196531,
+            "judgeCostUsd": 0.005989000000000001,
+            "durationSeconds": 60,
+            "startedAt": "2026-09-19T04:58:55.050Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-mhMW4C/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "criteria",
+                "passed": false,
+                "weight": 1,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "## Short answer\n\nI can't tell you from memory, and I couldn't check locally either.\n\nMy knowledge cutoff is May 2026; today is 2026-09-19. That gap covers WWDC 2026 and the fall release cycle — exactly where a new form factor and its APIs would land. Neither `ArrangementView` nor `AVCaptureDevice.DeviceType.builtInOuterUltraWideCamera` is something I know as of my cutoff. That is not evidence they don't exist; it's my blind spot. I'd rather say that than invent an availability table.\n\nI tried to answer it empirically instead, and hit two walls: the working directory (`/private/tmp/e-mhMW4C/home/cwd`) is empty — no Xcode project here — and my attempts to read the iOS SDK under `/Applications/Xcode.app` were denied by the current permission mode.\n\n## What actually determines the answer\n\nFour independent gates. All four must pass; they fail in different ways.\n\n1. **The SDK you compile against.** The symbol has to exist in the iOS SDK bundled with your Xcode. This is the hard gate for \"does it compile at all.\" Nothing else matters if this fails.\n2. **Your Xcode version.** You don't upgrade SDKs separately — you get the SDK by installing the Xcode that ships it. If the symbol is new this fall, it needs that fall Xcode (and possibly a beta).\n3. **Deployment target vs. availability annotation.** A symbol can be in the SDK and still be unusable unguarded. If it's annotated to a newer iOS than your minimum deployment target, you need `if #available(...)` / `@available`, or you raise the target.\n4. **Runtime device support** — this one is specific to the camera half. A `DeviceType` constant existing in the SDK says nothing about whether a given phone has that camera. Simulator won't have it either.\n\n## How to check, in about a minute\n\n```\nxcodebuild -version\nxcrun --sdk iphoneos --show-sdk-version\n\n# camera constant (Obj-C header, so grep works)\ngrep -rn \"OuterUltraWide\" \"$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks/AVFoundation.framework/Headers/\"\n\n# SwiftUI type (Swift-only, so check the module interface)\ngrep -rn \"ArrangementView\" \"$(xcrun --sdk iphoneos --show-sdk-path)/System/Library/Frameworks/SwiftUI.framework/Modules/SwiftUI.swiftmodule/\"\n```\n\nA hit gives you gate 1 and, on the surrounding `API_AVAILABLE(...)` / `@available(...)` line, gate 3 for free. No hit means you need a newer Xcode — or the name isn't right. Typing the symbol into a scratch file and building is equally authoritative and tells you the same thing.\n\n## One design note on the camera half, independent of all this\n\nWhatever those constants turn out to be called, don't hardcode a device type and assume you'll get a device back. Ask `AVCaptureDevice.DiscoverySession` for the types you want on `.front` and use what it returns, with a fallback. Discovery returning an empty array on some device or on Simulator is a normal outcome, not an error case — that pattern has been stable for many releases and will survive whatever the new naming is. If you want both physical cameras streaming at once rather than switching, that's `AVCaptureMultiCamSession`, which has its own per-device support check.\n\nI didn't touch any code. If you want a definitive answer, either point me at the project and allow reads under `/Applications/Xcode.app`, or paste the output of those greps and I'll tell you exactly which of the four gates you're on."
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 1,
+        "passRate": 1,
+        "scoreWithout": 0.3333333333333333,
+        "passRateWithout": 0.3333333333333333,
+        "delta": 0.6666666666666667
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 1,
+    "casesPassed": 1,
+    "overallScore": 1,
+    "overallPassRate": 1,
+    "meanDelta": 0.6666666666666667
+  }
+}
