@@ -18,7 +18,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 
 
 @dataclass(frozen=True)

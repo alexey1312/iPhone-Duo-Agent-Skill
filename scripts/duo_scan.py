@@ -21,7 +21,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 
 SEVERITIES = ["critical", "high", "medium", "low", "info"]
 SOURCE_EXTENSIONS = {".swift", ".m", ".mm", ".h"}

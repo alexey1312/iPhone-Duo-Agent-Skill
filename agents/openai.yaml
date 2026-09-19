@@ -1,5 +1,5 @@
 name: iphone-duo-skills
-version: "1.2.1"
+version: "1.2.2"
 description: >-
   Audit, plan and adapt SwiftUI and UIKit apps for iPhone Duo with a read-only
   scanner, SDK availability checks and approval-gated changes.
