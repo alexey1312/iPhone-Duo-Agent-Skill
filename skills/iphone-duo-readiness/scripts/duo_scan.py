@@ -295,6 +295,9 @@ INVENTORY_PATTERNS: dict[str, str] = {
     "hinge": r"\b(?:onHingeChange|UIHingeInteraction|UIHinge|DeviceHinge)\b",
     "scene accessories": r"\b(?:sceneAccessory|CameraCaptureAccessory)\b",
     "container content margins": r"\bContentMarginGuide\b|\bcontentMargins\s*\(\s*for\s*:",
+    # Recommended by READINESS-CHECKS and the bars skill, so adoption has to count.
+    "vertical bar trait observation": r"\bsystemTraitsAffectingVerticalBarEdge\b",
+    "bar layout region": r"\bUIViewLayoutRegion\b|\blayoutRegionForBarOn(?:Directional)?Edge\b|\bLayoutRegion\s*\.\s*bar\s*\(",
 }
 
 PORTRAIT_ORIENTATIONS = {"UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown"}

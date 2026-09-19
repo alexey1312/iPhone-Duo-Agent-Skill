@@ -338,6 +338,53 @@ class TraversalTests(ScanTestCase):
         self.assertEqual(inventory["video mirroring"], 1)
         self.assertNotIn("Live Activities", inventory)
 
+    def test_inventory_counts_27_1_adoption(self) -> None:
+        """An app that already adopted these must read as adopted, not be told again.
+
+        Each of these is something the skills recommend, so failing to detect it
+        turns a correct implementation into a repeat recommendation.
+        """
+        self.project.write(
+            "Sources/Reader.swift",
+            "ArrangementView { Primary() } secondary: { Secondary() }\n"
+            "    .arrangementViewStyle(.split.axes(.horizontal))\n"
+            "    .splitArrangementLayoutRatio(0.4)\n"
+            "    .contentMargins(for: .container, edges: .horizontal)\n"
+            "    .onHingeChange { _, ctx in _ = ctx.hinge }\n",
+        )
+        self.project.write(
+            "Sources/Detail.swift",
+            "let dimension = UISplitArrangementDimension.automatic()\n"
+            "let props = UIOverlayArrangementViewProperties()\n"
+            "item.axisBehavior = .verticalPreferred\n"
+            "navigationItem.verticalBarCompressionBehavior = .prefersTabBar\n"
+            "registerForTraitChanges(UITraitCollection.systemTraitsAffectingVerticalBarEdge) { (_: Detail, _) in }\n"
+            "_ = UIView.LayoutRegion.bar(onEdge: .trailing, extent: .fixed(44))\n",
+        )
+        inventory = self.project.scan()["inventory"]
+        self.assertEqual(inventory["arrangements"], 3)
+        self.assertEqual(inventory["arrangement tuning"], 2)
+        self.assertEqual(inventory["hinge"], 1)
+        self.assertEqual(inventory["vertical bar compression"], 1)
+        self.assertEqual(inventory["vertical bar trait observation"], 1)
+        self.assertEqual(inventory["bar layout region"], 1)
+        self.assertEqual(inventory["container content margins"], 1)
+
+    def test_inventory_ignores_unadopted_projects(self) -> None:
+        """The negative half: a plain project reports none of the 27.1 keys."""
+        self.project.write("Sources/Plain.swift", "struct Plain: View { var body: some View { Text(\"hi\") } }\n")
+        inventory = self.project.scan()["inventory"]
+        for key in (
+            "arrangements",
+            "arrangement tuning",
+            "hinge",
+            "vertical bar compression",
+            "vertical bar trait observation",
+            "bar layout region",
+            "container content margins",
+        ):
+            self.assertNotIn(key, inventory)
+
     def test_inventory_counts_containers(self) -> None:
         self.project.write(
             "Sources/Root.swift",
