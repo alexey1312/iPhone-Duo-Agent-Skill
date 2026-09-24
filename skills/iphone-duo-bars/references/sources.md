@@ -239,10 +239,11 @@ recommendation.
 Antoine van der Lee, [*iPhone Duo Simulator: Testing and Optimizing SwiftUI Apps*](https://www.avanderlee.com/swiftui/iphone-duo-simulator/)
 (SwiftLee, September 22, 2026) — a walkthrough of the talks' APIs and of the
 simulator.
-Two things in it are not in Apple's documentation, and `pose-test-matrix.md` says so
-where it uses them:
-holding ⌥ while clicking a pose button gives a hinge-angle slider,
-and Xcode › Settings › Components is where the iOS 27.1 runtime comes from.
+One thing in it is not in Apple's documentation, and `pose-test-matrix.md` says so
+where it uses it:
+holding ⌥ while clicking a pose button gives a hinge-angle slider.
+Its pointer to Xcode › Settings › Components for the iOS 27.1 runtime is cited from
+Apple's *Downloading and installing additional Xcode components* instead.
 Its list of what needs a device —
 camera handoff, direction-aware camera selection, reachability in folded poses,
 haptics, performance and panel appearance —

@@ -23,7 +23,8 @@ cameras and fold sit: `device-geometry.md`.
   tested.
   If the device type is listed but no 27.1 runtime pairs with it,
   install the runtime from Xcode › Settings › Components,
-  or with `xcodebuild -downloadPlatform iOS -buildVersion 27.1`.
+  or with `xcodebuild -downloadPlatform iOS -buildVersion 27.1`
+  (Apple documentation › *Downloading and installing additional Xcode components*).
 - **Poses are Device Hub's on-screen controls, not a command.** `simctl` has no fold,
   pose or hinge subcommand, and an app launched with `simctl launch` comes up on the
   **outer** display. Opening, folding and rotating are done by hand in Device Hub, so
