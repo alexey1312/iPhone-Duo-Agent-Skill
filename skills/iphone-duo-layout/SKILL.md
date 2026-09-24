@@ -158,6 +158,12 @@ division regions.
   Without one: clear foreground/background relationship where partially covering
   scrollable content is fine → overlay; main/detail where neither may be obscured →
   split.
+  Not every two-column interface needs an arrangement:
+  a list → detail that is really navigation stays in `NavigationSplitView`,
+  which already adapts across displays.
+  An arrangement is for two views inside one destination.
+  (Follows from 111463 placing arrangements between navigation containers and
+  content, and from the rule below.)
 - **Don't** put navigation containers (e.g. `NavigationSplitView`) inside an
   arrangement, and don't put an arrangement inside `List`, `ScrollView` or any
   container that could make part of it unreachable.

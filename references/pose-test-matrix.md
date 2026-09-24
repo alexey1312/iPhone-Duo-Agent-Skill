@@ -21,10 +21,18 @@ cameras and fold sit: `device-geometry.md`.
   not pair with it. If `simctl list devicetypes` matches nothing, the installed Xcode
   cannot simulate iPhone Duo — say so in the report instead of claiming the pose was
   tested.
+  If the device type is listed but no 27.1 runtime pairs with it,
+  install the runtime from Xcode › Settings › Components,
+  or with `xcodebuild -downloadPlatform iOS -buildVersion 27.1`.
 - **Poses are Device Hub's on-screen controls, not a command.** `simctl` has no fold,
   pose or hinge subcommand, and an app launched with `simctl launch` comes up on the
   **outer** display. Opening, folding and rotating are done by hand in Device Hub, so
   every pose below P1–P2 is a manual step. Automate the launch, not the pose.
+  Hold ⌥ (Option) while clicking a pose button to get a slider for the exact hinge
+  angle, which is how to reach the angles in between for P5, P6 and anything driven
+  by `onHingeChange`.
+  (SwiftLee, 2026-09-22; Apple's *Interacting with your app in Device Hub* documents
+  ⌥-click only for the rotate button.)
 - **First launch can take several minutes** (Xcode 27.1 known issue 187708500). Wait
   it out; a slow first boot is not a broken runtime.
 - **What the simulator cannot do** — report these as *not run* with the radar number,
@@ -35,6 +43,12 @@ cameras and fold sit: `device-geometry.md`.
     Live Activities included, which is exactly how the StandBy check would otherwise
     be met. Verify the widget on another simulator or a device.
   - **No camera**, unchanged: anything camera-dependent is device-only.
+    That includes handing off between the outer, inner and rear cameras as the
+    device opens, closes or turns, and choosing a camera by the direction it faces
+    (P10, P13).
+  - **Nothing physical:** whether touch targets can be reached in a folded pose,
+    haptics, performance profiling, and how the UI really looks on the two panels
+    all need the device (P16).
 - **Mac Catalyst**: if the app ships a Catalyst target, check it still builds after
   adopting any 27.1 API. iOS 27.1 APIs do not compile for Catalyst (185924957,
   workaround `#if !targetEnvironment(macCatalyst)`), and a target on iOS 27.1 loses
@@ -63,8 +77,8 @@ cameras and fold sit: `device-geometry.md`.
 | P2 | Closed, outer display, landscape | Toolbar and tab bar overflow sooner; the right items stay visible; keyboard up makes it worse. |
 | P3 | Open flat, inner display, landscape | Regular × regular; vertical bars on the side; sidebar if opted in; content uses the width (no centered phone column); no layout keyed off orientation. |
 | P4 | Open flat, inner display, portrait | Bars horizontal — the one state where the system keeps horizontal bars (HIG); layout still uses size classes. |
-| P5 | Partially folded, book pose | Nothing important spans the fold; alerts, menus, popovers and sheets sit clear of it; split views split evenly; custom controls displaced with small adjustments, not rearranged. |
-| P6 | Partially folded, tabletop pose | Viewing content on top, interactive controls on the bottom where it applies. |
+| P5 | Partially folded, book pose | Nothing important spans the fold; alerts, menus, popovers and sheets sit clear of it; split views split evenly; custom controls displaced with small adjustments, not rearranged. Sweep the hinge angle with the ⌥ slider: hinge-driven effects follow the angle continuously, with no jumps. |
+| P6 | Partially folded, tabletop pose | Viewing content on top, interactive controls on the bottom where it applies. Sweep the angle here too. |
 | P7 | Transitions: close ↔ open, fold ↔ flat | State survives; no jump to root; no stale geometry cached from the previous display; hinge-driven effects reset when not partially open; games stay playable and fill each new shape (change the aspect ratio rather than letterbox). |
 | P8 | Split View multitasking on the inner display | Asymmetric safe areas handled; narrow widths collapse cleanly; the stacked video-plus-apps layout. |
 | P9 | Multiple windows (if the app supports scenes) | New window requests from the outer display fail gracefully; activation action hidden when unavailable. |
@@ -74,6 +88,7 @@ cameras and fold sit: `device-geometry.md`.
 | P13 | Camera direction changes (camera apps, device only) | Open and close while capturing: the preview keeps streaming from a forward-facing camera; the rear camera works as a selfie camera when the open device is turned around; mirroring follows the direction the camera faces, not its position; the preview and captured media stay upright after every switch (a new rotation coordinator per device); the virtual front camera falls back cleanly to the common feature set. |
 | P14 | StandBy on the outer display | A widget or Live Activity appears when the device is folded or tented. **Not verifiable in the iPhone Duo simulator** (187708663, 187708767): check the widget renders on another simulator, verify StandBy on a device, and report this pose as *not run*. |
 | P15 | Mac Catalyst build (only if the app ships one) | The Catalyst target still builds after adopting 27.1 APIs (185924957, 187046347). |
+| P16 | Physical checks (device only) | Touch targets reachable with one hand in book and tabletop poses; haptics fire where expected; Instruments shows no hitch across open, close and fold; colours, text and the fold look right on the real panels. Always *not run* on the simulator. |
 
 ## Reporting
 
