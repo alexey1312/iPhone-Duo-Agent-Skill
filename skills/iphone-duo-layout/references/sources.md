@@ -235,3 +235,20 @@ observation. Every fact it contributes to these skills is re-attributed to the A
 artifact it rests on (tech specs, App Store Connect, the talks, TN3192); what remains
 inference is labelled so in `device-geometry.md`. Do not cite the post itself in a
 recommendation.
+
+Antoine van der Lee, [*iPhone Duo Simulator: Testing and Optimizing SwiftUI Apps*](https://www.avanderlee.com/swiftui/iphone-duo-simulator/)
+(SwiftLee, September 22, 2026) — a walkthrough of the talks' APIs and of the
+simulator.
+One thing in it is not in Apple's documentation, and `pose-test-matrix.md` says so
+where it uses it:
+holding ⌥ while clicking a pose button gives a hinge-angle slider.
+Its pointer to Xcode › Settings › Components for the iOS 27.1 runtime is cited from
+Apple's *Downloading and installing additional Xcode components* instead.
+Its list of what needs a device —
+camera handoff, direction-aware camera selection, reachability in folded poses,
+haptics, performance and panel appearance —
+is the basis of P16.
+It also notes that the author's *SwiftUI Agent Skill* 5.1.0 now covers resizable
+layouts, reserved regions, arrangements, hinge effects and vertical toolbars:
+a neighbouring skill, not a source.
+Everything else in the post is already cited here from the talks.
