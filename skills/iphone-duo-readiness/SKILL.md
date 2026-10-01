@@ -36,7 +36,9 @@ gate and the final report; the specialists own the details.
   (`references/api-availability.md`).
 - **Cite a session and timestamp for every item** (`references/sources.md`).
 - **Report verification honestly.** A green build proves it compiles. Only a pose
-  run in Device Hub (or a device) proves layout, and only for the poses actually run.
+  run on the iPhone Duo simulator — set in Device Hub, or from a script with the
+  third-party `hinge` CLI (`references/pose-test-matrix.md`) — or on a device proves
+  layout, and only for the poses actually run.
 
 ## Phase 1 — Recommend
 
@@ -135,6 +137,10 @@ instead of an arrangement), and keep the blocked change as a plan item.
 4. Re-run `duo_scan.py`; confirm resolved findings are gone and nothing new appeared.
 5. Run the pose matrix (`references/pose-test-matrix.md`) for the screens touched, if
    an iPhone Duo simulator exists. Otherwise list the poses as *not run* and why.
+   With the third-party `hinge` CLI installed, `scripts/duo_pose.py shoot <dir>
+   --relaunch <bundle id>` covers closed, book and flat (P1, P5, P3) with a
+   screenshot of each display; ask before running it, since it moves the
+   simulator's hinge. Portrait and tabletop need Device Hub's rotate control.
 6. Update each item's status and hand back the report.
 
 ## Guardrails

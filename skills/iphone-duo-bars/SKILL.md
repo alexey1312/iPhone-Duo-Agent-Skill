@@ -130,3 +130,5 @@ ship now and improves bars on every iPhone.
 Pose matrix P1 (outer display: side controls), P2 (outer display landscape, keyboard
 up), P3 (inner landscape: vertical bar), P4 (inner portrait: horizontal), P11 (right-to-left), P12 (Reduce Transparency)
 from `references/pose-test-matrix.md`. Check which items overflow and in what order.
+`scripts/duo_pose.py shoot <dir> --poses closed,flat` captures P1 and P3 with both
+displays (third-party `hinge` CLI; ask first); P2 and P4 need rotation in Device Hub.

@@ -27,6 +27,31 @@ struct InstrumentView: View {
 }
 ```
 
+Pausing, and switching on the status — 27.1 (SDK; typechecked against Xcode 27.1).
+`DeviceHinge.Status` is a struct with static members rather than an enum, so the
+`switch` needs `default`:
+
+```swift
+struct HingeMeter: View {
+    @State private var isRecording = true
+    @State private var posture = "unknown"
+
+    var body: some View {
+        Text(posture)
+            // Called with the initial state first; updates while disabled are dropped.
+            .onHingeChange(isEnabled: isRecording) { _, context in
+                guard let hinge = context.hinge else { posture = "no hinge"; return }
+                switch hinge.status {
+                case .closed: posture = "closed"
+                case .partiallyOpen: posture = "partially open"
+                case .fullyOpen: posture = "fully open"
+                default: posture = "unknown"
+                }
+            }
+    }
+}
+```
+
 UIKit — reproduced from the `UIHingeInteraction` documentation (27.1). The angle is in
 radians; a `nil` hinge means the view left a hierarchy that provides hinge updates
 (or the device has none):

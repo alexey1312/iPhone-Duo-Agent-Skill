@@ -37,7 +37,25 @@ camera can do: `references/device-geometry.md`.
   a continuous angle (`UIHinge.angle` is in radians; the SwiftUI sample uses `Angle`).
 - `context.hinge == nil` (UIKit: `update.hinge == nil`) means the device has no hinge
   or the view left a hierarchy that provides hinge updates: every hinge feature must
-  degrade to nothing on other devices. `UIHingeInteraction.isEnabled` pauses updates.
+  degrade to nothing on other devices.
+- The action runs once with the initial state, then on every update and whenever the
+  view moves between hierarchies (UIKit header, `initWithUpdateHandler:`). On that
+  first call `oldContext.hinge` is `nil` (*Booted*, outer display: `nil` → closed at
+  0°), so set up from the new context instead of waiting for a change.
+- Pause with `onHingeChange(isEnabled:)` / `UIHingeInteraction.isEnabled`. Updates
+  while disabled are dropped, not queued; re-enabling delivers the current state
+  (UIKit header, `isEnabled`).
+- **Prefer `status` when the posture is all you need.** The rate and granularity of
+  angle updates are system policy and change with system state (UIKit header,
+  `UIHinge.angle`), and the status is the system's own reading of the angle *and*
+  the device orientation (`DeviceHinge` documentation) — don't re-derive it from
+  angle thresholds. `DeviceHinge.Status` is a struct with static members, not an
+  enum, so a `switch` over it needs `default` (SDK). The simulator shows why
+  (*Booted*, `references/device-geometry.md`): it reported *partially open* at
+  174°, *fully open* only at 180°, and *closed* already at 19°.
+- **A call is not a change.** On the simulator the action often ran with an old and
+  a new context that were equal, several times per step. Compare before doing
+  anything costly — a sound, a haptic, an animation (*Booted*).
 - Filter for `.partiallyOpen` when reading the angle, and **reset in the else branch**
   so the effect does not stick when the device opens flat or closes.
 - **Hinge data drives interactions and effects, not layout.** Layout uses arrangements
@@ -177,6 +195,9 @@ adoption. The Dynamic Island on the side stack expands vertically for Live Activ
 3. Recommend with `references/recommendation-format.md`; mark 27.1 APIs *blocked* when
    the SDK lacks them; apply after approval; build.
 4. Verify poses P7, P8, P9, P10 and P13 in `references/pose-test-matrix.md`.
+   For hinge-driven effects, `scripts/duo_pose.py set <degrees>` (or `hinge -d <udid>
+   sweep`) moves the simulator's hinge while the app runs — third-party `hinge` CLI;
+   ask first. Expect repeated calls with equal contexts and a smoothed angle.
 
 ## Guardrails
 

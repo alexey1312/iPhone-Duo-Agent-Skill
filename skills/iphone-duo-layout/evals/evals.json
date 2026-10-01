@@ -37,6 +37,114 @@
         "Classifies ArrangementView, its modifiers and reservedRegions against the installed SDK: blocked on an iOS 27.0 SDK, available on an iOS 27.1 SDK. When they are blocked, offers the size-class or GeometryReader fallback that compiles today.",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 3,
+      "name": "arrangement-environment-at-root",
+      "prompt": "In our audio notes app (evals/files/AudioNotes) the Up Next list never collapses on the iPhone Duo simulator, even when it clearly floats over the player, and DetailsView keeps its HStack layout even when the two panes sit side by side on the open inner display. Both read the environment values exactly as Apple's samples do. What is wrong, and what should change? Plan only.",
+      "expected_output": "A plan that traces both symptoms to reading overlayArrangementZIndex and splitArrangementAxis in the view written directly in the ArrangementView closure, which reads the defaults (0 and nil); moves each read one view down (or wraps the root in a container); keeps the overlay with the Up Next list as the collapsible foreground primary; labels the behavior as measured on the simulator rather than documented; and leaves the hinge out of the layout.",
+      "files": [
+        "evals/files/AudioNotes"
+      ],
+      "expectations": [
+        "Identifies that UpNextView and DetailsView are the root views of the ArrangementView's primary and secondary closures and that a root view reads the environment's defaults there — overlayArrangementZIndex 0 and splitArrangementAxis nil — while views nested inside them read the arrangement's values.",
+        "Labels that behavior as measured on the iPhone Duo simulator (Xcode 27.1, the layout skill or the repository's arrangement probe), not as documented API behavior, and notes that Apple's own samples read the values at the root.",
+        "Proposes moving each read one view down — a child view that owns the @Environment property, or the root wrapped in a container such as VStack — and states that adding a modifier to the root view is not enough.",
+        "Keeps the overlay arrangement with the Up Next list as the primary, which is the foreground and reads a z-index above 0 while it floats over the player, so collapsing it on zIndex > 0 stays correct once the value is read one view down (111463, 13:44–14:17).",
+        "Does not replace the arrangement or its environment values with hinge-angle-driven layout (hinge data is for interactions and effects, 111464 2:35).",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "fold-off-centre-grid",
+      "prompt": "Following Apple's advice, our photo wall (evals/files/PhotoWall) switches to an even number of columns whenever the iPhone Duo reports a vertical fold. On the open inner display in landscape the fold still runs straight through a column of photos. Why, and what should the grid do instead? Plan only.",
+      "expected_output": "A plan that explains the fold is in the middle of the display but not of the safe area, so a symmetric even grid misses it, and lays the grid out against the division region's frame instead.",
+      "files": [
+        "evals/files/PhotoWall"
+      ],
+      "expectations": [
+        "Explains that the fold sits in the middle of the display, not of the safe-area content area: in landscape the vertical bar's trailing inset (84 pt, measured on the simulator) makes the reader asymmetric, so the middle gutter of a symmetric even-column grid lands beside the fold rather than on it (about 42 pt to the leading side).",
+        "Proposes laying the grid out against the division region's own frame — content either side of frame.minX / frame.maxX, the frame including its margins — rather than relying on the column count, keeping outer margins (Tech Talk 111463 around 5:50, or the HIG's grid guidance).",
+        "Keeps reading the region from the GeometryProxy on every layout (inactive regions included, so the layout holds flat and folded) and treats its frame as being in the proxy's own coordinate space.",
+        "Does not drive the grid from the hinge angle, the device model or the interface orientation.",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "fold-width-flat-check",
+      "prompt": "Our floating Record button (evals/files/VoiceMemo) is supposed to step off the crease only while the iPhone Duo is half folded. It now sits off-centre even when the phone is lying flat open. Plan a fix, don't edit.",
+      "expected_output": "A plan that traces the bug to testing frame.width > 0 on a region queried with .includeInactive, explains the frame includes its margins and is 40 pt in both states, and switches to isActive or the default active-only query.",
+      "files": [
+        "evals/files/VoiceMemo"
+      ],
+      "expectations": [
+        "Identifies the cause: the code queries with .includeInactive and treats frame.width > 0 as 'folded', but a division region's frame includes its margins, so it is about 40 pt wide whether the device is flat or folded (measured on the simulator); the talk's 'width of zero' describes the fold line, not frame.",
+        "Fixes it by testing isActive, or by dropping .includeInactive so only active regions come back (Tech Talk 111463 around 7:13–7:45).",
+        "Keeps .includeInactive only for high-level decisions such as grid column counts, not for displacing a control.",
+        "Does not replace the reserved-region query with hinge-angle logic.",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 6,
+      "name": "outer-lens-first-region",
+      "prompt": "While a broadcast is live we draw a small red dot beside the camera hole on the iPhone Duo's outer display (evals/files/LiveDot). On the simulator the dot lands in the wrong place — not next to the lens. What is wrong? Plan only.",
+      "expected_output": "A plan that names both bugs: .first among two outer-display occlusion regions, and a frame read in a different coordinate space from the one the dot is positioned in.",
+      "files": [
+        "evals/files/LiveDot"
+      ],
+      "expectations": [
+        "States that the closed device's outer display reports two active occlusion regions — the 37 × 37 camera hole and an 84 × 170 strip for the status bar and Dynamic Island — and that their order is undocumented, so .first is luck; picks the lens by a meaningful property such as the smallest area.",
+        "Explains that region frames are in the coordinate space of the GeometryProxy that queried them: the reader sits inside .padding(16) while the dot is positioned in the outer overlay's space, so the dot is shifted — query in the same space you position in, or convert.",
+        "Labels the two-region fact as measured on the simulator rather than documented by Apple.",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "overlay-side-in-book-pose",
+      "prompt": "In our map search (evals/files/MapSearch) the results panel floats over the map, as intended. When the iPhone Duo is folded like a book, the results move to the right of the fold and the map to the left. Our designer wants the results on the left, next to the search field. What do we change? Plan only.",
+      "expected_output": "A plan that adds overlayArrangementEdge(.leading) to the primary results panel and explains the default side.",
+      "files": [
+        "evals/files/MapSearch"
+      ],
+      "expectations": [
+        "Explains that in book pose the overlay arrangement goes side by side and by default puts the primary view (the results) on the trailing side of the fold and the secondary (the map) on the leading side (Preparing your app for iPhone Duo › Arrange views; also measured on the simulator).",
+        "Proposes .overlayArrangementEdge(.leading) on the primary view — the results panel inside the primary closure — not on the ArrangementView or on the map.",
+        "Keeps the overlay arrangement and the NavigationStack around it as they are; does not replace them with hinge-angle checks or a hand-made HStack.",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 8,
+      "name": "split-ratio-in-book-pose",
+      "prompt": "Our notes editor (evals/files/NotesSplit) gives the outline 30% of the width with splitArrangementLayoutRatio. On the open iPhone Duo that works, but folded like a book the outline suddenly takes the whole left half. Is our ratio broken? Plan only.",
+      "expected_output": "A plan that explains the split puts its divider on the fold in book pose, overriding the ratio, and advises not forcing a 30% split across the crease.",
+      "files": [
+        "evals/files/NotesSplit"
+      ],
+      "expectations": [
+        "Explains that in book pose the split arrangement moves its divider onto the fold even against a layout ratio, leaving the fold's band empty between the panes — the arrangement working as designed, not a broken ratio (Preparing your app for iPhone Duo › Arrange views, 'adjusted around the folding region'; measured on the simulator).",
+        "Advises against forcing the 30% split while folded, because content would then straddle the crease (Tech Talk 111463 around 1:29–2:00), and suggests adapting the outline's content to the wider pane instead.",
+        "Does not propose computing the ratio from the hinge angle or from the fold's position.",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 9,
+      "name": "hidden-secondary-still-laid-out",
+      "prompt": "On the closed iPhone Duo our episode screen (evals/files/Episode) shows only the player — fine, we limited the split to horizontal. But our 'transcript_viewed' analytics event fires on every launch on the outer display, where nobody can see the transcript. Why? Plan only.",
+      "expected_output": "A plan that explains the hidden secondary is still laid out at full size, so its geometry callback fires, and moves the analytics to a real visibility signal.",
+      "files": [
+        "evals/files/Episode"
+      ],
+      "expectations": [
+        "Explains that a split that cannot split along its allowed axis shows only the primary view (Tech Talk 111463 around 12:44), but the hidden secondary stays in the hierarchy and is laid out at full size, so its onGeometryChange fires with a large height (measured on the simulator).",
+        "Recommends not inferring visibility from a pane's geometry, and proposes a different signal — for example reading splitArrangementAxis one view down (nil for the hidden pane on the simulator), the UIKit arrangement state's isHidden, or an explicit user action — labelling any simulator-measured behaviour as such.",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }

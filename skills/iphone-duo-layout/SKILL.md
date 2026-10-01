@@ -112,13 +112,27 @@ poses, drawing mockups: `references/device-geometry.md` (never a layout input).
 
 - `reservedRegions(kind: .division)` on a `GeometryProxy` (via `GeometryReader` or
   `onGeometryChange`) or on a `UIView`; use each region's `frame`.
-- The fold is a **division** region: active only when folded, zero width when flat.
+- The fold is a **division** region: active only while the device is partially
+  folded; flat, it is inactive and, in the talk's words, has a width of zero (7:32).
   `options: .includeInactive` returns it anyway — use that for high-level decisions
   such as preferring an even number of grid columns.
-- **Occlusion** regions represent the FaceTime camera. The inner camera's region
-  exists only while the camera is active (the UI moves aside); the outer camera's is
-  always present and expands into the Dynamic Island for Live Activities. (HIG ›
-  Reserved regions)
+  Decide with `isActive`, or with the default active-only query, never with
+  `frame.width`: the zero width is the fold line, while `frame` includes 20 pt of
+  margin each side and measures 40 pt flat and folded alike (*Booted*,
+  `references/device-geometry.md`).
+- In landscape the fold is the middle of the display, not of the safe area: the
+  84 pt trailing inset leaves 455.5 pt before the fold's frame and 371.5 pt after
+  it. Anything centred in the safe area misses the crease by 42 pt — place against
+  the region's frame, not against the middle (*Booted*).
+- Tell book pose from tabletop by the shape of the active division —
+  a vertical band is book, a horizontal one tabletop —
+  not by the hinge (`references/layout-code.md` › Pose from the fold).
+- **Occlusion** regions represent the FaceTime camera. The inner camera's region is
+  active only while the camera is (the UI moves aside) and inactive otherwise, so
+  `.includeInactive` returns it even then (8:12; HIG › Reserved regions). The outer
+  camera's is always active and expands into the Dynamic Island for Live Activities.
+  On the outer display the same query also returns the bar strip beside it,
+  both with zero margins (*Booted*, `references/device-geometry.md`).
 - Each region carries `frame` (already including `margins`, the extra room
   interactive content keeps), `isActive`, `kind` and `id`;
   `reservedRegions(kind:options:layoutDirectionBehavior:)` returns every region that
@@ -141,19 +155,49 @@ division regions.
   `setViewController(_:for: .primary / .secondary)`.
 - **Split** (default): divides its bounds; horizontal when wider than tall, vertical
   when taller. `.split.axes(.horizontal)` restricts it; when it cannot split along its
-  allowed axis it shows only one view. UIKit: `updateArrangement(.split.axes(…))`.
-- **Overlay**: prefers content above or below, side by side when folded. Respond with
-  `overlayArrangementZIndex` (UIKit: `state(for:)?.zIndex`), e.g. collapse the
-  secondary view when it is on top.
+  allowed axis it shows only the primary view (12:44). UIKit:
+  `updateArrangement(.split.axes(…))`.
+  The hidden secondary stays in the hierarchy and is still laid out at full size —
+  its `onGeometryChange` fires — so never read visibility from its geometry
+  (*Booted*: `.split.axes(.horizontal)` on the portrait outer display).
+  In book pose the split moves its divider onto the fold, even against a
+  `splitArrangementLayoutRatio`, and leaves the fold's 40 pt frame empty between
+  the panes (*Booted*: 0.3 flat → 455.5 | 371.5 pt folded).
+- **Overlay**: layers the views while no division is active, side by side when
+  partially folded. The **primary** is the foreground: layered, it reads
+  `overlayArrangementZIndex` 1 against the secondary's 0 and sits at the top leading
+  corner at its own size (*Booted*, outer display). Respond to the z-index (UIKit:
+  `state(for:)?.zIndex`): the talk makes its collapsible Up Next list the primary
+  and collapses it while it floats over the player (13:44–14:17); the HIG also lets
+  you collapse the secondary when it should not appear. `.overlay.axes(_:)` limits
+  the axes it may go side by side along (SDK; UIKit `UIOverlayArrangement.axes`).
+  Folded like a book, the primary takes the trailing side of the fold and the
+  secondary the leading side, both at z-index 0, unless `overlayArrangementEdge`
+  says otherwise (*Booted*; *Preparing your app for iPhone Duo* › Arrange views).
+- **Both styles start from the unfolded layout.** Reserved regions arrive a few
+  layout passes late, so an app launched folded first lays out layered or evenly
+  split and only then moves to the fold (*Booted*). Code that samples the first
+  layout — an `onAppear` measurement — sees the unfolded one.
+- **Read the arrangement's environment one view down.** The view written directly in
+  the `primary` or `secondary` closure reads the defaults — `overlayArrangementZIndex`
+  0, `splitArrangementAxis` `nil` — whatever modifiers it carries; a view nested
+  inside it, or the same view wrapped in a `VStack`, reads the real values. Apple's
+  own samples (the talk's `UpNextView`, the documentation's `DetailsView`) read at
+  that root, so copied as they are they never collapse or re-lay out.
+  (*Booted*, Xcode 27.1 (27A9269), outer display, the repository's
+  `arrangement_probe.swift`; the fix is in `references/layout-code.md`.)
 - **Tuning** (Apple documentation › `ArrangementView`, `UIArrangementViewController`):
   `splitArrangementLayoutRatio(_:)` sizes a view by a fraction of the container
-  (the view with the highest `layoutPriority` is sized first, the rest fill),
-  `splitArrangementLayoutSize(minWidth:idealWidth:maxWidth:…)` by points; read
-  `splitArrangementAxis` from the environment to re-lay out a child for a horizontal
-  or vertical split. `overlayArrangementEdge(.trailing)` anchors an overlay's view
-  when the fold turns the layers into a side-by-side layout. UIKit:
-  `UISplitArrangement.DimensionRange`, `state(for:)` → `ViewState.isHidden` /
-  `splitAxis` / `zIndex`, `placement(for:)`, `updateArrangement(_:animated:)`.
+  (the view with the highest `layoutPriority` is sized first, the rest fill), or by
+  a range per axis with `splitArrangementLayoutRatio(minHorizontal:idealHorizontal:…)`;
+  `splitArrangementLayoutSize(minWidth:idealWidth:maxWidth:…)` sizes it by points,
+  and `splitArrangementFixedLayoutSize(horizontal:vertical:)` also exists (SDK).
+  Read `splitArrangementAxis` from the environment, one view down, to re-lay out a
+  child for a horizontal or vertical split. `overlayArrangementEdge(.trailing)`
+  anchors an overlay's view when the fold turns the layers into a side-by-side
+  layout. UIKit: `UISplitArrangement.DimensionRange`, `state(for:)` →
+  `ViewState.isHidden` / `splitAxis` / `zIndex`, `placement(for:)`,
+  `updateArrangement(_:animated:)`.
 - **Choosing:** an existing `HStack`/`VStack` pattern → split; `ZStack` → overlay.
   Without one: clear foreground/background relationship where partially covering
   scrollable content is fine → overlay; main/detail where neither may be obscured →
@@ -178,6 +222,9 @@ division regions.
 3. Recommend (`references/recommendation-format.md`), marking 27.1 APIs *blocked* when
    the SDK lacks them; apply after approval; build.
 4. Verify with poses P1, P3, P5, P6, P7 and P8 from `references/pose-test-matrix.md`.
+   `scripts/duo_pose.py shoot` reaches P1, P5 and P3 from a script (third-party
+   `hinge` CLI; ask first): look in the book-pose screenshot for anything that sits
+   on the fold. P6 needs rotation, which only Device Hub does.
 
 ## Hinge data is not a layout input
 

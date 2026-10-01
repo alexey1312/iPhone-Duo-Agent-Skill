@@ -86,7 +86,8 @@ than taken on trust:
 | `horizontalSizeClass` / `verticalSizeClass` | compact / regular |
 | `verticalBarEdge` | `.trailing` |
 | `reservedRegions(kind: .division)` | none — the device is closed |
-| `reservedRegions(kind: .occlusion)` | **two**: a 37 × 37 camera hole at (399.7, 29.3) and an 84 × 170 strip at (382, 0) for the status bar and Dynamic Island |
+| `reservedRegions(kind: .occlusion)` | **two**: a 37 × 37 camera hole at (399.7, 29.3) and an 84 × 170 strip at (382, 0) for the status bar and Dynamic Island; both active, both with **zero margins** (re-measured 2026-10-01) |
+| `onHingeChange`, first call | right after launch, before any change: `oldContext.hinge` **`nil`**, `newContext.hinge` closed at 0° (2026-10-01) |
 
 Three things about reserved regions that only a booted device settles, and that an
 earlier run of the probe got wrong by sampling `onAppear`:
@@ -110,6 +111,16 @@ earlier run of the probe got wrong by sampling `onAppear`:
   both insets are 0 on this display, so the probe could not tell it apart
   from no offset at all.
 
+A third-party catalog of the APIs,
+*iPhone Duo by Examples* (`sources.md` › Background reading),
+says the folded outer display reports no reserved regions at all.
+Its own Reserved Regions screen, launched on the outer display of this build
+and set to Occlusion (in a local build — `simctl` cannot tap),
+lists exactly the two above, with the same frames and zero margins —
+so the claim does not hold for an app that starts there.
+Nor for one that arrives there: the probe, launched open and folded to 0° while it
+ran, reports the same two regions once it lands on the outer display.
+
 This is the asymmetry the talks describe, with numbers:
 **84 pt on the trailing edge against 0 on the leading edge, and 0 on top.**
 The top inset is zero because the status bar is not at the top — it has moved to the
@@ -120,11 +131,61 @@ The 34 pt bottom inset is the home indicator.
 The 84 pt is the *system* region — the app under test had no bars of its own. An app
 with a toolbar or tab bar gets more, because its bars share that edge.
 
-> **The command line cannot change poses.** `simctl` has no fold, pose or hinge
-> subcommand, and an app launched with `simctl launch` comes up on the outer display.
-> Opening, folding and rotating are Device Hub's on-screen controls, so the inner
-> display and the folded poses are measured by hand, not scripted
-> (`pose-test-matrix.md`).
+> **`simctl` cannot change poses; a third-party CLI can.** `simctl` has no fold,
+> pose or hinge subcommand, and an app launched with `simctl launch` comes up on the
+> display in use — the outer one while the device is closed. Apple's
+> `xcrun devicectl device motion hinge-angle -d <udid>` *reads* the angle.
+> Setting it takes Device Hub's controls, or `hinge`
+> (`pose-test-matrix.md` › Tooling), which posts the same private event as
+> Device Hub's hinge slider. The inner-display numbers below were taken that way.
+> Rotation is still manual, so tabletop (pose 6) is not covered.
+
+### Inner display, measured
+
+*Booted* grade. The same probe, with the hinge set by `hinge`:
+open flat at 180° (P3) and folded like a book at 90° (P5),
+**inner display, landscape**, 2026-10-01, Xcode 27.1 (27A9269).
+
+| | Flat, 180° | Book, 90° |
+| --- | --- | --- |
+| `screen.bounds` | 951 × 669 pt | same |
+| Size inside the safe area | 867 × 635 pt | same |
+| `safeAreaInsets` | top 0, leading 0, bottom **34**, trailing **84** | same |
+| `horizontalSizeClass` / `verticalSizeClass` | regular / regular | same |
+| `verticalBarEdge` | `.trailing` | same |
+| `reservedRegions(kind: .division)` | one, **inactive**: frame (455.5, 0, **40 × 669**), margins leading **20** / trailing **20** | the same frame, **active** |
+| `reservedRegions(kind: .occlusion)` | the inner camera, **inactive**: 58 × 37 at (677.3, 21); the bar strip, active: 84 × 120 at (867, 0); all margins zero | same |
+| `onHingeChange`, first call | `nil` → fully open at 180° | `nil` → partially open at 90° |
+
+What that settles:
+
+- **The fold's `frame` is 40 pt in both states.**
+  The reserved rect inside it — the frame minus 20 pt of margin each side — is a
+  zero-width line at x = 475.5, the middle of the 951 pt display.
+  That is the "width of zero" the talk gives for the flat fold
+  (Tech Talk 111463, 7:32); `frame` includes the margins, so it never reads zero.
+  Flat and folded differ only in `isActive`, so test that and nothing else.
+- **The fold is not in the middle of the safe area.**
+  The 84 pt trailing inset leaves 455.5 pt of content area before the fold's frame
+  and 371.5 pt after it. A layout centred in the safe area — an even grid, a
+  50/50 split of the safe width — puts its middle 42 pt to the leading side
+  of the crease.
+- **The inner camera is reported while it is off**, as an inactive 58 × 37 region
+  (Tech Talk 111463, 8:12). The region is a pill, not the round 37 × 37 of the
+  outer camera.
+- **The bar strip shrinks to 84 × 120 pt** on the inner display, against 84 × 170
+  on the outer one.
+
+The simulator also shows how the system reports the hinge.
+Set to 175°, 178° and 179° by `hinge`, it reported 170.3°, 173.1° and 174.1°,
+all still *partially open*; only 180° reported *fully open*.
+Folding down, it reported *closed* already at 19.2° (between the requested 20° and
+15°), with the angle still above zero.
+Between changes the action often ran with an old and a new context that were
+equal — seven to ten times per step.
+These are the simulator's numbers, and the rate and granularity of angle updates
+are system policy (UIKit header, `UIHinge.angle`): read them as "status is the
+system's call and the angle is approximate", not as thresholds to code against.
 
 ### What the simulator reports
 
@@ -194,8 +255,9 @@ Bezel around the inner display ≈ 3.4 mm per side (derived: body minus active a
   controls on the side; its reserved region is always present and expands into the
   Dynamic Island for Live Activities. (HIG)
 - **Inner front camera:** behind the display, hidden until the camera is active; then
-  its region appears and the UI moves aside. (HIG; occlusion region, Tech Talk 111463
-  7:50)
+  its region becomes active and the UI moves aside. While the camera is off, the
+  region is still reported, as inactive. (HIG; occlusion region, Tech Talk 111463
+  7:50, 8:12)
 
 ### Where they are (read off the HIG illustrations, and confirmed by the simulator)
 
@@ -217,7 +279,8 @@ Bezel around the inner display ≈ 3.4 mm per side (derived: body minus active a
   ≈ 7 % of body width the illustrations suggest; the same near-miss of measures. The folding region is a vertical band at the centre,
   ≈ 2.8 % of the display width (≈ 4 mm, derived from that estimate). The inner camera,
   drawn only when active, sits in the **right half**, centre ≈ (70 % W, 8 % H),
-  diameter ≈ 3.5 % of the width.
+  diameter ≈ 3.5 % of the width. The simulator's occlusion region puts it at
+  (74 % W, 6 % H), 58 × 37 pt (*Booted*, `Inner display, measured`).
 - **It opens like a book.** Put those together: the outer display is on the back of
   the **left** half, the inner camera is in the **right** half. (Diagram + derived)
 

@@ -25,19 +25,58 @@
     },
     {
       "id": 2,
-      "name": "missing-27-1-sdk",
+      "name": "apply-with-installed-sdk",
       "prompt": "In evals/files/PodcastPlayer, turn the player + queue HStack into an ArrangementView and give the queue toggle a horizontal-only axisBehavior so it stays put on iPhone Duo. Just do it, I'm using the Xcode that's installed on this Mac.",
-      "expected_output": "The agent checks the installed SDK, finds ArrangementView and axisBehavior absent, does not write code that cannot compile, explains why #available does not help, and offers work that compiles today.",
+      "expected_output": "The agent checks the installed SDK, finds the iOS 27.1 SDK (Xcode 27.1), applies ArrangementView and axisBehavior(.horizontalOnly) behind iOS 27.1 availability gates, and typechecks the result.",
       "files": [
         "evals/files/PodcastPlayer"
       ],
       "expectations": [
         "The agent verified against the installed SDK (ran sdk_api_check.py, grepped the SDK, or compiled a probe) and reports the Xcode and SDK version it found, rather than assuming one.",
-        "The response states whether ArrangementView and axisBehavior are declared in the installed SDK, and is right: both require the iOS 27.1 SDK.",
-        "No file in the project copy contains ArrangementView or axisBehavior after the run.",
-        "The response explains that an #available check cannot make an undeclared symbol compile.",
-        "The response does not propose shipping guessed 27.1 API calls behind a compile-time guard (#if compiler, #if canImport, custom flag).",
-        "The response offers or applies at least one concrete change that compiles today (e.g. size-class driven layout for the player/queue, titles/symbols on bar items, visibilityPriority)."
+        "The response says correctly that the installed iOS 27.1 SDK (Xcode 27.1 on this machine) declares both ArrangementView and axisBehavior.",
+        "PlayerScreen.swift now uses an ArrangementView for the player and queue and gives the queue toggle .axisBehavior(.horizontalOnly), each behind an iOS 27.1 availability gate (if #available or an availability-gated modifier), because the project does not deploy to iOS 27.1 only.",
+        "The calls are not hidden behind compile-time guards such as #if compiler, #if canImport or a custom flag.",
+        "The edited file typechecks against the installed SDK (swiftc -typecheck or a build in the transcript), or the response says why it could not."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "scripted-pose-testing",
+      "prompt": "We want our CI agent to take screenshots of our app in book pose and lying flat on the iPhone Duo simulator, unattended. simctl doesn't seem to have a fold command. Is there any way to do it, and what can't be automated? There's no project to look at — just answer.",
+      "expected_output": "An answer that says Apple ships no pose command, devicectl reads the angle, the third-party hinge CLI (or the duo_pose.py wrapper) sets it, rotation stays manual, and screenshots must name the display.",
+      "files": [],
+      "expectations": [
+        "States that Apple ships no command that sets the pose — simctl has no fold, pose or hinge subcommand — and that xcrun devicectl device motion hinge-angle reads the angle.",
+        "Points to the third-party hinge CLI (artemnovichkov/hinge) — directly or through the skill's duo_pose.py wrapper — which sets the angle by posting Device Hub's hinge-slider event inside the simulator, and flags that it relies on a private, undocumented protocol that may break with any Xcode and that the simulator must be named explicitly (-d / --device) because hinge otherwise acts on the first booted simulator.",
+        "States that rotation has no command, so inner-display portrait and tabletop stay manual, and that those poses must be reported as not run rather than passed.",
+        "Says screenshots must name the display — --display=1 for the outer display, --display=3 for the inner — because simctl's default display is not stable, and that the display not in use comes back black."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "black-screenshot",
+      "prompt": "After xcrun simctl launch booted com.acme.trips on the iPhone Duo simulator, xcrun simctl io booted screenshot shot.png gives an all-black 2007 × 2853 image. The app is definitely running. What's going on?",
+      "expected_output": "An answer that the app is on the outer display of a closed device while the screenshot took the inner one; name the display with --display=1 (outer) or --display=3 (inner).",
+      "files": [],
+      "expectations": [
+        "Explains that 2007 × 2853 is the inner display, which is black while the closed device shows the app on the outer display, so the screenshot captured the wrong display — simctl's default display is not a reliable choice.",
+        "Gives the fix: name the display — xcrun simctl io <device> screenshot --display=1 for the outer display (1398 × 2034), --display=3 for the inner — or open the device first so the app moves to the inner display.",
+        "Names the screenshot's display as the cause, rather than an app rendering, timing or launch problem."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "mac-host-tests-hinge",
+      "prompt": "Our UI package (evals/files/FoldKit) builds for iOS and for macOS so we can run unit tests on the Mac host. After adding onHingeChange behind if #available(iOS 27.1, *), the iOS build is fine but swift build on the Mac fails with \"value of type 'FoldMeter.Content' has no member 'onHingeChange'\". We're on Xcode 27.1. Why, and what's the minimal fix? Go ahead and fix it.",
+      "expected_output": "A fix that adds a compile-time platform gate around the hinge code, explaining that Xcode 27.1 ships the macOS 27.0 SDK, which does not declare the API, so #available cannot help.",
+      "files": [
+        "evals/files/FoldKit"
+      ],
+      "expectations": [
+        "Explains that Xcode 27.1 ships the macOS 27.0 SDK (xcrun --sdk macosx --show-sdk-version reports 27.0), which does not declare onHingeChange at all, so a runtime #available check cannot help — the declaration has to exist for the code to compile.",
+        "Adds a compile-time platform gate around the hinge code in FoldMeter.swift — #if os(iOS), or one that also keeps tvOS and visionOS — while keeping the runtime if #available(iOS 27.1, *) check for the iOS deployment target.",
+        "Frames it as a toolchain gap rather than a permanent rule: the API is annotated for macOS 27.1 as well, so the gate can be revisited when a macOS 27.1 SDK ships.",
+        "The compile-time gate is a platform condition (#if os(...)) rather than #if compiler(...) or #if canImport(...), and the hinge behaviour is kept on iOS."
       ]
     }
   ]
