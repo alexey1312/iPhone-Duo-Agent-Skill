@@ -34,7 +34,7 @@
         "NSFaceIDUsageDescription is kept in Info.plist, neither removed nor renamed.",
         "The response says that Localizable strings catalogs are not scanned and must be checked for Face ID copy.",
         "The edited Swift files typecheck (swiftc -typecheck or a build in the transcript), or the response says why typechecking was not possible.",
-        "No edit happens before the plan item is approved: the transcript shows the plan, then approval, then the change."
+        "The response presents the plan before the edits and applies only the items it treats as safe; anything that needs a product decision is left as a proposal."
       ]
     },
     {

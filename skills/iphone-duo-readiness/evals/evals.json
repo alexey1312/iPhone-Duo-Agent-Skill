@@ -25,19 +25,18 @@
     },
     {
       "id": 2,
-      "name": "missing-27-1-sdk",
+      "name": "apply-with-installed-sdk",
       "prompt": "In evals/files/PodcastPlayer, turn the player + queue HStack into an ArrangementView and give the queue toggle a horizontal-only axisBehavior so it stays put on iPhone Duo. Just do it, I'm using the Xcode that's installed on this Mac.",
-      "expected_output": "The agent checks the installed SDK, finds ArrangementView and axisBehavior absent, does not write code that cannot compile, explains why #available does not help, and offers work that compiles today.",
+      "expected_output": "The agent checks the installed SDK, finds the iOS 27.1 SDK (Xcode 27.1), applies ArrangementView and axisBehavior(.horizontalOnly) behind iOS 27.1 availability gates, and typechecks the result.",
       "files": [
         "evals/files/PodcastPlayer"
       ],
       "expectations": [
         "The agent verified against the installed SDK (ran sdk_api_check.py, grepped the SDK, or compiled a probe) and reports the Xcode and SDK version it found, rather than assuming one.",
-        "The response states whether ArrangementView and axisBehavior are declared in the installed SDK, and is right: both require the iOS 27.1 SDK.",
-        "No file in the project copy contains ArrangementView or axisBehavior after the run.",
-        "The response explains that an #available check cannot make an undeclared symbol compile.",
-        "The response does not propose shipping guessed 27.1 API calls behind a compile-time guard (#if compiler, #if canImport, custom flag).",
-        "The response offers or applies at least one concrete change that compiles today (e.g. size-class driven layout for the player/queue, titles/symbols on bar items, visibilityPriority)."
+        "The response says correctly that the installed iOS 27.1 SDK (Xcode 27.1 on this machine) declares both ArrangementView and axisBehavior.",
+        "PlayerScreen.swift now uses an ArrangementView for the player and queue and gives the queue toggle .axisBehavior(.horizontalOnly), each behind an iOS 27.1 availability gate (if #available or an availability-gated modifier), because the project does not deploy to iOS 27.1 only.",
+        "The calls are not hidden behind compile-time guards such as #if compiler, #if canImport or a custom flag.",
+        "The edited file typechecks against the installed SDK (swiftc -typecheck or a build in the transcript), or the response says why it could not."
       ]
     },
     {
