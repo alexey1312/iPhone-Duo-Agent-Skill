@@ -94,5 +94,9 @@
   {
     "query": "switch between HStack and VStack with AnyLayout when Dynamic Type gets large, iOS 17",
     "should_trigger": false
+  },
+  {
+    "query": "overlayArrangementZIndex is always 0 in my Up Next view inside an ArrangementView on the iPhone Duo simulator — why doesn't it change?",
+    "should_trigger": true
   }
 ]

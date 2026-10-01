@@ -52,6 +52,20 @@ struct OverlayArrangement: View {
     }
 }
 
+// --- Arrangements: tuning and the overlay's axes (2026-10-01) ---
+struct ArrangementTuning: View {
+    var body: some View {
+        ArrangementView {
+            Color.red
+                .splitArrangementLayoutRatio(minHorizontal: 0.25, idealHorizontal: 0.3, maxHorizontal: 0.4)
+                .splitArrangementFixedLayoutSize(horizontal: true, vertical: false)
+        } secondary: {
+            Color.blue.overlayArrangementEdge(HorizontalEdge.trailing)
+        }
+        .arrangementViewStyle(.overlay.axes(.horizontal))
+    }
+}
+
 // --- Arrangements: UIKit ---
 @MainActor func uikitArrangement() {
     let vc = UIArrangementViewController()
@@ -70,6 +84,21 @@ struct HingeView: View {
         Color.clear.onHingeChange { _, new in
             guard let hinge = new.hinge, hinge.status == .partiallyOpen else { return }
             angle = hinge.angle
+        }
+    }
+}
+
+// --- Hinge: SwiftUI, paused, with a status switch (2026-10-01) ---
+struct HingeStatusView: View {
+    @State private var isEnabled = true
+    @State private var label = ""
+    var body: some View {
+        Text(label).onHingeChange(isEnabled: isEnabled) { _, new in
+            guard let hinge = new.hinge else { return }
+            switch hinge.status {                   // a struct, not an enum: `default` is required
+            case .closed, .partiallyOpen, .fullyOpen: label = "known"
+            default: label = "unknown"
+            }
         }
     }
 }

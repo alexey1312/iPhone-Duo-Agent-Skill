@@ -295,6 +295,16 @@ xcrun --sdk iphonesimulator swiftc -typecheck -target arm64-apple-ios18.0-simula
 Both probes are committed under [`scripts/probes/`](../scripts/probes/README.md)
 with the commands that ran them.
 
+Added on 2026-10-01, same toolchain, same command:
+`onHingeChange(isEnabled:_:)` with a `switch` over `DeviceHinge.Status` —
+a struct with static members, not an enum, so the `switch` needs `default` —
+`.overlay.axes(_:)`, which the talks never show but the SDK declares
+(UIKit: `UIOverlayArrangement.axes`, "the supported axes of the arrangement"),
+`splitArrangementLayoutRatio(minHorizontal:idealHorizontal:maxHorizontal:…)`,
+`splitArrangementFixedLayoutSize(horizontal:vertical:)`,
+and the new layout samples (pose from the fold, even columns,
+the z-index read one view down).
+
 Not verified: the two Mac Catalyst known issues above are reported as Apple's, by
 radar number. A bare `swiftc -target arm64-apple-ios27.1-macabi` did not resolve
 SwiftUI at all here, so it is not a reproduction and is not presented as one.

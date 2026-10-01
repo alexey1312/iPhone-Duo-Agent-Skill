@@ -37,7 +37,20 @@ camera can do: `references/device-geometry.md`.
   a continuous angle (`UIHinge.angle` is in radians; the SwiftUI sample uses `Angle`).
 - `context.hinge == nil` (UIKit: `update.hinge == nil`) means the device has no hinge
   or the view left a hierarchy that provides hinge updates: every hinge feature must
-  degrade to nothing on other devices. `UIHingeInteraction.isEnabled` pauses updates.
+  degrade to nothing on other devices.
+- The action runs once with the initial state, then on every update and whenever the
+  view moves between hierarchies (UIKit header, `initWithUpdateHandler:`). On that
+  first call `oldContext.hinge` is `nil` (*Booted*, outer display: `nil` → closed at
+  0°), so set up from the new context instead of waiting for a change.
+- Pause with `onHingeChange(isEnabled:)` / `UIHingeInteraction.isEnabled`. Updates
+  while disabled are dropped, not queued; re-enabling delivers the current state
+  (UIKit header, `isEnabled`).
+- **Prefer `status` when the posture is all you need.** The rate and granularity of
+  angle updates are system policy and change with system state (UIKit header,
+  `UIHinge.angle`), and the status is the system's own reading of the angle *and*
+  the device orientation (`DeviceHinge` documentation) — don't re-derive it from
+  angle thresholds. `DeviceHinge.Status` is a struct with static members, not an
+  enum, so a `switch` over it needs `default` (SDK).
 - Filter for `.partiallyOpen` when reading the angle, and **reset in the else branch**
   so the effect does not stick when the device opens flat or closes.
 - **Hinge data drives interactions and effects, not layout.** Layout uses arrangements

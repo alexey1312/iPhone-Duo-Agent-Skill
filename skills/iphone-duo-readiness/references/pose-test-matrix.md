@@ -34,6 +34,14 @@ cameras and fold sit: `device-geometry.md`.
   by `onHingeChange`.
   (SwiftLee, 2026-09-22; Apple's *Interacting with your app in Device Hub* documents
   ⌥-click only for the rotate button.)
+- **Screenshots are per display.**
+  `xcrun simctl io <udid> screenshot --display=1 outer.png` captures the outer
+  display (1398 × 2034); without `--display` it captures the inner one
+  (2007 × 2853). Only the display in use has content — the other comes back black —
+  so a black screenshot after `simctl launch` means the wrong display, not a broken
+  app. `recordVideo` takes the same flag. For logs, launch with `--console-pty`
+  (`scripts/probes/README.md` in the repository). Measured 2026-10-01 on
+  Xcode 27.1 (27A9269), device closed.
 - **First launch can take several minutes** (Xcode 27.1 known issue 187708500). Wait
   it out; a slow first boot is not a broken runtime.
 - **What the simulator cannot do** — report these as *not run* with the radar number,

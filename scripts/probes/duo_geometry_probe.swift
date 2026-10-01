@@ -6,7 +6,8 @@ import UIKit
 // Two readers, one inset 50 pt inside the other, so a proxy-local coordinate space can be told from a
 // display one. `pass` counts body evaluations across both readers — they alternate — and the reserved
 // regions are empty for the first few, so a probe that samples only `onAppear` reports `occlusions=[]`
-// and misses them entirely.
+// and misses them entirely. The hinge is logged separately, on every `onHingeChange` call, with the old
+// context next to the new one, so the first call shows what the action receives before any change.
 
 @MainActor enum Pass { static var n = 0 }
 
@@ -24,6 +25,9 @@ struct DuoProbe: App {
                     .padding(50)
                 }
             }
+            .onHingeChange { old, new in
+                NSLog("DUOHINGE old=%@ new=%@", describe(old.hinge), describe(new.hinge))
+            }
         }
     }
 }
@@ -37,8 +41,8 @@ func report(_ label: String, _ p: GeometryProxy) -> Int {
     out += " global=\(p.frame(in: .global))"
     let div = p.reservedRegions(kind: .division, options: .includeInactive)
     let occ = p.reservedRegions(kind: .occlusion, options: .includeInactive)
-    out += " divisions=\(div.map { "\($0.frame)|active=\($0.isActive)" })"
-    out += " occlusions=\(occ.map { "\($0.frame)|active=\($0.isActive)" })"
+    out += " divisions=\(div.map(describe))"
+    out += " occlusions=\(occ.map(describe))"
     if let s = UIApplication.shared.connectedScenes.first as? UIWindowScene {
         out += " scale=\(s.screen.traitCollection.displayScale) screenBounds=\(s.screen.bounds)"
         out += " verticalBarEdge=\(s.keyWindow?.traitCollection.verticalBarEdge.rawValue ?? -1)"
@@ -47,4 +51,20 @@ func report(_ label: String, _ p: GeometryProxy) -> Int {
     }
     NSLog("%@", out)
     return Pass.n
+}
+
+func describe(_ r: ReservedRegion) -> String {
+    let m = r.margins
+    return "\(r.frame)|margins(t:\(m.top) l:\(m.leading) b:\(m.bottom) tr:\(m.trailing))|active=\(r.isActive)"
+}
+
+func describe(_ hinge: DeviceHinge?) -> String {
+    guard let hinge else { return "nil" }
+    let status = switch hinge.status {
+    case .closed: "closed"
+    case .partiallyOpen: "partiallyOpen"
+    case .fullyOpen: "fullyOpen"
+    default: "unknown"                     // DeviceHinge.Status is a struct, not an enum
+    }
+    return "\(status)@\(hinge.angle.degrees)deg"
 }

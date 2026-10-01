@@ -37,6 +37,23 @@
         "Classifies ArrangementView, its modifiers and reservedRegions against the installed SDK: blocked on an iOS 27.0 SDK, available on an iOS 27.1 SDK. When they are blocked, offers the size-class or GeometryReader fallback that compiles today.",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 3,
+      "name": "arrangement-environment-at-root",
+      "prompt": "In our audio notes app (evals/files/AudioNotes) the Up Next list never collapses on the iPhone Duo simulator, even when it clearly floats over the player, and DetailsView keeps its HStack layout even when the two panes sit side by side on the open inner display. Both read the environment values exactly as Apple's samples do. What is wrong, and what should change? Plan only.",
+      "expected_output": "A plan that traces both symptoms to reading overlayArrangementZIndex and splitArrangementAxis in the view written directly in the ArrangementView closure, which reads the defaults (0 and nil); moves each read one view down (or wraps the root in a container); keeps the overlay with the Up Next list as the collapsible foreground primary; labels the behavior as measured on the simulator rather than documented; and leaves the hinge out of the layout.",
+      "files": [
+        "evals/files/AudioNotes"
+      ],
+      "expectations": [
+        "Identifies that UpNextView and DetailsView are the root views of the ArrangementView's primary and secondary closures and that a root view reads the environment's defaults there — overlayArrangementZIndex 0 and splitArrangementAxis nil — while views nested inside them read the arrangement's values.",
+        "Labels that behavior as measured on the iPhone Duo simulator (Xcode 27.1, the layout skill or the repository's arrangement probe), not as documented API behavior, and notes that Apple's own samples read the values at the root.",
+        "Proposes moving each read one view down — a child view that owns the @Environment property, or the root wrapped in a container such as VStack — and states that adding a modifier to the root view is not enough.",
+        "Keeps the overlay arrangement with the Up Next list as the primary, which is the foreground and reads a z-index above 0 while it floats over the player, so collapsing it on zIndex > 0 stays correct once the value is read one view down (111463, 13:44–14:17).",
+        "Does not replace the arrangement or its environment values with hinge-angle-driven layout (hinge data is for interactions and effects, 111464 2:35).",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }

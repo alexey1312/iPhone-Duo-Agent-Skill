@@ -86,7 +86,8 @@ than taken on trust:
 | `horizontalSizeClass` / `verticalSizeClass` | compact / regular |
 | `verticalBarEdge` | `.trailing` |
 | `reservedRegions(kind: .division)` | none — the device is closed |
-| `reservedRegions(kind: .occlusion)` | **two**: a 37 × 37 camera hole at (399.7, 29.3) and an 84 × 170 strip at (382, 0) for the status bar and Dynamic Island |
+| `reservedRegions(kind: .occlusion)` | **two**: a 37 × 37 camera hole at (399.7, 29.3) and an 84 × 170 strip at (382, 0) for the status bar and Dynamic Island; both active, both with **zero margins** (re-measured 2026-10-01) |
+| `onHingeChange`, first call | right after launch, before any change: `oldContext.hinge` **`nil`**, `newContext.hinge` closed at 0° (2026-10-01) |
 
 Three things about reserved regions that only a booted device settles, and that an
 earlier run of the probe got wrong by sampling `onAppear`:
@@ -110,6 +111,15 @@ earlier run of the probe got wrong by sampling `onAppear`:
   both insets are 0 on this display, so the probe could not tell it apart
   from no offset at all.
 
+A third-party catalog of the APIs,
+*iPhone Duo by Examples* (`sources.md` › Background reading),
+says the folded outer display reports no reserved regions at all.
+Its own Reserved Regions screen, launched on the outer display of this build
+and set to Occlusion (in a local build — `simctl` cannot tap),
+lists exactly the two above, with the same frames and zero margins —
+so the claim does not hold for an app that starts there.
+Not covered by either run: arriving on the outer display by closing a running app.
+
 This is the asymmetry the talks describe, with numbers:
 **84 pt on the trailing edge against 0 on the leading edge, and 0 on top.**
 The top inset is zero because the status bar is not at the top — it has moved to the
@@ -125,6 +135,24 @@ with a toolbar or tab bar gets more, because its bars share that edge.
 > Opening, folding and rotating are Device Hub's on-screen controls, so the inner
 > display and the folded poses are measured by hand, not scripted
 > (`pose-test-matrix.md`).
+
+### Inner display: not measured yet
+
+What the sources say, until a run of the probe in P3 and P5 replaces it:
+
+- **The fold's division region.**
+  The talk: active only while the device is folded;
+  flat, it is inactive "and has a width of zero" (Tech Talk 111463, 7:32).
+  *iPhone Duo by Examples* (*Unverified*): its `frame` is 40 pt wide —
+  20 pt of margins either side of a zero-width fold line —
+  and the same in the flat and the partially folded state.
+  The two agree if "zero width" describes the reserved line, not `frame`,
+  which by definition includes the margins (`ReservedRegion` documentation).
+  Either way, code tells active from inactive with `isActive`, never with a width.
+- **The inner camera's occlusion region.**
+  Active only while the camera is, inactive otherwise (Tech Talk 111463, 8:12);
+  *iPhone Duo by Examples* sees it as an inactive region on a fully open device,
+  which agrees.
 
 ### What the simulator reports
 
@@ -194,8 +222,9 @@ Bezel around the inner display ≈ 3.4 mm per side (derived: body minus active a
   controls on the side; its reserved region is always present and expands into the
   Dynamic Island for Live Activities. (HIG)
 - **Inner front camera:** behind the display, hidden until the camera is active; then
-  its region appears and the UI moves aside. (HIG; occlusion region, Tech Talk 111463
-  7:50)
+  its region becomes active and the UI moves aside. While the camera is off, the
+  region is still reported, as inactive. (HIG; occlusion region, Tech Talk 111463
+  7:50, 8:12)
 
 ### Where they are (read off the HIG illustrations, and confirmed by the simulator)
 

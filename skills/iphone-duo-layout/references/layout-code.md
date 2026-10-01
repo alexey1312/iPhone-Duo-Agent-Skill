@@ -105,7 +105,9 @@ struct FloatingControls: View {
 
     private func position(in size: CGSize, avoiding fold: CGRect?) -> CGPoint {
         let centered = CGPoint(x: size.width / 2, y: size.height - 60)
-        guard let fold, fold.width > 0, fold.minX...fold.maxX ~= centered.x else { return centered }
+        // The default query returns active regions only, so `fold` is nil when flat or closed.
+        // Don't test `fold.width` instead: the frame includes the margins.
+        guard let fold, fold.minX...fold.maxX ~= centered.x else { return centered }
         // Move to the trailing half, next to where it would sit when closed.
         return CGPoint(x: fold.maxX + (size.width - fold.maxX) / 2, y: centered.y)
     }
@@ -138,6 +140,85 @@ GeometryReader { proxy in
 }
 // Each region: id, kind (.division / .occlusion), frame (includes margins), margins, isActive
 ```
+
+## Pose from the fold — 27.1 (111463, 4:09–4:46)
+
+Book pose sends alerts to the trailing side; tabletop puts viewing content on top and
+controls on the bottom. Which one the device is in follows from the shape of the
+active division region — a vertical band is book, a horizontal one tabletop — so the
+layout needs no hinge reading (111464, 2:35). The shapes are derived from the poses in
+`device-geometry.md`, not measured.
+
+```swift
+struct NowPlaying: View {
+    var body: some View {
+        GeometryReader { proxy in
+            // Active regions only: nil while the device is flat or closed.
+            let fold = proxy.reservedRegions(kind: .division).first?.frame
+            if let fold, fold.width > fold.height {
+                // Tabletop: content above the fold, controls below it.
+                VStack(spacing: 0) {
+                    Artwork().frame(height: max(fold.minY, 0))
+                    Color.clear.frame(height: fold.height)
+                    TransportControls().frame(maxHeight: .infinity)
+                }
+            } else if let fold {
+                // Book: one side each.
+                HStack(spacing: 0) {
+                    Artwork().frame(width: max(fold.minX, 0))
+                    Color.clear.frame(width: fold.width)
+                    TransportControls().frame(maxWidth: .infinity)
+                }
+            } else {
+                VStack {
+                    Artwork()
+                    TransportControls()
+                }
+            }
+        }
+    }
+}
+```
+
+Use this for discrete, manually placed controls. An arrangement does the same split
+for two views without any of this code, and continuously scrolling content does not
+displace at all (3:45).
+
+## Even columns — 27.1 (111463, 7:36)
+
+The fold exists whether or not it is active, so a grid can prefer an even number of
+columns whenever a vertical division is present, and no tile straddles the fold when
+the device bends:
+
+```swift
+struct PhotoGrid: View {
+    let photos: [Photo]
+
+    var body: some View {
+        GeometryReader { proxy in
+            let hasVerticalFold = proxy.reservedRegions(kind: .division, options: .includeInactive)
+                .contains { $0.frame.height > $0.frame.width }
+            let count = columnCount(width: proxy.size.width, minimum: 140, preferEven: hasVerticalFold)
+            ScrollView {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: count)) {
+                    ForEach(photos) { PhotoTile(photo: $0) }
+                }
+                .padding()
+            }
+        }
+    }
+
+    private func columnCount(width: CGFloat, minimum: CGFloat, preferEven: Bool) -> Int {
+        let fitting = max(Int(width / minimum), 1)
+        return preferEven && fitting > 1 && !fitting.isMultiple(of: 2) ? fitting - 1 : fitting
+    }
+}
+```
+
+An even count alone does not put the gutter on the fold — padding and spacing shift it.
+When it must line up exactly, lay out the halves either side of the fold's frame,
+the way the talk's Fitness grid keeps its outer margins and widens the spacing at
+the hinge (111463, 5:50).
 
 ## ArrangementView — 27.1 (111463, 11:23–13:07)
 
@@ -188,6 +269,33 @@ let primaryState = arrangementVC.state(for: .primary)
 myModel.minimization = (primaryState?.zIndex ?? 0) > 0 ? .collapsed : .expanded
 ```
 
+**Copied as it is, the SwiftUI half never collapses.** `UpNextView` is the view
+written directly in the closure, and that view reads the environment's default, 0;
+only views nested inside it see the arrangement's value (measured on Xcode 27.1
+(27A9269); `scripts/probes/arrangement_probe.swift` in the repository). Read it one
+view down:
+
+```swift
+struct UpNextView: View {
+    var body: some View {
+        UpNextContent()                    // the closure's root: reads 0 whatever happens
+    }
+}
+
+struct UpNextContent: View {
+    @Environment(\.overlayArrangementZIndex) private var zIndex: Int
+    var body: some View {
+        UpNextList(minimization: zIndex > 0 ? .collapsed : .expanded)
+    }
+}
+
+// Or leave UpNextView as it was and wrap it where it is placed:
+// ArrangementView { VStack { UpNextView() } } secondary: { PlayerView() }
+```
+
+A modifier on the root does not help — `UpNextView().padding(0)` still reads 0. The
+same holds for `splitArrangementAxis`, which reads `nil` at the root.
+
 ## Tuning an arrangement — 27.1 (`ArrangementView` documentation)
 
 ```swift
@@ -200,16 +308,25 @@ ArrangementView {
 }
 .arrangementViewStyle(.split.axes(.horizontal))
 
-// Where the overlay's primary view lands when the fold makes the layers side by side
+// A range per axis instead of one ratio; a fixed-size variant also exists
+ConversationView()
+    .splitArrangementLayoutRatio(minHorizontal: 0.25, idealHorizontal: 0.3, maxHorizontal: 0.4)
+ConversationView()
+    .splitArrangementFixedLayoutSize(horizontal: true, vertical: false)
+
+// Where the overlay's primary view lands when the fold makes the layers side by side;
+// .overlay.axes(_:) limits the axes it may go side by side along
 ArrangementView {
     ControlsView()
         .overlayArrangementEdge(.trailing)
 } secondary: {
     ContentView()
 }
-.arrangementViewStyle(.overlay)
+.arrangementViewStyle(.overlay.axes(.horizontal))
 
-// A child re-lays itself out for the split's axis (nil outside a split arrangement)
+// A child re-lays itself out for the split's axis (nil outside a split arrangement).
+// It must sit one view below the closure's root: placed directly as `primary` or
+// `secondary`, DetailsView reads nil and always takes the HStack branch.
 struct DetailsView: View {
     @Environment(\.splitArrangementAxis) var axis
 
