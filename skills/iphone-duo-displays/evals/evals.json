@@ -38,6 +38,49 @@
         "Classifies the direction coordinator and the physical front camera types against the installed SDK -- both need the iOS 27.1 SDK -- citing Tech Talk 111465 with timestamps or the AVKit article by section. Does not report the camera device types as missing from an iOS 27.1 SDK: AVFoundation declares them only as the Objective-C constants AVCaptureDeviceTypeBuiltIn{Outer,Inner}UltraWideCamera.",
         "No file in the project copy was modified, and testing is called out as device-only because Simulator has no camera."
       ]
+    },
+    {
+      "id": 3,
+      "name": "hinge-click-burst",
+      "prompt": "Our fold-to-zoom camera control (evals/files/FoldZoom/FoldZoom/ZoomControl.swift) plays a click on every hinge update and switches to flat mode at 175°. On the iPhone Duo simulator testers hear bursts of clicks while the hinge isn't moving, and flat mode sometimes never engages. Plan a fix, don't edit.",
+      "expected_output": "A plan that compares old and new contexts before side effects, uses status instead of an angle threshold for flat, and keeps the reset branch.",
+      "files": [
+        "evals/files/FoldZoom"
+      ],
+      "expectations": [
+        "Explains that the action can run with an old and a new context that are equal (measured on the simulator, several calls per step), so the click must be gated on an actual change of angle or status.",
+        "Explains that the rate and granularity of angle updates are system policy (UIKit header, UIHinge.angle) and that the system decides the status — the simulator reported 179° as about 174° and still partially open — so flat mode should key off status == .fullyOpen, not an angle threshold.",
+        "Keeps handling of a nil hinge and a reset of the zoom when the device is not partially open (Tech Talk 111464 around 1:18).",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "hinge-initial-call",
+      "prompt": "We log a device_folded analytics event from onHingeChange (evals/files/FoldZoom/FoldZoom/FoldAnalytics.swift). Every launch on iPhone Duo logs one, even when nobody touches the phone. Why? Plan only.",
+      "expected_output": "A plan that explains the action runs with the initial state first (old hinge nil) and skips that first call when logging transitions.",
+      "files": [
+        "evals/files/FoldZoom"
+      ],
+      "expectations": [
+        "Explains that the action runs once with the initial state when it attaches — and again when the view moves between hierarchies — not only on changes (UIKit header for UIHingeInteraction; on the simulator the first call carries a nil old hinge and the current status as new).",
+        "Fixes it by treating a call whose old hinge is nil as setup, and logging only transitions between two known statuses.",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "hinge-status-switch",
+      "prompt": "Swift says 'switch must be exhaustive' on our switch over the hinge status in evals/files/HingeBadge, but we handle closed, partiallyOpen and fullyOpen. Fix it and tell me why in a sentence or two.",
+      "expected_output": "A one-line fix adding default, with the explanation that DeviceHinge.Status is a struct with static members.",
+      "files": [
+        "evals/files/HingeBadge"
+      ],
+      "expectations": [
+        "Explains that DeviceHinge.Status is a struct with static members, not an enum, so the compiler cannot prove the switch exhaustive.",
+        "Adds a plain default case (not @unknown default, which applies to enums) to the switch in HingeBadge.swift.",
+        "Makes no unrelated changes to the file."
+      ]
     }
   ]
 }

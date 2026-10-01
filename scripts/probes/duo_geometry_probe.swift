@@ -45,6 +45,7 @@ func report(_ label: String, _ p: GeometryProxy) -> Int {
     out += " occlusions=\(occ.map(describe))"
     if let s = UIApplication.shared.connectedScenes.first as? UIWindowScene {
         out += " scale=\(s.screen.traitCollection.displayScale) screenBounds=\(s.screen.bounds)"
+        out += " mainScreenBounds=\(UIScreen.main.bounds)"     // deprecated; logged to show which display it reports
         out += " verticalBarEdge=\(s.keyWindow?.traitCollection.verticalBarEdge.rawValue ?? -1)"
         out += " hSize=\(s.keyWindow?.traitCollection.horizontalSizeClass.rawValue ?? -1)"
         out += " vSize=\(s.keyWindow?.traitCollection.verticalSizeClass.rawValue ?? -1)"

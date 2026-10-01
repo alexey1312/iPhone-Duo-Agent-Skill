@@ -36,6 +36,21 @@
         "The edited Swift files typecheck (swiftc -typecheck or a build in the transcript), or the response says why typechecking was not possible.",
         "No edit happens before the plan item is approved: the transcript shows the plan, then approval, then the change."
       ]
+    },
+    {
+      "id": 3,
+      "name": "main-screen-is-outer",
+      "prompt": "Our onboarding card (evals/files/Onboard) is sized from the screen so it looks the same on every iPhone. On the open iPhone Duo it comes out small and oddly proportioned, as if sized for another screen. What's going on? Plan only.",
+      "expected_output": "A plan that explains UIScreen.main reports the outer display even when the app is on the inner one, and sizes the card from its container instead.",
+      "files": [
+        "evals/files/Onboard"
+      ],
+      "expectations": [
+        "Explains that UIScreen.main does not follow the display the app is on: on iPhone Duo it reports the outer display (466 × 678 pt) even while the app runs on the open inner display (951 × 669 pt) — measured on the simulator — and that UIScreen.main is deprecated.",
+        "Proposes sizing the card from its container — GeometryReader, containerRelativeFrame, size classes — or, where a screen is really needed, the window scene's screen (Tech Talk 111461 around 4:16), and recomputing on every layout because opening and closing the device resizes the app.",
+        "Cites the scanner rule DUO001 or the adaptivity guidance on main-screen assumptions.",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }
