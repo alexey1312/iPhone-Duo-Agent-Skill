@@ -36,7 +36,9 @@ gate and the final report; the specialists own the details.
   (`references/api-availability.md`).
 - **Cite a session and timestamp for every item** (`references/sources.md`).
 - **Report verification honestly.** A green build proves it compiles. Only a pose
-  run in Device Hub (or a device) proves layout, and only for the poses actually run.
+  run on the iPhone Duo simulator — set in Device Hub, or from a script with the
+  third-party `hinge` CLI (`references/pose-test-matrix.md`) — or on a device proves
+  layout, and only for the poses actually run.
 
 ## Phase 1 — Recommend
 

@@ -10,6 +10,8 @@
 //   overlayModified                 the same root view with a modifier applied
 //   overlayWrapped                  the same view, wrapped in a VStack
 //   overlaySmall                    a 200 × 120 primary, to see where the overlay puts it
+//   overlayLeading                  the primary with `.overlayArrangementEdge(.leading)`
+//   splitRatio                      `.split` with `.splitArrangementLayoutRatio(0.3)` on the primary
 // Build and run: README.md in this directory.
 import SwiftUI
 
@@ -50,6 +52,14 @@ struct ProbeRoot: View {
                 ArrangementView { Pane(name: "primary", color: .orange).frame(width: 200, height: 120) }
                     secondary: { Pane(name: "secondary", color: .teal) }
                     .arrangementViewStyle(.overlay)
+            case "overlayLeading":
+                ArrangementView { Pane(name: "primary", color: .orange).overlayArrangementEdge(HorizontalEdge.leading) }
+                    secondary: { Pane(name: "secondary", color: .teal) }
+                    .arrangementViewStyle(.overlay)
+            case "splitRatio":
+                ArrangementView { Pane(name: "primary", color: .orange).splitArrangementLayoutRatio(0.3) }
+                    secondary: { Pane(name: "secondary", color: .teal) }
+                    .arrangementViewStyle(.split)
             default:
                 ArrangementView { Pane(name: "primary", color: .orange) }
                     secondary: { Pane(name: "secondary", color: .teal) }

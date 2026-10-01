@@ -50,7 +50,12 @@ camera can do: `references/device-geometry.md`.
   `UIHinge.angle`), and the status is the system's own reading of the angle *and*
   the device orientation (`DeviceHinge` documentation) — don't re-derive it from
   angle thresholds. `DeviceHinge.Status` is a struct with static members, not an
-  enum, so a `switch` over it needs `default` (SDK).
+  enum, so a `switch` over it needs `default` (SDK). The simulator shows why
+  (*Booted*, `references/device-geometry.md`): it reported *partially open* at
+  174°, *fully open* only at 180°, and *closed* already at 19°.
+- **A call is not a change.** On the simulator the action often ran with an old and
+  a new context that were equal, several times per step. Compare before doing
+  anything costly — a sound, a haptic, an animation (*Booted*).
 - Filter for `.partiallyOpen` when reading the angle, and **reset in the else branch**
   so the effect does not stick when the device opens flat or closes.
 - **Hinge data drives interactions and effects, not layout.** Layout uses arrangements

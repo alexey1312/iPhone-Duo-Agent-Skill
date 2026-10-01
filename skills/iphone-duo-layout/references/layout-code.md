@@ -146,8 +146,9 @@ GeometryReader { proxy in
 Book pose sends alerts to the trailing side; tabletop puts viewing content on top and
 controls on the bottom. Which one the device is in follows from the shape of the
 active division region — a vertical band is book, a horizontal one tabletop — so the
-layout needs no hinge reading (111464, 2:35). The shapes are derived from the poses in
-`device-geometry.md`, not measured.
+layout needs no hinge reading (111464, 2:35). Book pose is measured — a 40 × 669 pt
+band, active, in landscape; tabletop's horizontal band is derived from the poses in
+`device-geometry.md`, because the simulator cannot be rotated from a script.
 
 ```swift
 struct NowPlaying: View {
@@ -180,6 +181,7 @@ struct NowPlaying: View {
 }
 ```
 
+Checked on the simulator in book pose: the fold falls in the gap between the halves.
 Use this for discrete, manually placed controls. An arrangement does the same split
 for two views without any of this code, and continuously scrolling content does not
 displace at all (3:45).
@@ -187,8 +189,8 @@ displace at all (3:45).
 ## Even columns — 27.1 (111463, 7:36)
 
 The fold exists whether or not it is active, so a grid can prefer an even number of
-columns whenever a vertical division is present, and no tile straddles the fold when
-the device bends:
+columns whenever a vertical division is present — the talk's high-level decision.
+On its own that does not keep tiles off the fold (below):
 
 ```swift
 struct PhotoGrid: View {
@@ -215,10 +217,59 @@ struct PhotoGrid: View {
 }
 ```
 
-An even count alone does not put the gutter on the fold — padding and spacing shift it.
-When it must line up exactly, lay out the halves either side of the fold's frame,
+Run on the simulator, this grid lays out six columns flat, and the fold runs
+through the middle of the fourth. An even count alone does not put the gutter on the
+fold. In landscape the fold is
+the middle of the display, not of the safe area: measured on the simulator, the
+84 pt trailing inset puts the fold's frame at x 455.5–495.5 of an 867 pt reader,
+so the middle gutter of a symmetric grid (x 433.5) misses it by 42 pt
+(`device-geometry.md` › Inner display, measured).
+When it must line up, lay out the halves either side of the fold's frame,
 the way the talk's Fitness grid keeps its outer margins and widens the spacing at
-the hinge (111463, 5:50).
+the hinge (111463, 5:50):
+
+```swift
+struct FoldAlignedGrid: View {
+    let photos: [Photo]
+
+    var body: some View {
+        GeometryReader { proxy in
+            let fold = proxy.reservedRegions(kind: .division, options: .includeInactive)
+                .first { $0.frame.height > $0.frame.width }?.frame
+            ScrollView {
+                if let fold {
+                    let leading = max(fold.minX, 0)
+                    let trailing = max(proxy.size.width - fold.maxX, 0)
+                    let perSide = max(Int(min(leading, trailing) / 140), 1)
+                    HStack(alignment: .top, spacing: 0) {
+                        half(Array(photos.enumerated()), keep: { $0 % (perSide * 2) < perSide }, columns: perSide)
+                            .frame(width: leading)
+                        Color.clear.frame(width: fold.width)        // the fold's frame, margins included
+                        half(Array(photos.enumerated()), keep: { $0 % (perSide * 2) >= perSide }, columns: perSide)
+                            .frame(width: trailing)
+                    }
+                } else {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140))]) {
+                        ForEach(photos) { PhotoTile(photo: $0) }
+                    }
+                }
+            }
+        }
+    }
+
+    private func half(_ items: [(offset: Int, element: Photo)], keep: (Int) -> Bool, columns: Int) -> some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: columns)) {
+            ForEach(items.filter { keep($0.offset) }, id: \.element.id) { PhotoTile(photo: $0.element) }
+        }
+        .padding(.horizontal, 8)
+    }
+}
+```
+
+Checked on the simulator, flat and in book pose: the fold falls in the gap between
+the halves. The halves are unequal in landscape (455.5 against 371.5 pt). Both get the column
+count the narrower one fits, so tiles on the leading side come out wider; each row
+stays even, and no tile crosses the fold, flat or folded.
 
 ## ArrangementView — 27.1 (111463, 11:23–13:07)
 

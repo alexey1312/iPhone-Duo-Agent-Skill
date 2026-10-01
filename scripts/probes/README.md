@@ -112,10 +112,41 @@ Three results, two of which an earlier version of this probe got wrong:
    at (349.7, −20.7), the strip at (332, −50). Regions outside the proxy give negative
    coordinates rather than being clipped.
 
-**The inner display and the folded poses are not covered.** `simctl` has no fold or
-pose subcommand and an app launched this way comes up on the outer display, so those
-numbers need Device Hub's on-screen controls and a person watching the log.
-That is why `device-geometry.md` carries runtime numbers for one pose only.
+### The inner display, open and folded
+
+`simctl` has no fold or pose subcommand, so the hinge is set with the third-party
+[`hinge`](https://github.com/artemnovichkov/hinge) CLI
+(`pose-test-matrix.md` › Tooling) — always with `-d`, or it picks the first booted
+simulator — and the app is launched after the pose is set:
+
+```bash
+hinge -d <udid> open      # or: hinge -d <udid> 90
+xcrun simctl launch --console-pty <udid> com.example.duoprobe
+```
+
+2026-10-01, Xcode 27.1 (27A9269), inner display in landscape:
+
+```
+open, 180°  DUOPROBE pass=9 outer size=867.0x635.0 safeArea(t:0.0 l:0.0 b:34.0 tr:84.0)
+            divisions=[(455.5, 0.0, 40.0, 669.0)|margins(t:0.0 l:20.0 b:0.0 tr:20.0)|active=false]
+            occlusions=[(677.333, 21.0, 58.0, 37.0)|margins(…0…)|active=false,
+                        (867.0, 0.0, 84.0, 120.0)|margins(…0…)|active=true]
+            screenBounds=(0.0, 0.0, 951.0, 669.0) verticalBarEdge=2 hSize=2 vSize=2
+            DUOHINGE old=nil new=fullyOpen@180.0deg
+book, 90°   the same, except divisions=[…|active=true]
+            DUOHINGE old=nil new=partiallyOpen@90.0deg
+```
+
+The fold's frame is 40 pt flat and folded; only `isActive` changes.
+The inner camera is there while off, inactive.
+
+To watch the hinge while the app runs, keep `--console-pty` attached and step the
+angle: `for a in 175 178 179 180 150 120 60 30 20 15 10 5 2 1 0; do hinge -d <udid> $a;
+sleep 1.2; done`. The run reported 170.3°, 173.1° and 174.1° — all *partially open* —
+for 175°, 178° and 179°; *fully open* only at 180°; *closed* already at 19.2°; and
+seven to ten calls per step whose old and new contexts were equal.
+Closed at 0°, the app moved to the outer display and reported the two outer
+occlusion regions again. Tabletop is not covered: rotation has no command.
 
 ## `arrangement_probe.swift` — where do an arrangement's environment values reach?
 
@@ -161,5 +192,17 @@ Four results:
 4. The primary's axis reads `vertical` under `.axes(.horizontal)`:
    the container's own axis, not one the style allows.
 
-The inner display and the folded poses are not covered, for the reason above:
-book and tabletop need Device Hub's controls and a person.
+On the **inner display in landscape**, with the hinge set by `hinge`, last value of
+each line (`overlaySmall` and `overlayWrapped` behave as on the outer display):
+
+| `-mode` | Open flat, 180° | Book, 90° |
+| --- | --- | --- |
+| `overlay` | layered: primary leaf zIndex **1**, both 867 × 635 | side by side: secondary (0, 0, 455.5 × 635), primary (495.5, 0, 371.7 × 635), both zIndex 0 |
+| `overlayLeading` | as `overlay` | the sides swap: primary (0, 0, 455.5), secondary (495.5, 0, 371.5) |
+| `split` | 433.5 \| 433.5, axis **horizontal** | 455.5 \| 371.5 — the divider on the fold, the 40 pt frame left empty |
+| `splitRatio` (0.3) | 260.1 \| 606.9 — the ratio | first 0.3, then 455.5 \| 371.5: the fold wins over the ratio |
+| `splitV` (`.axes(.vertical)`) | only the primary, 867 × 635; its leaf axis `horizontal` | the same |
+
+In book pose both styles first lay out as if flat — layered, or split evenly or by the
+ratio — and move to the fold a few passes later, when the reserved regions arrive.
+Tabletop is not covered: the simulator cannot be rotated from a script.

@@ -25,15 +25,36 @@ cameras and fold sit: `device-geometry.md`.
   install the runtime from Xcode › Settings › Components,
   or with `xcodebuild -downloadPlatform iOS -buildVersion 27.1`
   (Apple documentation › *Downloading and installing additional Xcode components*).
-- **Poses are Device Hub's on-screen controls, not a command.** `simctl` has no fold,
-  pose or hinge subcommand, and an app launched with `simctl launch` comes up on the
-  **outer** display. Opening, folding and rotating are done by hand in Device Hub, so
-  every pose below P1–P2 is a manual step. Automate the launch, not the pose.
-  Hold ⌥ (Option) while clicking a pose button to get a slider for the exact hinge
-  angle, which is how to reach the angles in between for P5, P6 and anything driven
-  by `onHingeChange`.
+- **Apple ships no command that sets a pose.** `simctl` has no fold, pose or hinge
+  subcommand, and an app launched with `simctl launch` comes up on the display in
+  use — the **outer** one while the device is closed. In Device Hub, hold ⌥ (Option)
+  while clicking a pose button to get a slider for the exact hinge angle
   (SwiftLee, 2026-09-22; Apple's *Interacting with your app in Device Hub* documents
-  ⌥-click only for the rotate button.)
+  ⌥-click only for the rotate button). Apple's `devicectl` reads the angle:
+
+  ```bash
+  xcrun devicectl device motion hinge-angle -d <udid> --session-timeout 5
+  ```
+
+- **`hinge` sets the angle from a script** — a third-party CLI and agent skill,
+  [artemnovichkov/hinge](https://github.com/artemnovichkov/hinge) (MIT). It builds a
+  small helper for the simulator SDK and runs it with `simctl spawn`, posting the
+  vendor HID event Device Hub's slider sends. The protocol is private and
+  undocumented; it worked on Xcode 27.1 (27A9269) with the iOS 27.1 runtime on
+  2026-10-01, and may break with any Xcode. Pass the device explicitly — without
+  `-d` it acts on the first booted simulator, whatever that is:
+
+  ```bash
+  hinge -d <udid> open           # 180°: P3 (inner display flat)
+  hinge -d <udid> 90             # book pose: P5
+  hinge -d <udid> sweep 180 0 2  # fold closed over 2 s while the app runs: P7
+  hinge -d <udid> get            # reads it back through devicectl
+  ```
+
+  Wait about a second after each step before reading geometry or taking a
+  screenshot. **Rotation is still manual**, so P4 (inner portrait) and P6 (tabletop)
+  need Device Hub's rotate control. A pose reached this way counts as tested on the
+  simulator; say which tool set it.
 - **Screenshots are per display.**
   `xcrun simctl io <udid> screenshot --display=1 outer.png` captures the outer
   display (1398 × 2034); without `--display` it captures the inner one
@@ -86,7 +107,7 @@ cameras and fold sit: `device-geometry.md`.
 | P2 | Closed, outer display, landscape | Toolbar and tab bar overflow sooner; the right items stay visible; keyboard up makes it worse. |
 | P3 | Open flat, inner display, landscape | Regular × regular; vertical bars on the side; sidebar if opted in; content uses the width (no centered phone column); no layout keyed off orientation. |
 | P4 | Open flat, inner display, portrait | Bars horizontal — the one state where the system keeps horizontal bars (HIG); layout still uses size classes. |
-| P5 | Partially folded, book pose | Nothing important spans the fold; alerts, menus, popovers and sheets sit clear of it; split views split evenly; custom controls displaced with small adjustments, not rearranged. Sweep the hinge angle with the ⌥ slider: hinge-driven effects follow the angle continuously, with no jumps. |
+| P5 | Partially folded, book pose | Nothing important spans the fold; alerts, menus, popovers and sheets sit clear of it; split views split evenly; custom controls displaced with small adjustments, not rearranged. Sweep the hinge angle with the ⌥ slider or `hinge sweep`: hinge-driven effects follow the angle continuously, with no jumps. The fold sits 42 pt to the trailing side of the safe area's middle in landscape (`device-geometry.md`), so a gutter or split centred in the safe area misses it: check that the fold falls in a gap, not in a tile or a control. |
 | P6 | Partially folded, tabletop pose | Viewing content on top, interactive controls on the bottom where it applies. Sweep the angle here too. |
 | P7 | Transitions: close ↔ open, fold ↔ flat | State survives; no jump to root; no stale geometry cached from the previous display; hinge-driven effects reset when not partially open; games stay playable and fill each new shape (change the aspect ratio rather than letterbox). |
 | P8 | Split View multitasking on the inner display | Asymmetric safe areas handled; narrow widths collapse cleanly; the stacked video-plus-apps layout. |

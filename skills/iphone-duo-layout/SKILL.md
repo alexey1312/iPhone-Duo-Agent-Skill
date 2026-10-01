@@ -117,8 +117,13 @@ poses, drawing mockups: `references/device-geometry.md` (never a layout input).
   `options: .includeInactive` returns it anyway — use that for high-level decisions
   such as preferring an even number of grid columns.
   Decide with `isActive`, or with the default active-only query, never with
-  `frame.width`: `frame` includes `margins`, and a third-party run reports a 40 pt
-  frame in both states (*Unverified*, `references/device-geometry.md`).
+  `frame.width`: the zero width is the fold line, while `frame` includes 20 pt of
+  margin each side and measures 40 pt flat and folded alike (*Booted*,
+  `references/device-geometry.md`).
+- In landscape the fold is the middle of the display, not of the safe area: the
+  84 pt trailing inset leaves 455.5 pt before the fold's frame and 371.5 pt after
+  it. Anything centred in the safe area misses the crease by 42 pt — place against
+  the region's frame, not against the middle (*Booted*).
 - Tell book pose from tabletop by the shape of the active division —
   a vertical band is book, a horizontal one tabletop —
   not by the hinge (`references/layout-code.md` › Pose from the fold).
@@ -155,6 +160,9 @@ division regions.
   The hidden secondary stays in the hierarchy and is still laid out at full size —
   its `onGeometryChange` fires — so never read visibility from its geometry
   (*Booted*: `.split.axes(.horizontal)` on the portrait outer display).
+  In book pose the split moves its divider onto the fold, even against a
+  `splitArrangementLayoutRatio`, and leaves the fold's 40 pt frame empty between
+  the panes (*Booted*: 0.3 flat → 455.5 | 371.5 pt folded).
 - **Overlay**: layers the views while no division is active, side by side when
   partially folded. The **primary** is the foreground: layered, it reads
   `overlayArrangementZIndex` 1 against the secondary's 0 and sits at the top leading
@@ -163,6 +171,13 @@ division regions.
   and collapses it while it floats over the player (13:44–14:17); the HIG also lets
   you collapse the secondary when it should not appear. `.overlay.axes(_:)` limits
   the axes it may go side by side along (SDK; UIKit `UIOverlayArrangement.axes`).
+  Folded like a book, the primary takes the trailing side of the fold and the
+  secondary the leading side, both at z-index 0, unless `overlayArrangementEdge`
+  says otherwise (*Booted*; *Preparing your app for iPhone Duo* › Arrange views).
+- **Both styles start from the unfolded layout.** Reserved regions arrive a few
+  layout passes late, so an app launched folded first lays out layered or evenly
+  split and only then moves to the fold (*Booted*). Code that samples the first
+  layout — an `onAppear` measurement — sees the unfolded one.
 - **Read the arrangement's environment one view down.** The view written directly in
   the `primary` or `secondary` closure reads the defaults — `overlayArrangementZIndex`
   0, `splitArrangementAxis` `nil` — whatever modifiers it carries; a view nested

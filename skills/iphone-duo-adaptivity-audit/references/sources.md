@@ -259,8 +259,8 @@ and a "Good to Know" list of simulator observations.
 Each observation was re-checked on Xcode 27.1 (27A9269) on 2026-10-01
 before anything here relied on it:
 
-- *The folded outer display reports no reserved regions* — does not hold for an app
-  launched there: the catalog's own Reserved Regions screen, set to Occlusion in a
+- *The folded outer display reports no reserved regions* — does not hold, neither for
+  an app closed while it runs nor for one launched there: the catalog's own Reserved Regions screen, set to Occlusion in a
   local build (`simctl` cannot tap), lists the camera hole and the bar strip
   (`device-geometry.md`).
 - *`overlayArrangementZIndex` reads 0 at the root of the content* — confirmed,
@@ -270,8 +270,10 @@ before anything here relied on it:
   (`scripts/probes/arrangement_probe.swift`; `iphone-duo-layout`).
 - *The overlay's primary floats at the top leading corner* and *a split that cannot
   split shows only the primary* — confirmed on the outer display.
-- *The fold's frame is 40 pt with 20 pt margins in both states* — not measured here;
-  recorded as *Unverified* in `device-geometry.md`.
+- *The fold's frame is 40 pt with 20 pt margins in both states* — confirmed on the
+  inner display, flat and in book pose (`device-geometry.md` › Inner display, measured).
+- *In book pose `.split` puts its divider on the fold, overriding the ratio* —
+  confirmed; so is `overlayArrangementEdge` choosing the side.
 - *Hinge update rate is system policy*, *the action fires with the initial state* and
   *`DeviceHinge.Status` is a struct* — cited instead from the UIKit headers and the SDK.
 - `simctl io … screenshot --display=1` for the outer display — confirmed,
@@ -284,3 +286,13 @@ the talk and are the shape of the samples in `iphone-duo-layout`'s `layout-code.
 rewritten rather than copied. Its *See Also* list (Accorduon, DuoBird, SandValley and
 others) shows hinge-as-interaction games, the "good fit" case in
 `iphone-duo-displays`. Do not cite the repository in a recommendation.
+
+Artem Novichkov, [*hinge*](https://github.com/artemnovichkov/hinge)
+(MIT, September 19–26, 2026) — a CLI and agent skill that sets the hinge angle of a
+booted iPhone Duo simulator by posting, inside the simulator, the private vendor HID
+event Device Hub's hinge slider sends, and reads it back with Apple's
+`devicectl device motion hinge-angle`.
+It is how the inner-display numbers in `device-geometry.md` were taken
+(`pose-test-matrix.md` › Tooling).
+It is tooling, not a source: what it measures is cited as *Booted*,
+and the protocol it relies on is undocumented.
