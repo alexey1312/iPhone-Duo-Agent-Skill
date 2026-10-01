@@ -55,14 +55,16 @@ cameras and fold sit: `device-geometry.md`.
   screenshot. **Rotation is still manual**, so P4 (inner portrait) and P6 (tabletop)
   need Device Hub's rotate control. A pose reached this way counts as tested on the
   simulator; say which tool set it.
-- **Screenshots are per display.**
+- **Screenshots are per display — name the display every time.**
   `xcrun simctl io <udid> screenshot --display=1 outer.png` captures the outer
-  display (1398 × 2034); without `--display` it captures the inner one
-  (2007 × 2853). Only the display in use has content — the other comes back black —
-  so a black screenshot after `simctl launch` means the wrong display, not a broken
-  app. `recordVideo` takes the same flag. For logs, launch with `--console-pty`
+  display (1398 × 2034) and `--display=3` the inner one (2007 × 2853): the screen IDs
+  the device profile declares (`simctl io <udid> enumerate`). Without `--display`,
+  simctl picked the inner display in one session and the outer in a later one, so the
+  default proves nothing. Only the display in use has content — the other comes back
+  black — so a black screenshot usually means the wrong display, not a broken app.
+  `recordVideo` takes the same flag. For logs, launch with `--console-pty`
   (`scripts/probes/README.md` in the repository). Measured 2026-10-01 on
-  Xcode 27.1 (27A9269), device closed.
+  Xcode 27.1 (27A9269).
 - **First launch can take several minutes** (Xcode 27.1 known issue 187708500). Wait
   it out; a slow first boot is not a broken runtime.
 - **What the simulator cannot do** — report these as *not run* with the radar number,
