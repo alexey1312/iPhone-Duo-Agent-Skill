@@ -31,6 +31,24 @@ run each eval with and without the skill, grade the expectations, aggregate a be
 and review outputs in its viewer. Trigger accuracy is tuned with its `run_loop` against
 `trigger-evals.json`. Keep workspaces outside the repository (`*-workspace/` is ignored).
 
+The same cases also run through `claude plugin eval`.
+`scripts/build_plugin_evals.py` stages a copy of the plugin without any `evals/`
+directory — the expectations are the answer key — and writes one `case.yaml` per case
+next to it, outside the repository:
+
+```bash
+python3 scripts/build_plugin_evals.py "$TMPDIR/duo-plugin-eval"
+claude plugin eval "$TMPDIR/duo-plugin-eval" --trust-plugin --scaffold \
+  --allow-tools Bash Edit Write --model claude-opus-5-5 --judge-model claude-sonnet-5-5 \
+  --no-publish --max-cost-usd 60 --json "$TMPDIR/duo-eval.json"
+```
+
+`--no-publish` keeps the HTML report local; without it the report is published.
+The runner's `costUsd` leaves out the judge — a four-case pilot cost $3.25 for the
+agents and $1.55 for the judge — so set `--max-cost-usd` to about two thirds of the
+real budget. Before trusting a full run, read a few failing transcripts: the pilot's
+first grader version misjudged about one failure in four.
+
 ## Checks
 
 ```bash

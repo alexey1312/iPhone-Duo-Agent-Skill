@@ -109,6 +109,8 @@ agent reasons over structured JSON instead of ad-hoc grep output.
   third-party [`hinge`](https://github.com/artemnovichkov/hinge) CLI
   (`brew install artemnovichkov/tap/hinge`), which uses a private simulator event;
   Apple ships no command for it.
+- `scripts/build_plugin_evals.py` — stages the plugin without its `evals/` and turns the
+  skill-creator cases into a `claude plugin eval` suite (`CONTRIBUTING.md`).
 - `scripts/probes/` — the programs that produced the measured numbers: a typecheck of
   every iPhone Duo API shape these skills teach, a geometry probe that reports what
   a booted iPhone Duo simulator actually returns, and an arrangement probe that shows
