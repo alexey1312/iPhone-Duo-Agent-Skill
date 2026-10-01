@@ -222,6 +222,9 @@ division regions.
 3. Recommend (`references/recommendation-format.md`), marking 27.1 APIs *blocked* when
    the SDK lacks them; apply after approval; build.
 4. Verify with poses P1, P3, P5, P6, P7 and P8 from `references/pose-test-matrix.md`.
+   `scripts/duo_pose.py shoot` reaches P1, P5 and P3 from a script (third-party
+   `hinge` CLI; ask first): look in the book-pose screenshot for anything that sits
+   on the fold. P6 needs rotation, which only Device Hub does.
 
 ## Hinge data is not a layout input
 

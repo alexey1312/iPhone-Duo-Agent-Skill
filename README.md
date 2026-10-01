@@ -104,6 +104,11 @@ agent reasons over structured JSON instead of ad-hoc grep output.
 - `scripts/sdk_api_check.py` — reads the selected SDK's public headers and Swift
   interfaces and reports which iPhone Duo symbols exist, with their availability
   annotations. Code is never written against a symbol the compiler cannot see.
+- `scripts/duo_pose.py` — puts a booted iPhone Duo simulator into closed, book or
+  flat pose and screenshots both displays, for the verification phase. It drives the
+  third-party [`hinge`](https://github.com/artemnovichkov/hinge) CLI
+  (`brew install artemnovichkov/tap/hinge`), which uses a private simulator event;
+  Apple ships no command for it.
 - `scripts/probes/` — the programs that produced the measured numbers: a typecheck of
   every iPhone Duo API shape these skills teach, a geometry probe that reports what
   a booted iPhone Duo simulator actually returns, and an arrangement probe that shows

@@ -34,6 +34,7 @@ COPIES: dict[str, list[str]] = {
     "references/device-geometry.md": ALL_SKILLS,
     "scripts/duo_scan.py": ALL_SKILLS,
     "scripts/sdk_api_check.py": ALL_SKILLS,
+    "scripts/duo_pose.py": POSE_SKILLS,
 }
 
 

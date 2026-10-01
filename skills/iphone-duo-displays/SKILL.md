@@ -195,6 +195,9 @@ adoption. The Dynamic Island on the side stack expands vertically for Live Activ
 3. Recommend with `references/recommendation-format.md`; mark 27.1 APIs *blocked* when
    the SDK lacks them; apply after approval; build.
 4. Verify poses P7, P8, P9, P10 and P13 in `references/pose-test-matrix.md`.
+   For hinge-driven effects, `scripts/duo_pose.py set <degrees>` (or `hinge -d <udid>
+   sweep`) moves the simulator's hinge while the app runs — third-party `hinge` CLI;
+   ask first. Expect repeated calls with equal contexts and a smoothed angle.
 
 ## Guardrails
 

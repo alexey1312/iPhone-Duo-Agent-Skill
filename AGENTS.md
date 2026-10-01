@@ -5,6 +5,10 @@ This repository contains Agent Skills that advise on and change iOS app code.
 - **Phase 1 stays read-only.** `duo_scan.py` and `sdk_api_check.py` must never write to
   the scanned project or the SDK. Keep it that way; `test_scan_does_not_modify_files`
   guards the scanner.
+- **`duo_pose.py` changes simulator state** — it moves an iPhone Duo simulator's hinge
+  through the third-party `hinge` CLI. Skills run it only in the verification phase,
+  after the developer approves; it acts on iPhone Duo simulators only and restores the
+  angle after `shoot`. Its tests never touch a simulator.
 - **Every recommendation cites a session and timestamp.** New scanner rules need a
   `source` matching `Tech Talk 1114xx … m:ss` or `WWDC26 278 … m:ss`; the metadata test
   enforces it.

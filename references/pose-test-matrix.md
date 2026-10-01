@@ -55,6 +55,23 @@ cameras and fold sit: `device-geometry.md`.
   screenshot. **Rotation is still manual**, so P4 (inner portrait) and P6 (tabletop)
   need Device Hub's rotate control. A pose reached this way counts as tested on the
   simulator; say which tool set it.
+- **`scripts/duo_pose.py` wraps `hinge` for the verification phase.** It picks the
+  iPhone Duo by device type — never another booted simulator — waits until
+  `devicectl` reports the angle, screenshots both displays by screen ID, and puts the
+  hinge back where it was. It changes simulator state, so run it only after the
+  developer has approved verification, never during a read-only scan:
+
+  ```bash
+  python3 scripts/duo_pose.py status                        # Duo simulators, hinge CLI, angle
+  python3 scripts/duo_pose.py shoot /tmp/poses --relaunch com.example.app
+  #   P1 closed, P5 book, P3 flat: <pose>-inner.png and <pose>-outer.png each
+  python3 scripts/duo_pose.py set book                      # leave it in book pose
+  ```
+
+  A relaunched app needs a few seconds before it draws (`--launch-wait`, 3 s by
+  default; at 1 s the inner display came back blank). If `hinge` is missing, the
+  script stops with the install command, and the poses are *not run*. If it reports
+  an angle it did not reach, the private protocol has likely changed — say so.
 - **Screenshots are per display — name the display every time.**
   `xcrun simctl io <udid> screenshot --display=1 outer.png` captures the outer
   display (1398 × 2034) and `--display=3` the inner one (2007 × 2853): the screen IDs
