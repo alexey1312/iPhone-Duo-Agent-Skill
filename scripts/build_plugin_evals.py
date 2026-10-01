@@ -15,7 +15,8 @@ find them there — and puts the generated suite next to it:
 
 Plan-only cases get read-only tools plus Bash and are graded on the final
 message; cases that ask for an edit also get Edit and Write and are graded on
-the whole trace, plus regex checks on the files they should leave behind.
+the file, final message or trace each expectation is about (EDIT_FOCUS), plus
+regex checks on the files they should leave behind.
 Every case carries a low-weight check that the trace never touches an answer
 key. Run it outside the repository so nothing above the stage leads back to
 the expectations:
@@ -44,6 +45,42 @@ EDIT_TOOLS = READ_TOOLS + ["Edit", "Write"]
 STRUCTURAL = "No file in the project copy was modified."
 ANSWER_KEY = r"graders/|case\.yaml|evals\.json"
 
+# What the judge reads for each expectation of an edit case: the final message, the whole
+# trace (only for "did it run a typecheck"), or the file the expectation is about. Reading
+# a file instead of the trace keeps the skill text the agent loaded out of the judge's view.
+LAST, TRACE = "last_message", "trace"
+
+
+def file_focus(path: str) -> dict:
+    return {"source": "file", "path": path}
+
+
+EDIT_FOCUS: dict[str, list] = {
+    "documented-orientation-exception": [
+        file_focus("FloatingDock/Sources/GalleryGrid.swift"), file_focus("FloatingDock/Sources/GalleryGrid.swift"),
+        file_focus("FloatingDock/Sources/DockBleedModifier.swift"),
+        file_focus("FloatingDock/Sources/DockBleedModifier.swift"), LAST, TRACE, LAST],
+    "face-id-copy": [
+        TRACE, file_focus("VaultLock/Sources/UnlockScreen.swift"), file_focus("VaultLock/Sources/UnlockScreen.swift"),
+        file_focus("VaultLock/Info.plist"), LAST, TRACE, TRACE],
+    "apply-with-installed-sdk": [
+        TRACE, LAST, file_focus("PodcastPlayer/PodcastPlayer/PlayerScreen.swift"),
+        file_focus("PodcastPlayer/PodcastPlayer/PlayerScreen.swift"), TRACE],
+    "hinge-status-switch": [
+        LAST, file_focus("HingeBadge/HingeBadge/HingeBadge.swift"), file_focus("HingeBadge/HingeBadge/HingeBadge.swift")],
+    "mac-host-tests-hinge": [
+        LAST, file_focus("FoldKit/Sources/FoldKit/FoldMeter.swift"), LAST,
+        file_focus("FoldKit/Sources/FoldKit/FoldMeter.swift")],
+}
+
+JUDGE_PREAMBLE = (
+    "Grade this one criterion. Judge the substance, not the wording: examples, sources and "
+    "figures in parentheses show what counts and need not appear word for word, unless the "
+    "criterion says the work must cite or state them. A criterion that says the work does not "
+    "do something passes when the work does not do it. A hedged or partial version of the "
+    "criterion's core claim fails.\n\nCriterion: "
+)
+
 # End-state checks for the cases that ask for an edit: (file in the workspace, pattern, match).
 FILE_CHECKS: dict[str, list[tuple[str, str, str]]] = {
     "hinge-status-switch": [
@@ -51,7 +88,7 @@ FILE_CHECKS: dict[str, list[tuple[str, str, str]]] = {
         ("HingeBadge/HingeBadge/HingeBadge.swift", r"@unknown", "not_contains"),
     ],
     "mac-host-tests-hinge": [
-        ("FoldKit/Sources/FoldKit/FoldMeter.swift", r"#if\s+(os\(iOS\)|!os\(macOS\))", "contains"),
+        ("FoldKit/Sources/FoldKit/FoldMeter.swift", r"#if\s+!?os\(", "contains"),
         ("FoldKit/Sources/FoldKit/FoldMeter.swift", r"#available\(iOS 27\.1", "contains"),
     ],
     "apply-with-installed-sdk": [
@@ -89,14 +126,17 @@ def case_id(case: dict) -> str:
 def case_definition(case: dict) -> dict:
     edit = is_edit(case)
     graders = []
+    focus = EDIT_FOCUS.get(case["name"]) if edit else None
+    if edit and (focus is None or len(focus) != len(case["expectations"])):
+        raise ValueError(f"{case['name']}: give every expectation of an edit case a focus in EDIT_FOCUS")
     for index, expectation in enumerate(case["expectations"], start=1):
         if not edit and expectation == STRUCTURAL:
             continue
         graders.append({
             "type": "llm",
             "name": f"e{index:02d}",
-            "criteria": f"Pass only if this holds for the agent's work: {expectation}",
-            "focus": "trace" if edit else "last_message",
+            "criteria": JUDGE_PREAMBLE + expectation,
+            "focus": focus[index - 1] if focus else LAST,
         })
     for number, (file, pattern, match) in enumerate(FILE_CHECKS.get(case["name"], []), start=1):
         graders.append({"type": "regex", "name": f"file{number:02d}", "target": {"source": "file", "path": file},

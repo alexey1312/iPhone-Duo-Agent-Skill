@@ -61,7 +61,7 @@
       "expectations": [
         "Explains that 2007 × 2853 is the inner display, which is black while the closed device shows the app on the outer display, so the screenshot captured the wrong display — simctl's default display is not a reliable choice.",
         "Gives the fix: name the display — xcrun simctl io <device> screenshot --display=1 for the outer display (1398 × 2034), --display=3 for the inner — or open the device first so the app moves to the inner display.",
-        "Does not diagnose an app rendering or launch bug."
+        "Names the screenshot's display as the cause, rather than an app rendering, timing or launch problem."
       ]
     },
     {
@@ -76,7 +76,7 @@
         "Explains that Xcode 27.1 ships the macOS 27.0 SDK (xcrun --sdk macosx --show-sdk-version reports 27.0), which does not declare onHingeChange at all, so a runtime #available check cannot help — the declaration has to exist for the code to compile.",
         "Adds a compile-time platform gate around the hinge code in FoldMeter.swift — #if os(iOS), or one that also keeps tvOS and visionOS — while keeping the runtime if #available(iOS 27.1, *) check for the iOS deployment target.",
         "Frames it as a toolchain gap rather than a permanent rule: the API is annotated for macOS 27.1 as well, so the gate can be revisited when a macOS 27.1 SDK ships.",
-        "Does not hide the call behind a compiler-version or canImport check, and does not delete the hinge feature."
+        "The compile-time gate is a platform condition (#if os(...)) rather than #if compiler(...) or #if canImport(...), and the hinge behaviour is kept on iOS."
       ]
     }
   ]

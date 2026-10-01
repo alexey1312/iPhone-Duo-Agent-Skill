@@ -75,6 +75,18 @@ class BuildTests(unittest.TestCase):
                     re.compile(pattern)
                     self.assertTrue((ROOT / "skills" / case["skill"] / "evals" / "files" / file).is_file())
 
+    def test_edit_cases_focus_on_existing_files(self) -> None:
+        for case in builder.load_cases():
+            if not builder.is_edit(case):
+                continue
+            focus = builder.EDIT_FOCUS[case["name"]]
+            with self.subTest(case["name"]):
+                self.assertEqual(len(focus), len(case["expectations"]))
+                for item in focus:
+                    if isinstance(item, dict):
+                        fixture = ROOT / "skills" / case["skill"] / "evals" / "files" / item["path"]
+                        self.assertTrue(fixture.is_file(), item["path"])
+
     def test_refuses_to_stage_inside_the_repository(self) -> None:
         self.assertEqual(builder.main([str(ROOT / "build-stage")]), 2)
 
