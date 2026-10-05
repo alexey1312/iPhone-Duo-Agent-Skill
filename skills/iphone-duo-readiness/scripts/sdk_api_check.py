@@ -18,7 +18,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-VERSION = "1.2.2"
+VERSION = "1.4.0"
 
 
 @dataclass(frozen=True)
@@ -120,6 +120,13 @@ DEFAULT_SYMBOLS: list[Symbol] = [
     Symbol("childForPreferredVerticalBarBehavior", "bars", "iOS 27.1", also=("childViewControllerForPreferredVerticalBarBehavior",)),
     Symbol("setNeedsUpdateOfVerticalBarConfiguration", "bars", "iOS 27.1"),
     Symbol("layoutRegionForBarOnEdge", "bars", "iOS 27.1", "Swift: UIView.LayoutRegion.bar(onEdge:extent:)"),
+    # From the Developer Forums answers (sources.md › Developer Forums Q&A); measured on the
+    # iOS 27.1 SDK (Xcode 27.1, 27A9269) on 2026-10-05.
+    Symbol("layoutGuideForLayoutRegion", "bars", "iOS 26", "Swift: UIView.layoutGuide(for:); pair with LayoutRegion.bar(onEdge:extent:) for a custom bar"),
+    Symbol("safeAreaBar", "bars", "iOS 26", "SwiftUI custom bar; the HorizontalEdge overload puts it on the side"),
+    Symbol("cornerAdaptation", "layout", "iOS 26", "UIView.LayoutRegion.margins / safeArea / readableContent(cornerAdaptation:)"),
+    Symbol("defaultViewProperties", "layout", "iOS 27.1", "UISplitArrangement / UIOverlayArrangement: copy, change, setViewProperties(_:for:)"),
+    Symbol("setBackIndicatorImage", "bars", "iOS 13", "UINavigationBarAppearance; keeps the system back button"),
     Symbol("windowCameraCaptureAccessory", "displays", "iOS 27.1", "accessory scene session role", also=("UIWindowSceneSessionRoleCameraCaptureAccessory",)),
     # Present in the 27.0 SDK, relevant to multiple windows and resizing.
     Symbol("UISceneClosureConfirmation", "displays", "iOS 27.0", "UIWindowScene.closureConfirmation"),
@@ -301,6 +308,49 @@ def check(sdk: Path, symbols: list[Symbol]) -> dict:
     return {"files_searched": len(files), "symbols": rows}
 
 
+PLATFORM_DIRECTORIES = {"iphoneos": "iPhoneOS", "iphonesimulator": "iPhoneSimulator"}
+SDK_NAME = re.compile(r"^(?P<platform>[A-Za-z]+)(?P<version>\d+(?:\.\d+)*)\.sdk$")
+
+
+def version_tuple(text: str) -> tuple[int, ...] | None:
+    try:
+        return tuple(int(part) for part in text.split("."))
+    except ValueError:
+        return None
+
+
+def newer_installed_sdks(selected_version: str, platform: str,
+                         roots: tuple[Path, ...] = (Path("/Applications"),)) -> list[dict]:
+    """Other Xcode installs whose SDK for `platform` is newer than the selected one.
+
+    `xcode-select` can point at an older Xcode while a newer one sits next to it;
+    the check then reports the newer SDK's symbols as missing. Listing the newer SDKs
+    lets the reader re-run against one with DEVELOPER_DIR instead of concluding
+    *blocked*. Read-only: it lists directories and never changes the selection.
+    """
+    selected = version_tuple(selected_version)
+    directory = PLATFORM_DIRECTORIES.get(platform)
+    if selected is None or directory is None:
+        return []
+    found = []
+    seen: set[Path] = set()
+    for root in roots:
+        for app in sorted(root.glob("Xcode*.app")):
+            developer = app / "Contents/Developer"
+            # Xcode ships `iPhoneOS.sdk` and a versioned symlink to it, `iPhoneOS27.1.sdk`:
+            # only the symlink's name carries the version.
+            for sdk in sorted((developer / f"Platforms/{directory}.platform/Developer/SDKs").glob("*.sdk")):
+                match = SDK_NAME.match(sdk.name)
+                if not match or match["platform"] != directory or sdk.resolve() in seen:
+                    continue
+                version = version_tuple(match["version"])
+                if version and version > selected:
+                    seen.add(sdk.resolve())
+                    found.append({"xcode": str(app), "developer_dir": str(developer),
+                                  "sdk_path": str(sdk), "sdk_version": match["version"]})
+    return found
+
+
 def render_markdown(report: dict) -> str:
     lines = [
         "# SDK API check",
@@ -329,6 +379,18 @@ def render_markdown(report: dict) -> str:
             "Missing symbols do not compile with this SDK. Do not write code against them; "
             "record the work as blocked on a newer Xcode instead.",
         ]
+    newer = report.get("newer_sdks_installed") or []
+    if newer:
+        lines += ["", "A newer SDK is installed next to the selected one:", ""]
+        for item in newer:
+            lines.append(f"- {item['sdk_version']} in `{item['xcode']}`")
+        lines += [
+            "",
+            "Re-run against it before calling anything blocked, for example "
+            f"`DEVELOPER_DIR={newer[-1]['developer_dir']} python3 scripts/sdk_api_check.py`. "
+            "Report both: what the selected Xcode compiles, and which Xcode the plan needs. "
+            "Do not change the developer's `xcode-select`.",
+        ]
     return "\n".join(lines) + "\n"
 
 
@@ -355,6 +417,8 @@ def main(argv: list[str] | None = None) -> int:
         "xcode_version": (run(["xcodebuild", "-version"]) or "unknown").replace("\n", ", "),
         **report,
     }
+    if not args.sdk:
+        report["newer_sdks_installed"] = newer_installed_sdks(report["sdk_version"], args.platform)
     if args.format == "json":
         json.dump(report, sys.stdout, indent=2)
         sys.stdout.write("\n")

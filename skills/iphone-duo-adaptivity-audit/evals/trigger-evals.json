@@ -86,5 +86,9 @@
   {
     "query": "implement Face ID login with LAContext evaluatePolicy in SwiftUI, show an error alert on failure",
     "should_trigger": false
+  },
+  {
+    "query": "should our SceneDelegate save whether the iPhone Duo was folded and restore it in sceneDidBecomeActive?",
+    "should_trigger": true
   }
 ]

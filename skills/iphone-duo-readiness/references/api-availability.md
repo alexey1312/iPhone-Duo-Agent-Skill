@@ -30,6 +30,14 @@ the compiler uses) and reports which symbols exist. It changes nothing.
    blocked item as a plan entry instead.
 3. **Say which toolchain you checked.** Report `xcodebuild -version` and the SDK
    version next to any availability claim.
+   The checker reads the SDK of the *selected* Xcode.
+   On a machine where `xcode-select` still points at Xcode 27.0 and Xcode 27.1 is
+   installed next to it, every 27.1 symbol reads as missing.
+   The checker lists any newer SDK installed in another `/Applications/Xcode*.app`.
+   Re-run against it for the one command instead of concluding *blocked*:
+   `DEVELOPER_DIR=/Applications/Xcode-27.1.app/Contents/Developer python3 scripts/sdk_api_check.py`
+   (use the path it prints). Report both — what the selected Xcode compiles and which
+   Xcode the plan needs — and never change the developer's `xcode-select`.
 4. **Deployment target still matters.** A symbol present in the SDK but introduced
    in iOS 27.1 needs `if #available(iOS 27.1, *)` (SwiftUI modifiers: an
    availability-gated `ViewModifier`) when the deployment target is lower.
@@ -53,6 +61,18 @@ Overview):
 | Before iOS 27 | The space to the left of the status bar and camera | A familiar size and aspect ratio | Horizontal |
 | iOS 27 | Same | Extends to the left of the status bar area | Horizontal |
 | iOS 27.1 | Edge to edge | Edge to edge | Standard navigation and toolbar buttons lay out vertically under the status bar |
+
+Apple engineers added detail on the forums (Forums 847856, 847887; DTS):
+
+- Built with Xcode 26 or older, the app keeps a familiar iPhone size and aspect ratio.
+  Fully open, it is centred on the inner display; partially open, it shifts to one
+  side at the same size; in Split View it keeps that size on either side.
+- Built with Xcode 27, it fills most of the screen except the vertical bar.
+- Built with Xcode 27.1, it fills the screen and uses the vertical bar.
+- **No `Info.plist` key selects a tier.** The linked SDK alone decides, so a team that
+  wants the old presentation can only keep building with the older SDK —
+  until April 2027, when App Store Connect requires the iOS 27 SDK (derived from the
+  calendar in `sources.md`, not stated by Apple).
 
 Resizing behavior follows the same split (TN3192; Tech Talk 111461, 4:37): built with
 the iOS 27 SDK and without `UIRequiresFullScreen`, the scene resizes continuously;
@@ -84,10 +104,10 @@ SDK was unreleased, no longer exists.
 | Area | Needs 27.1 | Already in the 27.0 SDK |
 | --- | --- | --- |
 | Adaptivity | — | `effectiveGeometry`, `registerForTraitChanges`, `deviceMotionBody`, `headingBody`, `UITraitSystemPrefersReducedResourceUsage` |
-| Corners | — | `ConcentricRectangle`, `UICornerConfiguration` (both iOS 26) |
+| Corners | — | `ConcentricRectangle`, `UICornerConfiguration`, `UIView.LayoutRegion` with `margins(cornerAdaptation:)` / `safeArea(cornerAdaptation:)` / `readableContent(cornerAdaptation:)` and `UIView.layoutGuide(for:)` / `edgeInsets(for:)` (all iOS 26) |
 | Navigation | — | `defaultTabBarPlacement`, `prominentTabIdentifier`, `navigationBarMinimization`, `toolbarMinimizationBehavior`, `preferredImageVisibility` |
-| Bars | `axisBehavior`, `ToolbarItemAxisBehavior`, `UIBarButtonItem.axisBehavior`, `toolbarVerticalEdge`, `verticalBarEdge`, `UIVerticalBarEdge`, `systemTraitsAffectingVerticalBarEdge`, `toolbarVerticalBehavior`, `ToolbarVerticalBehavior`, `preferredVerticalBarBehavior`, `UIVerticalBarBehavior`, `childForPreferredVerticalBarBehavior`, `setNeedsUpdateOfVerticalBarConfiguration`, `toolbarVerticalCompressionBehavior`, `verticalBarCompressionBehavior`, `layoutRegionForBarOnEdge` | `topBarPinnedTrailing`, `pinnedTrailingGroup`, `leftItemsSupplementBackButton`, `additionalOverflowItems`, `ToolbarOverflowMenu`, `visibilityPriority`, `presentationPlacement`, `preferredPlacement`, `backgroundExtensionEffect` and `UIBackgroundExtensionView` (iOS 26) |
-| Layout | `reservedRegions`, `ReservedRegion`, `UIViewReservedRegion`, `UIViewReservedRegionKind`, `ArrangementView`, `arrangementViewStyle`, `ArrangementViewStyleConfiguration`, `AutomaticArrangementViewStyle`, `UIArrangementViewController`, `UIArrangementViewState`, `arrangementViewController`, `UISplitArrangement`, `UISplitArrangementDimension`, `UISplitArrangementDimensionRange`, `UISplitArrangementViewProperties`, `UIOverlayArrangement`, `UIOverlayArrangementViewProperties`, `splitArrangementAxis`, `splitArrangementLayoutRatio`, `splitArrangementLayoutSize`, `splitArrangementFixedLayoutSize`, `overlayArrangementEdge`, `overlayArrangementZIndex`, `ContentMarginGuide` | — |
+| Bars | `axisBehavior`, `ToolbarItemAxisBehavior`, `UIBarButtonItem.axisBehavior`, `toolbarVerticalEdge`, `verticalBarEdge`, `UIVerticalBarEdge`, `systemTraitsAffectingVerticalBarEdge`, `toolbarVerticalBehavior`, `ToolbarVerticalBehavior`, `preferredVerticalBarBehavior`, `UIVerticalBarBehavior`, `childForPreferredVerticalBarBehavior`, `setNeedsUpdateOfVerticalBarConfiguration`, `toolbarVerticalCompressionBehavior`, `verticalBarCompressionBehavior`, `layoutRegionForBarOnEdge` | `topBarPinnedTrailing`, `pinnedTrailingGroup`, `leftItemsSupplementBackButton`, `additionalOverflowItems`, `ToolbarOverflowMenu`, `visibilityPriority`, `presentationPlacement`, `preferredPlacement`, `backgroundExtensionEffect` and `UIBackgroundExtensionView` (iOS 26), `safeAreaBar(edge:alignment:spacing:content:)` with a `HorizontalEdge` (iOS 26), `UINavigationBarAppearance.setBackIndicatorImage(_:transitionMaskImage:)` (iOS 13) |
+| Layout | `reservedRegions`, `ReservedRegion`, `UIViewReservedRegion`, `UIViewReservedRegionKind`, `ArrangementView`, `arrangementViewStyle`, `ArrangementViewStyleConfiguration`, `AutomaticArrangementViewStyle`, `UIArrangementViewController`, `UIArrangementViewState`, `arrangementViewController`, `UISplitArrangement`, `UISplitArrangementDimension`, `UISplitArrangementDimensionRange`, `UISplitArrangementViewProperties`, `defaultViewProperties`, `setViewProperties(_:for:)`, `UIOverlayArrangement`, `UIOverlayArrangementViewProperties`, `splitArrangementAxis`, `splitArrangementLayoutRatio`, `splitArrangementLayoutSize`, `splitArrangementFixedLayoutSize`, `overlayArrangementEdge`, `overlayArrangementZIndex`, `ContentMarginGuide` | — |
 | Displays | `onHingeChange`, `UIHinge`, `UIHingeInteraction`, `CameraCaptureAccessory`, `windowCameraCaptureAccessory` | `sceneAccessory`, `onAvailabilityChange`, `UISceneAccessory`, `registerSceneAccessory`, `UISceneAccessoryRegistration`, `UISceneClosureConfirmation`, `UIWindowSceneActivationAction` (Swift: `UIWindowScene.ActivationAction`) |
 | Cameras | `AVCaptureDeviceDirectionCoordinator`, `AVCaptureDeviceDescriptor`, `AVCaptureDeviceDirectionMap`, `builtInOuterUltraWideCamera`, `builtInInnerUltraWideCamera` | `dynamicAspectRatio` (iOS 26), `RotationCoordinator` (iOS 17) |
 | Device | — | `LAContext.biometryType` (iOS 11) |
@@ -234,7 +254,13 @@ Measured on the 27.1 SDK:
 | `UIArrangementViewControllerViewPlacement` | `UIArrangementViewController.ViewPlacement` (`.primary` / `.secondary`) |
 | `UIWindowSceneSessionRoleCameraCaptureAccessory` | `UISceneSession.Role.windowCameraCaptureAccessory` |
 | `childViewControllerForPreferredVerticalBarBehavior` | `childForPreferredVerticalBarBehavior` |
-| `layoutRegionForBarOnEdge:extent:` | `UIView.LayoutRegion.bar(onEdge:extent:)` |
+| `layoutRegionForBarOnEdge:extent:` | `UIView.LayoutRegion.bar(onEdge:extent:)` with a `UIRectEdge` |
+| `layoutRegionForBarOnDirectionalEdge:extent:` | `UIView.LayoutRegion.bar(onEdge:extent:)` with an `NSDirectionalRectEdge` |
+| `marginsLayoutRegionWithCornerAdaptation:` | `UIView.LayoutRegion.margins(cornerAdaptation:)` (`.horizontal`, `.vertical`, or `nil`) |
+| `layoutGuideForLayoutRegion:` | `UIView.layoutGuide(for:)` |
+| `UISplitArrangementViewProperties` | `UISplitArrangement.ViewProperties` — a struct; `setViewProperties(_:for:)` is `mutating`, so the arrangement must be a `var` |
+| `fractionalDimension:` | `UISplitArrangement.Dimension.fractional(_:)` |
+| `setViewProperties:forPlacement:` | `setViewProperties(_:for:)` |
 | `AVCaptureDeviceTypeBuiltInOuterUltraWideCamera` | `AVCaptureDevice.DeviceType.builtInOuterUltraWideCamera` |
 
 The flat names fail with "has been renamed".
@@ -304,6 +330,21 @@ a struct with static members, not an enum, so the `switch` needs `default` —
 `splitArrangementFixedLayoutSize(horizontal:vertical:)`,
 and the new layout samples (pose from the fold, even columns,
 the z-index read one view down).
+
+Added on 2026-10-05, same toolchain, same command, for the samples taken from the
+Developer Forums answers (`sources.md` › Developer Forums Q&A):
+the UIKit split ratio through `defaultViewProperties`, `width.preferred = .fractional(0.33)`,
+`setViewProperties(_:for: .primary)` and `updateArrangement(_:)` (Forums 847990);
+`layoutGuide(for: .bar(onEdge:extent:))` with an `NSDirectionalRectEdge` (Forums 847835);
+`safeAreaBar(edge: .trailing)` in SwiftUI;
+`layoutGuide(for: .margins(cornerAdaptation: .horizontal))` and `edgeInsets(for:)` (Forums 848019),
+which also compile at an iOS 26 deployment target, ungated;
+a sheet's `preferredPlacement` set inside `animateChanges` from the active division region
+(Forums 847797);
+the back indicator image through `UINavigationBarAppearance` (Forums 847875);
+and a compositional-layout section and a `WKWebView` host that read the fold.
+`scripts/probes/forum_probe.swift` builds all of the UIKit ones into an app,
+and the probes README records what they did on the simulator.
 
 Not verified: the two Mac Catalyst known issues above are reported as Apple's, by
 radar number. A bare `swiftc -target arm64-apple-ios27.1-macabi` did not resolve

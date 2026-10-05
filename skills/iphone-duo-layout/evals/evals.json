@@ -145,6 +145,54 @@
         "Recommends not inferring visibility from a pane's geometry, and proposes a different signal — for example reading splitArrangementAxis one view down (nil for the hidden pane on the simulator), the UIKit arrangement state's isHidden, or an explicit user action — labelling any simulator-measured behaviour as such.",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 10,
+      "name": "webview-fold",
+      "prompt": "In book pose on the iPhone Duo, the floating Listen button in our article web view (evals/files/ArticleWeb) sits right on the crease, even though the page pads itself with env(safe-area-inset-*). We also tried env(viewport-segment-*), which did nothing. The pages come from our own server. Plan a fix, don't edit.",
+      "expected_output": "A plan that explains the fold never reaches CSS safe-area insets, that the web segment and posture APIs cannot be enabled in WKWebView, and that the UIKit host must query the division region and pass it to the page.",
+      "files": [
+        "evals/files/ArticleWeb"
+      ],
+      "expectations": [
+        "Explains that CSS env(safe-area-inset-*) and the web view's content-inset adjustment do not include the fold's division region, so the padding cannot move anything off the crease (Apple engineer on the Developer Forums, thread 848036).",
+        "Explains that env(viewport-segment-*) and the Device Posture API are experimental Safari features that cannot be enabled in WKWebView, so they are not a fix for this app.",
+        "Has the UIKit host query the active division region (reservedRegions(kind: .division)) during layout and pass its frame to the page — for example as CSS custom properties through evaluateJavaScript — again whenever the fold changes and after each page load.",
+        "Moves only the fixed Listen button and lets the scrolling article text flow across the fold, keeping the fold geometry separate from the safe-area padding.",
+        "Does not detect the device model or use the hinge angle to decide the layout.",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 11,
+      "name": "compositional-fold",
+      "prompt": "Our dashboard (evals/files/Dashboard) is supposed to keep the gap between its two summary cards on the iPhone Duo crease, but in book pose the crease runs through the first card. We assumed the hinge shows up in the collection view's insets. Should the photo grid below avoid the crease too? Plan only.",
+      "expected_output": "A plan that explains compositional layouts get no fold insets or traits, builds the summary section from the collection view's reserved regions with an invalidation on change, leaves the scrolling grid alone, and replaces the 0.1 pt hiding trick.",
+      "files": [
+        "evals/files/Dashboard"
+      ],
+      "expectations": [
+        "Explains that the fold never reaches the collection view's insets: the division region adds no safe-area insets, so environment.container.effectiveContentInsets do not change in book pose and the code's assumption is wrong (Apple engineer on the Developer Forums, thread 847879; it also adds no layout margins or traits, and compositional layouts have no automatic fold avoidance).",
+        "Builds the summary section from the collection view's own active division region (reservedRegions(kind: .division)), putting the gap on the fold's frame, and invalidates the layout when the fold changes — for example from viewWillLayoutSubviews.",
+        "Says the vertically scrolling photo grid does not need to avoid the crease; lining it up with the fold is optional at most.",
+        "Replaces the 0.1 pt section used to hide the cards in compact width with a data-source or layout change, because a tiny section still produces items.",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 12,
+      "name": "sheet-fold-placement",
+      "prompt": "Our place sheet (evals/files/TripMap) should be centred when the iPhone Duo lies flat and on the trailing side when it is folded like a book. Right now it is on the trailing side even when flat, and we dismiss and re-present it from a UIHingeInteraction on every fold, which flickers. Plan a fix, don't edit.",
+      "expected_output": "A plan that explains a sheet's placement applies in every pose, drops the dismiss and re-present, and sets the placement from the active division region during layout.",
+      "files": [
+        "evals/files/TripMap"
+      ],
+      "expectations": [
+        "Explains that preferredPlacement applies in every pose and that no per-pose placement API exists; by default a folded sheet moves to the leading side and a flat one is centred (Apple engineers on the Developer Forums, thread 847797).",
+        "Removes the dismiss and re-present: a presented sheet stays presented and adapts through a fold (thread 848034).",
+        "Sets the placement from whether an active division region exists (reservedRegions(kind: .division) / isActive), re-evaluated during layout such as viewWillLayoutSubviews and applied with animateChanges — not from the hinge status or angle.",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }

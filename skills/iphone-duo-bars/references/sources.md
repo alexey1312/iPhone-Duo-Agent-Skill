@@ -7,6 +7,10 @@ articles have no timestamps: cite the page and section (for example *HIG, Design
 for iPhone Duo › Vertical controls* or *Preparing your app for iPhone Duo › Optimize
 bars for vertical presentation*). Hardware facts cite the tech specs or App Store
 Connect (`device-geometry.md`).
+Answers from Apple staff on the Developer Forums have no timestamps either:
+cite the thread number, for example *Forums 848036*.
+They rank below the talks, the HIG, the documentation and the SDK
+(*Developer Forums Q&A*, below).
 
 Chapter summaries and code samples are published on each session page. When a
 code sample and the SDK disagree, the SDK wins — see `api-availability.md`.
@@ -199,15 +203,104 @@ Cite by page and section. Availability annotations as published on 2026-09-17.
 - [App Store Connect screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) — iPhone Duo sizes; uploads "later this year". Numbers in `device-geometry.md`.
 - [Apple unveils iPhone Duo](https://www.apple.com/newsroom/2026/09/apple-unveils-iphone-duo/) (newsroom, 2026-09-09) — Split View with two apps and two windows of one app on iPhone for the first time; StandBy on either display "even when it's not charging", with new Calendar and Weather faces; the Dock, Lock Screen controls and app navigation move to the side; both displays share the same aspect ratio; ships October 23 on iOS 27.1.
 
+## Developer Forums Q&A — September 23–24, 2026
+
+Apple engineers answered UIKit questions about iPhone Duo in two forum activities,
+[1670080](https://developer.apple.com/forums/activities/1670080) and
+[1665080](https://developer.apple.com/forums/activities/1665080).
+Each thread is at `https://developer.apple.com/forums/thread/<number>`.
+The table paraphrases only the replies marked *Apple Staff*
+(Frameworks Engineer, DTS Engineer, Technology Evangelist),
+read on 2026-10-05.
+Community replies are not a source.
+
+How to use them:
+
+- Cite the thread number: *Forums 848036*.
+- A forum answer ranks below the talks, the HIG, the documentation and the SDK.
+  When it conflicts with one of those, the higher source wins, and the conflict is noted here.
+- Where an answer describes behavior, `scripts/probes/forum_probe.swift` checked it
+  on the simulator.
+  Those results are marked *Booted* in the skills.
+
+| Thread | Question | Apple's answer, paraphrased |
+| --- | --- | --- |
+| 848036 | Keep `WKWebView` content clear of the fold | For content the app controls, the UIKit host passes the geometry to the page. Viewport Segments and Device Posture are opt-in experimental Safari features and cannot be enabled in `WKWebView`. CSS safe-area insets and the scroll view's inset adjustment do not include the division region. |
+| 847835 | Reserve and place a custom vertical bar | UIKit: `UIView.LayoutRegion.bar(onEdge:extent:)` with `UIView.layoutGuide(for:)`; SwiftUI: `safeAreaBar`. A custom tab bar or toolbar must also give what system bars give: labels that expand on long press, and the Large Content Viewer from *Accessibility Medium* text sizes up. |
+| 848019 | Asymmetric corners without hard-coded offsets | `UIView.LayoutRegion.margins(cornerAdaptation:)`, and `reservedRegions(kind:options:)` for the rest. |
+| 847879 | Compositional layouts and the fold | No automatic fold avoidance in `UICollectionView` or compositional layout. The division region adds no traits and no safe-area insets. Scrolling grids need not avoid it. Where a section must, do it only in sections that do not scroll orthogonally to the fold's axis, from the collection view's reserved regions. Split views pad their columns in book pose by themselves. |
+| 848018 | Hide a section with a 0.1 pt size | Not a way to hide a section: it still produces items, only tiny ones. |
+| 847854 | Move a control off the fold | Compare the region's width and height: the rect is oriented, taller than wide for a vertical fold. There is no layout guide for the fold; reserved regions are the manual-layout API. Prefer arrangements, which do this evaluation themselves. |
+| 847797 | A sheet centred when flat, trailing when folded | Folded, every sheet moves to the leading edge; flat, it is centred. A sheet's placement applies in every pose, and no per-pose API exists (file an enhancement request). Workaround: set the placement from whether an active division region exists. |
+| 848034 | Bottom sheets during a fold | Sheets are not dismissed; they adapt to the pose. |
+| 848010 | Sheet placement and sizing across poses | `UISheetPresentationController.preferredPlacement` influences the adaptation. Update custom detents on a size-class change only if the content needs it. The reply names `traitCollectionDidChange`, deprecated since iOS 17: use `registerForTraitChanges`. |
+| 848035 | Save fold state in scene lifecycle events | Do not respond to the fold at the scene level. Reserved regions and hinge data are current when the scene returns to the foreground. Containers and arrangements lay out a launch into a folded device by themselves. A view that queries reserved regions during layout is laid out again when they change, through observation tracking. |
+| 847876 | Know when active regions change | Query them with `reservedRegions`; UIKit's automatic observation tracking covers trait changes, layout and display. `UIHingeInteraction` reports the hinge itself. |
+| 848021 | Adapt a large Objective-C document viewer | The same resizing and trait mechanisms as iPad and iPhone Mirroring. `windowScene(_:didUpdateEffectiveGeometry:)` is guaranteed when the scene moves between screens, but layout-time adaptation is the better route. The reserved-regions API works on every iPhone and iPad. Everything is available in Objective-C. Moving off `traitCollectionDidChange:` is advisable; the behavior is the same. |
+| 848042 | Carousel and cell state across a fold | Text input and scroll position survive, even when a `LazyVGrid` changes its column count: a fold is a size-class and trait change, not a scene disconnection. |
+| 847856 | Ask Xcode 27 for the old black-bar mode | Not possible. An Xcode 26 build keeps a familiar size and aspect ratio, similar to iPhone 17. An Xcode 27 build fills most of the screen except the vertical bar. An Xcode 27.1 build fills the screen and uses the vertical bar. No `Info.plist` key changes this; the SDK alone decides. |
+| 847887 | An app that has not adopted the new APIs | Built with Xcode 26 or older: closed, it uses the outer display outside the vertical bar; fully open, it is centred at the same size; partially open, it shifts to one side; in Split View it keeps that size on either side. Not every app needs arrangements or reserved regions. |
+| 847864 | `preferredVerticalBarBehavior` and size classes | Safari disables the vertical bar in regular width because its tabs stack horizontally. Disable it only when the compact and regular UI diverge for a similar reason. |
+| 847875 | A custom back button in the vertical bar | If only the icon changes, set the back indicator image and keep the system button (recommended). Otherwise set the item's `axisBehavior` to `.verticalPreferred`. |
+| 847814 | `UITabAccessory` partially folded | Use the division reserved region. |
+| 847874 | A modal over the whole inner display | `.fullScreen` (UIKit) or `fullScreenCover` (SwiftUI). In Split View it fills only the app's own window scene. |
+| 847817 | Force a vertical tab bar in every pose | No. The tab bar is horizontal on the inner display in portrait by design; system heuristics choose its axis and place. |
+| 847775 | Detect iPhone Duo | No API exists. Avoid device-specific behavior; iPhone apps resize on iPad and in iPhone Mirroring too. |
+| 847903 | Size class of the inner display | Use size classes for the space available, not as a screen detector; two apps can share the inner display. |
+| 847851 | Prevent rotation | The outer display honors supported orientations; the inner display does not. |
+| 847872 | An iPhone-only app that resizes on Duo but not on iPad | Not possible: iPhone apps resize on iPad and in iPhone Mirroring (WWDC26 278, 1:32). |
+| 848055 | Re-architect a `UINavigationController` app | Not required. Adapt the content inside it; a `UIArrangementViewController` works well inside a navigation controller. |
+| 848000 | Replace a sidebar container with an arrangement | No. Do not embed a `UINavigationController` in a `UIArrangementViewController`. For a tab bar controller, `sidebar.preferredPlacement = .sidebar` shows the sidebar in regular width. |
+| 847990 | A split ratio in UIKit | Copy the arrangement's `defaultViewProperties`, set `width.preferred` to `.fractional(_:)`, write it back with `setViewProperties(_:for:)` and call `updateArrangement(_:)`. |
+| 847770 | `tabSidebar` on iPhone Duo | iOS shows a bottom tab bar rather than adapting into a sidebar; opt into the sidebar with the preferred placement. |
+| 848011 | Migrate from app delegate to scenes | Follow the scene-based life-cycle transition guide; Xcode 27.1's App Resizability skill helps adopt `UIScene`. |
+
+### Group Lab summary — Forums 847644
+
+A DTS Engineer posted a written summary of the iPhone Duo Group Labs
+(`meet-with-apple/285`, `/286`) as thread 847644, read on 2026-10-05.
+The Labs themselves published no transcript.
+The summary answers about a hundred questions.
+Most answers repeat the talks.
+These add something:
+
+| Topic | Answer, paraphrased |
+| --- | --- |
+| State | Folding, unfolding and switching displays are size-class and trait changes; the process and the scene stay. Text input, scroll position and video playback survive. Typing while the device closes keeps the same scene and editing session. Use `stateRestorationActivity(for:)` only for a real scene disconnection. |
+| Multiple scenes | Not required for folding; they matter only for Split View with several instances and for scene accessories. `UserDefaults` and `@AppStorage` are app-wide. Audio and video playback belongs to the instance that started playback most recently. |
+| Outer display while open | Only through the system: a camera capture accessory, or AlarmKit with a Live Activity. Accessory animations must start, pause and stop at any moment. |
+| Picture in Picture | Open in landscape, a person can pin PiP to the top while the app resizes beneath it. Partially folded, the video takes half the screen. PiP moves to the outer display only when the device closes. |
+| Core Motion | `deviceMotionBody` gives values relative to the display only while the scene is full screen on it; otherwise data arrives in the device's default reference frame. |
+| Pose | There is no single pose value. Combine the hinge status and angle with orientation and size class. |
+| Web | Viewport Segments and Device Posture are experimental feature flags in Safari on iOS 27.1 (Settings › Apps › Safari › Advanced › Feature Flags). Web apps cannot detect iPhone Duo. |
+| Custom bars | No API moves a custom tab bar. Read `verticalBarEdge` / `toolbarVerticalEdge` and the reserved regions, and do not assume that safe-area insets reserve the camera and Dynamic Island strip. |
+| Custom sheets and panels | Custom bottom sheets must avoid the fold themselves; safe-area insets are not enough. |
+| Touch | A custom element over the camera's reserved region can lose touches there. |
+| VoiceOver | A custom layout split by the fold may need accessibility containers or sort priorities for a logical order. |
+| Presentations | `.overCurrentContext` applies only in regular width. A confirmation dialog for a `ToolbarOverflowMenu` item uses state-driven presentation. |
+| Tab items | For a dot or a count on a tab, use a badge rather than a `UITabAccessory`. |
+
+Treat the summary with care: two answers conflict with higher sources.
+
+- It says a compatibility-mode app has *the aspect ratio of an iPhone mini* on the
+  outer display. Forums 847856 (DTS) says *similar to iPhone 17*.
+  Write "a familiar iPhone size and aspect ratio" and name no model.
+- It says a portrait-only app's supported orientations are *honored*.
+  Tech Talk 111461 (3:30) and Forums 847851 say the inner display does not honor them.
+  The talk wins.
+
+Its sheet answers link `preferredPlacement` to `UITabBarController.Sidebar`.
+The sheet property is `UISheetPresentationController.preferredPlacement`.
+
 ## Release calendar (as of 2026-09-19)
 
 | Date | Event |
 | --- | --- |
 | September 9 | iPhone Duo announced; *Get ready for iPhone Duo* page, six Tech Talks (111461–111466) and *Designing for iPhone Duo* published; App Store Connect adds iPhone Duo screenshot sizes. Apple also states that from **April 2027** apps uploaded to App Store Connect must be built with the iOS 27 SDK or later. |
 | September 14 | Xcode 27 (27A266a) and iOS 27.0 (24A437) ship. Neither release-notes page mentions iPhone Duo; the 27.0 SDK has no Duo-specific API. |
-| September 16–17 | Online Group Labs (`meet-with-apple/285`, `/286`). No transcripts published, so nothing in them is citable. Apple also ships the 27.2 betas of every OS on September 16 — 27.1 is not the newest SDK for long. |
+| September 16–17 | Online Group Labs (`meet-with-apple/285`, `/286`). No transcripts published; a DTS Engineer later posted a written summary, Forums 847644 (*Developer Forums Q&A*). Apple also ships the 27.2 betas of every OS on September 16 — 27.1 is not the newest SDK for long. |
 | **September 18** | **Xcode 27.1 beta (27A9269)** with the **iOS 27.1 SDK** (27.1, build 24A94403), Swift 6.4, the **iPhone Duo simulator device type** (`iPhone19,4`) and the **iOS 27.1 simulator runtime** (24A94401). Apple news *Build for iPhone Duo with new resources*: Figma and Sketch design kits plus an iPhone Duo product bezel added to Apple Design Resources, and in-person workshops open. |
-| September 23 | Developer-forum Q&As: Photos & Camera, SwiftUI, UIKit. |
+| September 23–24 | Developer-forum Q&As: Photos & Camera, SwiftUI, UIKit. The UIKit answers are in *Developer Forums Q&A*. |
 | September 28 – October 27 | In-person *Workshop: Optimize your app for iPhone Duo* at Apple Developer Centers. Meet with Apple now carries an **iPhone Duo** topic filter: <https://developer.apple.com/events/view/upcoming-events> |
 | October 16 | Pre-orders. |
 | October 23 | iPhone Duo ships on iOS 27.1. App Store Connect asset uploads for iPhone Duo "later this year". |
@@ -296,3 +389,13 @@ It is how the inner-display numbers in `device-geometry.md` were taken
 (`pose-test-matrix.md` › Tooling).
 It is tooling, not a source: what it measures is cited as *Booted*,
 and the protocol it relies on is undocumented.
+
+Anton Gubarenko, [*iPhone Duo UIKit Q&A - Forums*](https://antongubarenko.substack.com/p/iphone-duo-uikit-q-and-a-forums)
+(Substack, September 30, 2026) — a condensed digest of the 43 UIKit forum threads,
+each linked to its thread.
+Use it to find a thread, then cite the thread (*Developer Forums Q&A*), not the post.
+Against the threads, the condensing dropped facts:
+that folded sheets move to the leading edge (Forums 847797);
+SwiftUI's `safeAreaBar` and the *Accessibility Medium* threshold for the
+Large Content Viewer (Forums 847835).
+It also reports the `traitCollectionDidChange` advice of Forums 848010 as "trait changes".

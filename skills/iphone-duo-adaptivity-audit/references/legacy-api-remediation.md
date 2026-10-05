@@ -133,6 +133,11 @@ override func viewDidLoad() {
 }
 ```
 
+Body-relative values arrive only while the scene is full screen on the display that
+hosts the view. In Split View, or anywhere the scene is not full screen, motion data
+comes in the device's default reference frame (Forums 847644). Code that depends on
+the body's orientation must allow for that.
+
 ## DUO005 — Scene lifecycle
 
 Minimum shape for a UIKit app:

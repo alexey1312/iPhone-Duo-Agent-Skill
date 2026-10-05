@@ -12,6 +12,9 @@ This repository contains Agent Skills that advise on and change iOS app code.
 - **Every recommendation cites a session and timestamp.** New scanner rules need a
   `source` matching `Tech Talk 1114xx … m:ss` or `WWDC26 278 … m:ss`; the metadata test
   enforces it.
+  An Apple engineer's forum answer is cited by thread number (`Forums 848036`) in the
+  skills and references, never as a scanner rule's only source; it ranks below the
+  talks, the HIG, the documentation and the SDK (`references/sources.md`).
 - **The SDK outranks the talks.** Typecheck every code sample against the installed
   SDK before adding it (`xcrun --sdk iphonesimulator swiftc -typecheck`). The iOS 27.1
   SDK ships with Xcode 27.1, so "reproduced from a session page" is no longer reason

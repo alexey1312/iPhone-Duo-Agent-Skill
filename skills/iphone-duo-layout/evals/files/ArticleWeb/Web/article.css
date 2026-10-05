@@ -1,0 +1,24 @@
+/* Served with every article. The page uses viewport-fit=cover. */
+
+body {
+    margin: 0;
+    font: 18px/1.5 -apple-system, sans-serif;
+    /* The safe area keeps text clear of the camera, the bars and the iPhone Duo hinge. */
+    padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+}
+
+.listen {
+    position: fixed;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    left: calc(50% - 60px);
+    width: 120px;
+    height: 44px;
+    border-radius: 22px;
+}
+
+/* Tried on iPhone Duo: move the button to the second screen segment. Has no effect. */
+@supports (width: env(viewport-segment-width 0 0)) {
+    .listen {
+        left: calc(env(viewport-segment-left 1 0) + env(viewport-segment-width 1 0) / 2 - 60px);
+    }
+}

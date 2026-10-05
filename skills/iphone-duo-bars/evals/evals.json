@@ -37,6 +37,36 @@
         "Does not propose opting the whole ProductScreen out of vertical bars.",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 3,
+      "name": "custom-tab-bar",
+      "prompt": "Lumen (evals/files/Lumen) uses our own animated tab bar pinned to the bottom. On the closed iPhone Duo every system app has its tab bar on the side, but ours stays at the bottom. We can't move to UITabBarController this quarter. Plan how to make the custom bar behave, don't edit.",
+      "expected_output": "A plan that says no API moves a custom bar, keeps migration as the real fix, and places the bar from verticalBarEdge and the bar layout region, with the accessibility a system bar provides.",
+      "files": [
+        "evals/files/Lumen"
+      ],
+      "expectations": [
+        "States that only TabView / UITabBarController get vertical placement and that no API moves a custom tab bar, and keeps migrating to the system container as the long-term fix.",
+        "Reads the side from traitCollection.verticalBarEdge, observed with registerForTraitChanges(UITraitCollection.systemTraitsAffectingVerticalBarEdge), and lays the bar out vertically on that edge, horizontally at the bottom when there is no vertical bar.",
+        "Positions the bar with UIView.LayoutRegion.bar(onEdge:extent:) through layoutGuide(for:) — gated with #available(iOS 27.1, *) for the iOS 17 deployment target — instead of hand-computed offsets or the safe area alone.",
+        "Calls out the accessibility a custom bar must rebuild: labels that expand on a long press and the Large Content Viewer at accessibility text sizes.",
+        "No file in the project copy was modified."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "custom-back-chevron",
+      "prompt": "Our detail screens (evals/files/Shelf) replace the back button with our brand chevron. On the closed iPhone Duo the system back button would move into the side bar, but ours stays at the top left. What should we change? Plan only.",
+      "expected_output": "A plan that keeps the system back button with a custom back indicator image, and explains why a custom-view item stays horizontal.",
+      "files": [
+        "evals/files/Shelf"
+      ],
+      "expectations": [
+        "Recommends keeping the system back button and setting the brand chevron as its back indicator image — UINavigationBarAppearance.setBackIndicatorImage(_:transitionMaskImage:) — because only the icon differs (Apple engineer on the Developer Forums, thread 847875).",
+        "Explains that a UIBarButtonItem with a custom view stays horizontal by default (Tech Talk 111462 around 8:00), and that a back item that must stay custom needs axisBehavior = .verticalPreferred (iOS 27.1) and must fit the bar's fixed width.",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }

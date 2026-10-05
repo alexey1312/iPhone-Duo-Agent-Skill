@@ -206,3 +206,122 @@ each line (`overlaySmall` and `overlayWrapped` behave as on the outer display):
 In book pose both styles first lay out as if flat — layered, or split evenly or by the
 ratio — and move to the fold a few passes later, when the reserved regions arrive.
 Tabletop is not covered: the simulator cannot be rotated from a script.
+
+## `forum_samples_probe.swift` — do the forum-derived samples compile?
+
+The samples `layout-code.md` and `vertical-bars.md` took from the Developer Forums
+answers, written as those files write them.
+Everything that needs iOS 27.x sits behind `-D FORUM_27_1`,
+so the corner-margins sample can also be checked at an iOS 26 deployment target, ungated:
+
+```bash
+xcrun --sdk iphonesimulator swiftc -typecheck -D FORUM_27_1 \
+  -target arm64-apple-ios27.1-simulator scripts/probes/forum_samples_probe.swift
+xcrun --sdk iphonesimulator swiftc -typecheck \
+  -target arm64-apple-ios26.0-simulator scripts/probes/forum_samples_probe.swift
+```
+
+Both clean against Xcode 27.1 (27A9269) on 2026-10-05.
+
+## `forum_probe.swift` — do the forum answers hold on the simulator?
+
+A UIKit app with one mode per launch.
+It checks the answers Apple engineers gave on the Developer Forums
+(`references/sources.md` › Developer Forums Q&A)
+where an answer describes behavior rather than an API.
+`run` below is the same flat → book → flat sequence for every mode:
+launch flat, wait 4 s, `duo_pose.py set book`, wait 3 s, screenshot `--display=3`,
+`duo_pose.py set flat`, wait 3 s, read the log.
+
+```bash
+mkdir -p /tmp/ForumProbe.app
+cp scripts/probes/ForumProbe-Info.plist /tmp/ForumProbe.app/Info.plist
+xcrun -sdk iphonesimulator swiftc -target arm64-apple-ios27.1-simulator \
+  -parse-as-library scripts/probes/forum_probe.swift -o /tmp/ForumProbe.app/ForumProbe
+xcrun simctl install <udid> /tmp/ForumProbe.app
+xcrun simctl launch <udid> com.example.forumprobe -mode layout   # or sheet, grid, web
+xcrun simctl spawn <udid> log show --last 1m --style compact \
+  --predicate 'eventMessage CONTAINS "FORUMPROBE"'
+```
+
+2026-10-05, Xcode 27.1 (27A9269), iOS 27.1 runtime, inner display in landscape
+(951 × 669 pt, safe area bottom 34 / trailing 84), hinge set with `hinge` through `duo_pose.py`.
+
+**`-mode layout`** — a view that reads `reservedRegions` in `layoutSubviews`,
+over a control view that reads nothing:
+
+```
+flat   LAYOUT control pass=1 · LAYOUT reader pass=1, 2  fold=nil
+book   LAYOUT reader pass=3  bounds=(951.0, 669.0) safe=(t:0 l:0 b:34 r:84) fold=(455.5, 0.0, 40.0, 669.0)
+flat   LAYOUT reader pass=4  fold=nil
+       (no new control pass; one SCENE didUpdateEffectiveGeometry, at launch)
+REGIONS margins=(t:0 l:0 b:34 r:84)
+        marginsH=(t:0 l:16 b:34 r:84)   marginsV=(t:16 l:0 b:34 r:84)
+        barTrailing56=(t:120 l:875 b:34 r:20)   barBottom56=(t:593 l:16 b:20 r:84)
+```
+
+1. **A view that reads the regions during layout gets a layout pass when they change.**
+   Bounds and safe area stay the same, and the control view gets no pass,
+   so the fold reaches only the view that reads the regions.
+   This is the observation tracking that Forums 848035 and 847876 describe.
+2. **Folding does not call `windowScene(_:didUpdateEffectiveGeometry:)`.**
+   The scene geometry does not change.
+   Forums 848021 guarantees the call only when the scene moves between screens.
+3. **`cornerAdaptation` names the axis along which the region moves in from a corner.**
+   `.horizontal` adds 16 pt on the leading edge, and `.vertical` adds 16 pt on the top.
+   An edge that the safe area already insets (bottom 34, trailing 84) does not change.
+4. **`bar(onEdge: .trailing, extent: 56)` is the system's vertical-bar slot.**
+   It is 56 pt wide at x 875–931, inside the 84 pt trailing inset,
+   and starts at y 120, under the 84 × 120 status-bar strip.
+   `bar(onEdge: .bottom, extent: 56)` sits 20 pt above the bottom edge.
+
+**`-mode sheet`** — a `.pageSheet` with medium and large detents:
+
+| | Flat | Book | Flat again |
+| --- | --- | --- | --- |
+| Default placement | x 149–802, centred on the display | x 8–467, leading side of the fold | centred |
+| `-fold-placement YES` | centred (`.automatic`) | x 483.5–943, `.trailing` | centred |
+
+The sheet stays presented through every step (Forums 848034).
+Folded, the default sheet goes to the leading side (Forums 847797).
+The fold-driven placement works when the presenting view controller
+reads the regions in `viewWillLayoutSubviews` and sets `preferredPlacement`
+in `animateChanges`.
+That method runs again when the device folds.
+
+**`-mode grid`** — a compositional layout.
+Section 0 has two cards that put their gap on the fold, and section 1 is a 6-column grid that scrolls:
+
+```
+flat   cards=(0.0, 0.0, 425.3, 120.0) (441.3, 0.0, 425.3, 120.0)  safe=(t:0 l:0 b:34 r:84) adjusted=(t:0 l:0 b:34 r:0)
+book   fold=(455.5, 0.0, 40.0, 669.0)
+       cards=(0.0, 0.0, 455.7, 120.0) (495.7, 0.0, 371.7, 120.0)  safe and adjusted unchanged
+```
+
+The division region adds nothing to the collection view's safe area or content insets
+(Forums 847879).
+The layout environment's insets stay at leading 0 / trailing 84.
+In book pose the gap between the cards falls on the fold's frame.
+The scrolling grid keeps six columns and crosses the fold, which is what the forum answer recommends.
+
+**`-mode web`** — a `WKWebView` page with `viewport-fit=cover`
+and `padding-left/right: env(safe-area-inset-*)`.
+A fixed button moves to the middle of the trailing half
+when the host passes the fold in as CSS custom properties:
+
+```
+flat   paddingLeft 0px · viewportSegments false · devicePosture false · env(viewport-segment-width) unsupported
+book   fold=(455.5, 0.0, 40.0, 669.0) · paddingLeft 0px · paddingRight 84px · innerWidth 951
+       button left 663.25, right 783.25 — centred on 723.25 = 495.5 + (951 − 495.5) / 2
+flat   button centred on 475.5
+```
+
+The division region never reaches `env(safe-area-inset-*)`
+or the scroll view's adjusted insets (Forums 848036).
+WKWebView does not expose the Viewport Segments and Device Posture APIs.
+The fold's frame in the web view's coordinates matched CSS pixels 1 : 1 here:
+the page renders at scale 1 and the scroll view has no leading inset.
+Between the first report and the fold, the right inset moved
+from the scroll view's adjusted inset (84, `innerWidth` 867)
+to `env(safe-area-inset-right)` (84 px, `innerWidth` 951).
+The cause is not determined; folding back did not reverse it.

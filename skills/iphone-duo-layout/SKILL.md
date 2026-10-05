@@ -1,20 +1,19 @@
 ---
 name: iphone-duo-layout
 description: >-
-  Use this skill when an app's layout or geometry breaks or wastes space on iPhone
-  Duo's foldable inner display: layouts that should become multi-column in regular
-  × regular size classes, NavigationSplitView or TabView sidebars on the inner
-  screen, a phone-width column stuck in the middle, safe-area insets that differ
-  left and right, content or floating controls crossed by the hinge in book or
-  tabletop pose, the FaceTime camera covering UI, or video letterboxing on the
-  wide inner screen. Also use it for the iOS 27.1 layout APIs: reservedRegions
-  (division, occlusion, right-to-left mirroring), ReservedRegion /
+  Use when an app's layout or geometry breaks or wastes space on iPhone Duo's
+  foldable inner display: layouts that should become multi-column in regular ×
+  regular size classes, NavigationSplitView or TabView sidebars, a phone-width
+  column stuck in the middle, safe-area insets that differ left and right, content,
+  floating controls, sheets, collection-view sections or WKWebView pages crossed by
+  the hinge in book or tabletop pose, the FaceTime camera covering UI, or video
+  letterboxing on the wide inner screen. Also use it for the iOS 27.1 layout APIs:
+  reservedRegions (division, occlusion, right-to-left mirroring), ReservedRegion /
   UIView.ReservedRegion, ArrangementView / UIArrangementViewController split or
-  overlay with their ratio, edge and axis modifiers, and ConcentricRectangle /
-  UICornerConfiguration. Follows Apple's iPhone Duo tech talks and documentation.
-  Not for toolbar items or overflow menus, removing idiom or orientation checks,
-  hinge-angle interactions, or generic SwiftUI and Auto Layout bugs unrelated to
-  the foldable.
+  overlay with their ratio, edge and axis modifiers, and corner-aware margins.
+  Follows Apple's talks, documentation and forum answers. Not for toolbar items or
+  overflow menus, removing idiom or orientation checks, hinge-angle interactions, or
+  generic SwiftUI and Auto Layout bugs unrelated to the foldable.
 ---
 
 # iPhone Duo layout
@@ -29,6 +28,9 @@ Code: `references/layout-code.md`. Availability: `references/api-availability.md
 which ships with Xcode 27.1 — on that toolchain they need a deployment-target gate,
 not a blocked entry). Physical facts — display sizes, where the cameras and fold sit,
 poses, drawing mockups: `references/device-geometry.md` (never a layout input).
+Apple engineers' forum answers fill gaps the talks leave — collection views, web
+views, sheets in folded poses — and rank below the talks
+(`references/sources.md` › Developer Forums Q&A; cite them as *Forums 848036*).
 
 ## 1. Size classes, not devices (Tech Talk 111461, 2:46)
 
@@ -73,6 +75,22 @@ poses, drawing mockups: `references/device-geometry.md` (never a layout input).
   `sheetPresentationController?.preferredPlacement`, iOS 27.0) parks a sheet at an
   edge so the content behind it stays visible; `iphone-duo-bars` owns what that
   does to the sheet's toolbar.
+- **Sheets through a fold** (Forums 848034, 847797): a presented sheet stays
+  presented and adapts — never dismiss and re-present it for a pose. Folded, it
+  moves to the leading side; flat, it is centred (*Booted*: x 8–467 pt in book
+  pose). The placement applies in every pose, and there is no per-pose placement.
+  If a design needs the trailing side while folded, set `preferredPlacement` from the
+  active division region in `viewWillLayoutSubviews`, which runs again on a fold
+  (`references/layout-code.md` › A sheet that follows the fold), and suggest an
+  enhancement request. Update custom detents on a size-class change only when the
+  content needs it, through `registerForTraitChanges` (Forums 848010).
+- `.fullScreen` / `fullScreenCover` fills the app's own window scene, not the
+  display: in Split View it covers only the app's own side (Forums 847874).
+  `.overCurrentContext` applies only in regular width (Forums 847644).
+- A `UINavigationController` app needs no new architecture: adapt the content inside
+  it, for example with a `UIArrangementViewController` as a pushed screen
+  (Forums 848055). Keep `UISplitViewController` for sidebar and content; an
+  arrangement does not replace it (Forums 848000).
 
 ## 3. Safe areas (111461, 6:06)
 
@@ -85,6 +103,15 @@ poses, drawing mockups: `references/device-geometry.md` (never a layout input).
   UI (custom bars, edge-to-edge designs): `ReservedRegion` / `UIViewReservedRegion`
   (27.1, 8:08).
 - Fit screen corners with `ConcentricRectangle` / `UICornerConfiguration` (iOS 26).
+  For controls placed against the margins, UIKit's
+  `view.layoutGuide(for: .margins(cornerAdaptation: .horizontal))` (iOS 26, no gate)
+  moves them in from the rounded corners (Forums 848019). *Booted*: 16 pt on the
+  leading edge with `.horizontal`, on the top with `.vertical`; an edge the safe area
+  already insets does not change.
+- **The fold is not in the safe area.** The division region adds no safe-area inset,
+  no layout margin and no trait (Forums 847879; *Booted*: book pose leaves
+  `safeAreaInsets` and `adjustedContentInset` unchanged). Code that waits for an inset
+  to move a control off the fold waits forever: query the region.
 
 ## 4. The hinge and reserved regions (111463)
 
@@ -141,6 +168,17 @@ poses, drawing mockups: `references/device-geometry.md` (never a layout input).
   mirrors the region frames by default and a `Layout` needs no special casing. Pass
   `layoutDirectionBehavior: .fixed` only when you place content in absolute
   coordinates on purpose. (Apple documentation › `ReservedRegion`)
+- **Query during layout, not at scene transitions** (Forums 848035, 847876). Read the
+  regions in `layoutSubviews` / `viewWillLayoutSubviews` (SwiftUI: the geometry
+  reader); UIKit's observation tracking lays the view out again when they change.
+  *Booted*: the reading view got a pass on fold and on unfold, a sibling that did not
+  read them got none. Saving a fold state in `sceneWillResignActive` and restoring it
+  in `sceneDidBecomeActive` is a finding: the regions are current when the scene
+  returns, and a launch into a folded device needs no special path. Folding does not
+  call `windowScene(_:didUpdateEffectiveGeometry:)` (*Booted*).
+- There is no layout guide for the fold — reserved regions are the manual-layout
+  API — and the region's rect is oriented: taller than wide is a vertical fold
+  (Forums 847854). Prefer an arrangement, which does this evaluation itself.
 - Adopt the query for the highest-priority manually laid out controls, not for every
   view (16:34).
 
@@ -197,7 +235,13 @@ division regions.
   anchors an overlay's view when the fold turns the layers into a side-by-side
   layout. UIKit: `UISplitArrangement.DimensionRange`, `state(for:)` →
   `ViewState.isHidden` / `splitAxis` / `zIndex`, `placement(for:)`,
-  `updateArrangement(_:animated:)`.
+  `updateArrangement(_:animated:)`. A UIKit ratio: copy the arrangement's
+  `defaultViewProperties`, set `width.preferred = .fractional(0.3)`, write it back
+  with `setViewProperties(_:for: .primary)` on a `var` arrangement, then
+  `updateArrangement(_:)` (Forums 847990).
+- Arrangements and reserved regions are not iPhone Duo-only: they work on every
+  iPhone and iPad on iOS 27.1 (Forums 847644, 848021), so the same code path runs
+  everywhere.
 - **Choosing:** an existing `HStack`/`VStack` pattern → split; `ZStack` → overlay.
   Without one: clear foreground/background relationship where partially covering
   scrollable content is fine → overlay; main/detail where neither may be obscured →
@@ -212,11 +256,41 @@ division regions.
   arrangement, and don't put an arrangement inside `List`, `ScrollView` or any
   container that could make part of it unreachable.
 
+## 6. Content the system does not move (Forums)
+
+Containers, `List`, `ScrollView` and system presentations adapt to the fold.
+These do not, and the talks say nothing about them:
+
+- **Collection views** (Forums 847879): `UICollectionView` and compositional layouts
+  have no automatic fold avoidance. Scrolling grids need not avoid the fold — let them
+  scroll across it. Adjust only a section that does not scroll across the fold's axis
+  (a row of summary cards), from the collection view's own reserved regions, and
+  invalidate the layout when the fold changes (`references/layout-code.md`). Lining a
+  whole grid up with the fold is a refinement, not a requirement; the talk's Fitness
+  grid shows how (111463, 5:50). Hide content per size class in the data source or the
+  layout, never with a 0.1 pt section (Forums 848018).
+- **Web content** (Forums 848036): CSS `env(safe-area-inset-*)` and the web view's
+  content insets do not include the fold, and the Viewport Segments and Device
+  Posture APIs cannot be enabled in `WKWebView` — they are experimental Safari flags
+  (Forums 847644; *Booted*: all three unavailable). For a page the app controls,
+  query the regions in the host and pass them in as CSS custom properties, separate
+  from the safe-area insets. A page the app does not control keeps scrolling across
+  the fold; keep native controls that float over it clear of the fold.
+- **Custom sheets, panels and accessories**: a hand-built bottom sheet or floating
+  panel must avoid the fold itself (Forums 847644). Place a `UITabAccessory` from the
+  division region when partially folded (Forums 847814).
+- **Accessibility**: a custom layout that the fold splits in two may need
+  accessibility containers or sort priorities for a sensible VoiceOver order
+  (Forums 847644).
+- **The camera hole**: a custom element over the camera's reserved region can lose
+  touches there (Forums 847644). Query `.occlusion` and keep controls out of it.
+
 ## Workflow
 
 1. From the scan inventory and the code, list screens by layout shape: container-based,
    centered single column, custom split/overlay, manually positioned controls,
-   full-bleed media.
+   full-bleed media, collection views (`compositional layout` in the inventory) and
+   web content (`web views`).
 2. For each, pick the smallest change that works on the pose matrix: container first,
    size-class adaptation second, arrangement third, reserved-region query last.
 3. Recommend (`references/recommendation-format.md`), marking 27.1 APIs *blocked* when
