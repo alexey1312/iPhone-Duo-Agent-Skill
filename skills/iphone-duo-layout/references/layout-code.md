@@ -3,6 +3,12 @@
 Samples as published on the session pages of Tech Talks 111461 and 111463, plus a few
 reproduced from Apple's documentation (marked). APIs marked **27.1** were absent from
 the iOS 27.0 SDK; confirm with `scripts/sdk_api_check.py`.
+Samples marked *Forums* put an Apple engineer's forum answer into code
+(`sources.md` › Developer Forums Q&A).
+They are this repository's code, not Apple's, and they typecheck against the
+iOS 27.1 SDK (`scripts/probes/forum_samples_probe.swift` in the repository).
+*Booted* marks behavior measured on the iPhone Duo simulator
+(`scripts/probes/forum_probe.swift`).
 
 ## Size classes (111461, 2:59)
 
@@ -32,6 +38,25 @@ ConcentricRectangle()
     .ignoresSafeArea()
 
 // UIKit (iOS 26): UICornerConfiguration
+```
+
+## Corner-aware margins — iOS 26 (Forums 848019)
+
+`UIView.LayoutRegion` gives margins that move in from the rounded screen corners.
+The axis names the direction of the move.
+*Booted*, inner display in landscape: `.horizontal` added 16 pt on the leading edge,
+`.vertical` 16 pt on the top, and an edge the safe area already insets did not change.
+No gate is needed above iOS 26.
+
+```swift
+@MainActor func pinToCornerMargins(_ view: UIView, _ filterButton: UIButton) {
+    let guide = view.layoutGuide(for: .margins(cornerAdaptation: .horizontal))
+    NSLayoutConstraint.activate([
+        filterButton.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
+        filterButton.topAnchor.constraint(equalTo: guide.topAnchor),
+    ])
+    _ = view.edgeInsets(for: .margins(cornerAdaptation: .vertical))
+}
 ```
 
 ## Sidebar on the inner display (111461, 5:44; WWDC26 278, 9:51)
@@ -141,6 +166,45 @@ GeometryReader { proxy in
 // Each region: id, kind (.division / .occlusion), frame (includes margins), margins, isActive
 ```
 
+## Query during layout, not at scene transitions — 27.1 (Forums 848035)
+
+Read the regions where the view lays itself out.
+Do not save a fold state when the scene goes to the background,
+and do not restore one when it comes back: the regions are current by then.
+*Booted*: a view that read the regions in `layoutSubviews` got a layout pass when the
+device folded and another when it opened, with bounds and safe area unchanged.
+A sibling view that did not read them got no pass.
+That is UIKit's observation tracking.
+It was measured in `layoutSubviews` and in `viewWillLayoutSubviews`;
+Apple's *Updating views automatically with observation tracking in UIKit* also lists
+`updateProperties()`.
+Folding does not call `windowScene(_:didUpdateEffectiveGeometry:)`.
+
+```swift
+final class RecordControlsView: UIView {
+    let recordButton = UIButton(configuration: .filled())
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        addSubview(recordButton)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let size = recordButton.intrinsicContentSize
+        var center = CGPoint(x: bounds.midX, y: bounds.maxY - safeAreaInsets.bottom - size.height)
+        if let fold = reservedRegions(kind: .division).first(where: \.isActive)?.frame,
+           fold.height > fold.width, fold.minX...fold.maxX ~= center.x {
+            center.x = fold.maxX + (bounds.maxX - safeAreaInsets.right - fold.maxX) / 2
+        }
+        recordButton.bounds.size = size
+        recordButton.center = center
+    }
+}
+```
+
 ## Pose from the fold — 27.1 (111463, 4:09–4:46)
 
 Book pose sends alerts to the trailing side; tabletop puts viewing content on top and
@@ -185,6 +249,41 @@ Checked on the simulator in book pose: the fold falls in the gap between the hal
 Use this for discrete, manually placed controls. An arrangement does the same split
 for two views without any of this code, and continuously scrolling content does not
 displace at all (3:45).
+
+## A sheet that follows the fold — 27.1 (Forums 847797)
+
+A presented sheet stays presented through a fold (Forums 848034).
+Folded, it moves to the leading side by default.
+*Booted*: x 8–467 pt in book pose, centred at x 149–802 pt when flat.
+`preferredPlacement` applies in every pose, and no per-pose API exists.
+When the design needs another side while folded, set the placement from the active
+division region, and update it from `viewWillLayoutSubviews`, which runs again on a fold.
+*Booted*: the sheet moved to x 483.5–943 pt in book pose and back to the centre when flat.
+Placing a sheet at an edge changes its toolbar: `iphone-duo-bars` owns that.
+
+```swift
+final class MapViewController: UIViewController {
+    func showDetails(_ details: UIViewController) {
+        details.modalPresentationStyle = .pageSheet
+        details.sheetPresentationController?.detents = [.medium(), .large()]
+        details.sheetPresentationController?.preferredPlacement = placementForFold()
+        present(details, animated: true)
+    }
+
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        guard let sheet = presentedViewController?.sheetPresentationController else { return }
+        let placement = placementForFold()
+        if sheet.preferredPlacement != placement {
+            sheet.animateChanges { sheet.preferredPlacement = placement }
+        }
+    }
+
+    private func placementForFold() -> UISheetPresentationController.Placement {
+        view.reservedRegions(kind: .division).contains(where: \.isActive) ? .trailing : .automatic
+    }
+}
+```
 
 ## Even columns — 27.1 (111463, 7:36)
 
@@ -270,6 +369,151 @@ Checked on the simulator, flat and in book pose: the fold falls in the gap betwe
 the halves. The halves are unequal in landscape (455.5 against 371.5 pt). Both get the column
 count the narrower one fits, so tiles on the leading side come out wider; each row
 stays even, and no tile crosses the fold, flat or folded.
+
+## A collection-view section clear of the fold — 27.1 (Forums 847879)
+
+`UICollectionView` and compositional layouts do not avoid the fold,
+and the division region adds no safe-area insets and no traits.
+*Booted*: in book pose the collection view's `safeAreaInsets`, `adjustedContentInset`
+and the layout environment's insets did not change.
+Scrolling content need not avoid the fold.
+Adjust only a section that does not scroll across the fold's axis,
+such as a row of summary cards, from the collection view's own reserved regions,
+and invalidate the layout when the fold changes.
+*Booted*: the gap between the two cards fell on the fold's frame, x 455.7–495.7 pt,
+while the 6-column grid below kept scrolling across it.
+To hide a section in some size classes, change the data source or the layout.
+A section sized to 0.1 pt still makes items, only tiny ones (Forums 848018).
+
+```swift
+final class DashboardViewController: UICollectionViewController {
+    private var lastFold: CGRect?
+
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        let fold = verticalFold()
+        if fold != lastFold {
+            lastFold = fold
+            collectionView.collectionViewLayout.invalidateLayout()
+        }
+    }
+
+    private func verticalFold() -> CGRect? {
+        guard let fold = collectionView.reservedRegions(kind: .division).first(where: \.isActive)?.frame,
+              fold.height > fold.width else { return nil }
+        return fold
+    }
+
+    func makeLayout() -> UICollectionViewCompositionalLayout {
+        UICollectionViewCompositionalLayout { [unowned self] index, environment in
+            index == 0 ? summarySection(environment) : feedSection()
+        }
+    }
+
+    private func summarySection(_ environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let height = NSCollectionLayoutDimension.absolute(120)
+        let full = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: height)
+        let leading = environment.container.effectiveContentInsets.leading
+        let width = environment.container.effectiveContentSize.width
+        let group: NSCollectionLayoutGroup
+        if let fold = verticalFold(), fold.minX > leading, fold.maxX < leading + width {
+            let first = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .absolute(fold.minX - leading),
+                                                                 heightDimension: height))
+            let second = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .absolute(leading + width - fold.maxX),
+                                                                  heightDimension: height))
+            group = .horizontal(layoutSize: full, subitems: [first, second])
+            group.interItemSpacing = .fixed(fold.width)
+        } else {
+            let card = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .fractionalWidth(0.5), heightDimension: height))
+            group = .horizontal(layoutSize: full, repeatingSubitem: card, count: 2)
+            group.interItemSpacing = .fixed(16)
+        }
+        return NSCollectionLayoutSection(group: group)
+    }
+
+    private func feedSection() -> NSCollectionLayoutSection {
+        let tile = NSCollectionLayoutItem(layoutSize: .init(widthDimension: .fractionalWidth(1.0 / 6),
+                                                            heightDimension: .fractionalWidth(1.0 / 6)))
+        let row = NSCollectionLayoutGroup.horizontal(
+            layoutSize: .init(widthDimension: .fractionalWidth(1), heightDimension: .fractionalWidth(1.0 / 6)),
+            repeatingSubitem: tile, count: 6)
+        return NSCollectionLayoutSection(group: row)
+    }
+}
+```
+
+The frames are in the collection view's own coordinates,
+which are content coordinates because a scroll view's bounds origin is its offset.
+With vertical scrolling, x matches the layout's x (bounds origin x was 0);
+y moves with the scroll position.
+
+## Web content and the fold — 27.1 (Forums 848036)
+
+The fold does not reach web content.
+CSS `env(safe-area-inset-*)` and the web view's adjusted content insets exclude it.
+The Viewport Segments and Device Posture APIs are experimental Safari feature flags
+and cannot be enabled in `WKWebView` (Forums 848036, 847644).
+*Booted*: `window.viewport.segments`, `navigator.devicePosture` and
+`env(viewport-segment-width 0 0)` were all unavailable,
+and the safe-area padding stayed the same in book pose.
+For a page the app controls, query the regions in the host and pass them in as CSS
+custom properties, separate from the safe-area insets, so neither side applies the
+same spacing twice.
+A page the app does not control keeps scrolling across the fold.
+Keep native controls that float over it clear of the fold.
+
+```swift
+final class ArticleWebViewController: UIViewController, WKNavigationDelegate {
+    private let webView = WKWebView()
+    private var sentFold: CGRect??          // .none: nothing sent to this page yet
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        webView.navigationDelegate = self
+        webView.frame = view.bounds
+        webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(webView)
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        sentFold = .none                    // a new page knows nothing yet
+        view.setNeedsLayout()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let fold = webView.reservedRegions(kind: .division).first(where: \.isActive)?.frame
+        guard sentFold != .some(fold) else { return }
+        sentFold = .some(fold)
+        let inset = webView.scrollView.adjustedContentInset
+        let script = fold.map { f in
+            let x = f.minX - inset.left, y = f.minY - inset.top
+            return """
+            document.documentElement.style.setProperty('--fold-min-x', '\(x)px');
+            document.documentElement.style.setProperty('--fold-max-x', '\(x + f.width)px');
+            document.documentElement.style.setProperty('--fold-min-y', '\(y)px');
+            document.documentElement.style.setProperty('--fold-max-y', '\(y + f.height)px');
+            document.documentElement.classList.add('fold-active');
+            """
+        } ?? "document.documentElement.classList.remove('fold-active');"
+        webView.evaluateJavaScript(script)
+    }
+}
+```
+
+```css
+/* In the page: a fixed button moves to the middle of the trailing half while folded */
+.listen { position: fixed; bottom: 40px; width: 120px; left: calc(50% - 60px); }
+.fold-active .listen {
+    left: calc(var(--fold-max-x) + (100% - env(safe-area-inset-right) - var(--fold-max-x)) / 2 - 60px);
+}
+```
+
+*Booted*: with the page at scale 1 and no leading content inset,
+the fold's frame in the web view matched CSS pixels 1 : 1
+(the button centred on x 723.25 = 495.5 + (951 − 495.5) / 2, measured without the
+safe-area term).
+Subtracting the adjusted content inset is derived, not measured.
 
 ## ArrangementView — 27.1 (111463, 11:23–13:07)
 
@@ -390,5 +634,23 @@ struct DetailsView: View {
             Metadata()
         }
     }
+}
+```
+
+UIKit, the same 30 / 70 split (Forums 847990).
+`UISplitArrangement` is a struct and `setViewProperties(_:for:)` is `mutating`,
+so copy the defaults, change them, and write them back:
+
+```swift
+@MainActor func makeEditor(outline: UIViewController, editor: UIViewController) -> UIArrangementViewController {
+    let controller = UIArrangementViewController()
+    controller.setViewController(outline, for: .primary)
+    controller.setViewController(editor, for: .secondary)
+    var arrangement: UISplitArrangement = .split.axes(.horizontal)
+    var properties = arrangement.defaultViewProperties
+    properties.width.preferred = .fractional(0.3)
+    arrangement.setViewProperties(properties, for: .primary)
+    controller.updateArrangement(arrangement)
+    return controller
 }
 ```

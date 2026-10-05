@@ -297,7 +297,14 @@ INVENTORY_PATTERNS: dict[str, str] = {
     "container content margins": r"\bContentMarginGuide\b|\bcontentMargins\s*\(\s*for\s*:",
     # Recommended by READINESS-CHECKS and the bars skill, so adoption has to count.
     "vertical bar trait observation": r"\bsystemTraitsAffectingVerticalBarEdge\b",
-    "bar layout region": r"\bUIViewLayoutRegion\b|\blayoutRegionForBarOn(?:Directional)?Edge\b|\bLayoutRegion\s*\.\s*bar\s*\(",
+    "bar layout region": r"\bUIViewLayoutRegion\b|\blayoutRegionForBarOn(?:Directional)?Edge\b|\bLayoutRegion\s*\.\s*bar\s*\(|\bsafeAreaBar\s*\(",
+    "corner-adapted margins": r"\bcornerAdaptation\s*:|\bLayoutRegionWithCornerAdaptation\b",
+    # Content the fold crosses that no container moves (Forums 847879, 848036): each hit
+    # is a screen to check in book pose, not a finding.
+    "web views": r"\bWKWebView\b",
+    "compositional layout": r"\bUICollectionViewCompositionalLayout\b|\bNSCollectionLayoutSection\b",
+    # Deprecated since iOS 17; same behavior on iPhone Duo (Forums 848021).
+    "traitCollectionDidChange": r"\btraitCollectionDidChange\b",
 }
 
 PORTRAIT_ORIENTATIONS = {"UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown"}

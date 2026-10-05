@@ -90,5 +90,13 @@
   {
     "query": "backgroundExtensionEffect for the detail banner under the sidebar in our iPad NavigationSplitView, nothing to do with iPhone",
     "should_trigger": false
+  },
+  {
+    "query": "we have a custom Lottie tab bar, how do we move it to the side like the system one on the closed iPhone Duo",
+    "should_trigger": true
+  },
+  {
+    "query": "custom back chevron stays top-left on iPhone Duo instead of going into the side bar",
+    "should_trigger": true
   }
 ]

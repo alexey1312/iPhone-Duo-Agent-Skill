@@ -34,7 +34,21 @@ begins.
   `main-screen-*`, so an app that asks for the main screen gets the smaller of the
   two whichever display it is actually on. (`references/device-geometry.md`, measured)
 - The **user interface idiom is not meaningful for layout**: an iPhone app stays in the
-  phone idiom while fully resizable. (111461 1:33; 278 6:17)
+  phone idiom while fully resizable. (111461 1:33; 278 6:17) iPhone Duo has no idiom
+  of its own and no API that identifies it (Forums 847775, 847644). An iPhone-only app
+  cannot opt out of resizing on iPad or in iPhone Mirroring either (Forums 847872;
+  278 1:32).
+- **A fold is a size-class and trait change, not a scene event.** Opening, closing and
+  folding keep the process and the scene; text input, scroll position and playback
+  survive (Forums 848042, 847644). Do not save a fold state on the way to the
+  background or restore one on the way back: reserved regions and hinge data are
+  current when the scene returns (Forums 848035). `windowScene(_:didUpdateEffectiveGeometry:)`
+  is guaranteed when the scene moves to the other display (Forums 848021), but
+  layout-time adaptation is the better route, and folding alone does not call it
+  (*Booted*, `scripts/probes/forum_probe.swift` in the repository).
+- **The SDK alone picks the compatibility tier.** No `Info.plist` key brings back the
+  boxed presentation once the app links the iOS 27 SDK (Forums 847856;
+  `references/api-availability.md` › What each linked SDK gets).
 - **UIScene lifecycle is required** when building with the latest SDKs; without it
   the app no longer launches. (278 2:10)
 - `UIRequiresFullScreen` no longer opts an app out of resizing from iOS 27: it gives
@@ -127,7 +141,15 @@ Full before/after code for SwiftUI and UIKit: `references/legacy-api-remediation
   matters (cutouts, camera side), ask before replacing.
 - **Scene lifecycle migration touches app state restoration, URL handling, push
   notification routing and background tasks.** Plan it as its own item and read
-  Xcode's `scene-lifecycle-task.md` reference when available.
+  Xcode's `scene-lifecycle-task.md` reference when available, or Apple's
+  *Transitioning to the UIKit scene-based life cycle* (Forums 848011).
+- **Fold handling in a scene delegate is a finding**, not a migration step. State
+  restoration (`stateRestorationActivity(for:)`) is for a real scene disconnection,
+  not for a fold (Forums 847644).
+- **`traitCollectionDidChange(_:)` is deprecated since iOS 17.** It still behaves the
+  same on iPhone Duo (Forums 848021), so move off it as code is touched rather than as
+  a blocker: `registerForTraitChanges(_:handler:)` or automatic trait tracking
+  (278 2:51). The scan inventory counts it.
 - Leave `UIRequiresFullScreen` alone in games that need discrete resizing; for other
   apps recommend removing it and adapting instead.
 - **Localization catalogs hide biometric copy.** The scanner reads Swift and

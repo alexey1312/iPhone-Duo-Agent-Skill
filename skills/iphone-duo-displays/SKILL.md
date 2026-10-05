@@ -62,6 +62,10 @@ camera can do: `references/device-geometry.md`.
   and reserved regions (`iphone-duo-layout`).
 - Good fits: instruments, games, camera and media controls, playful physical
   interactions. Poor fits: anything essential — it must be reachable without folding.
+- **There is no pose value.** No API says "book" or "tabletop". Combine the hinge
+  status and angle with orientation and size class when an effect needs the pose
+  (Forums 847644); for layout, the shape of the active division region tells book from
+  tabletop (`iphone-duo-layout`).
 
 ## Split View multitasking (2:59)
 
@@ -69,12 +73,25 @@ camera can do: `references/device-geometry.md`.
   that stacks video and apps. There is no opt-out to lean on.
 - Apps that already resize on iPad or in iPhone Mirroring start in good shape. Handle
   it with size classes and scene geometry, and the asymmetric safe areas it produces.
+- No free-form drag-to-resize and no Stage Manager: scene size follows the pose and
+  Split View, and no API sets it (Forums 847644).
+- **Picture in Picture** (Forums 847644): open in landscape, a person can pin PiP to
+  the top while the app resizes beneath it; partially folded, the video takes half the
+  screen and the app adjusts to the rest; PiP moves to the outer display only when the
+  device closes, under system control. Expect the vertical size to change while video
+  plays.
 - Verify: pose P8 in `references/pose-test-matrix.md`.
 
 ## Multiple scenes (3:38)
 
 - iPhone Duo is the first iPhone that shows multiple instances of an app's UI; apps
   that support multiple scenes on iPad get this too.
+- **Multiple scenes are not needed for folding.** Opening, closing and folding resize
+  the existing scene. Scenes matter for Split View with several instances and for
+  scene accessories (Forums 847644).
+- Instances share app-wide state: `UserDefaults` and `@AppStorage` are not per window.
+  Audio and video playback belongs to the instance that started playback most
+  recently (Forums 847644).
 - **New windows cannot be created on the outer display.** Every scene request must
   handle failure (scanner rule `DUO010` flags `errorHandler: nil`).
 - Prefer `UIWindowSceneActivationAction` (Swift: `UIWindowScene.ActivationAction`) for
@@ -118,6 +135,13 @@ camera can do: `references/device-geometry.md`.
   the script, tap to focus) is fine, a second interface is not.
 - Simulator has no camera: previews and Simulator check the accessory's layout,
   only a device shows it.
+- The system can withdraw accessory content at any moment, so its animations must
+  start, pause and stop cleanly; drive timed animation with `TimelineView` or
+  `CADisplayLink` (Forums 847644). An app cannot show an accessory without the
+  conditions the system requires, only toggle its own content with `isEnabled`.
+- **Outer display while open, without a camera**: there is no general route. Apart
+  from the camera capture accessory, AlarmKit alarms and a Live Activity are the way
+  an alarm-clock or timer app reaches the outer display (Forums 847644).
 
 ### Before proposing a camera accessory
 
@@ -181,7 +205,10 @@ Activities. An app with neither is absent from it. For apps that have a natural
 glanceable state (next event, timer, score, order status), a widget or Live Activity
 is a Tier 3 item; the scan inventory reports `WidgetKit` and `Live Activities`
 adoption. The Dynamic Island on the side stack expands vertically for Live Activities
-(HIG › Reserved regions), so nothing extra is needed there.
+(HIG › Reserved regions), so nothing extra is needed there — but every presentation
+of the `ActivityConfiguration` must exist: compact leading and trailing, minimal,
+expanded, and the Lock Screen (Forums 847644). Alarm and timer apps adopt AlarmKit
+and let it present the alert (Forums 847644).
 
 ## Workflow
 

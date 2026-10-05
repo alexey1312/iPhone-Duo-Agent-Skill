@@ -241,6 +241,38 @@ class SdkApiCheckTests(unittest.TestCase):
         self.assertTrue(row["found"])
         self.assertEqual(row["matched_as"], ["FooTypeWidget"], "the prose mention must not count")
 
+    def make_xcode(self, root: Path, app: str, *sdk_names: str) -> None:
+        sdks = root / app / "Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs"
+        for name in sdk_names:
+            (sdks / name).mkdir(parents=True)
+
+    def test_lists_a_newer_sdk_installed_next_to_the_selected_one(self) -> None:
+        """xcode-select at 27.0 with 27.1 installed must not read as 'blocked'."""
+        root = Path(self._directory.name) / "Applications"
+        self.make_xcode(root, "Xcode-27.0.0.app", "iPhoneOS27.0.sdk")
+        # The real layout: a directory without a version, and a versioned symlink to it.
+        self.make_xcode(root, "Xcode-27.1.0-Beta.app", "iPhoneOS.sdk")
+        sdks = root / "Xcode-27.1.0-Beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs"
+        (sdks / "iPhoneOS27.1.sdk").symlink_to("iPhoneOS.sdk")
+        found = sdk_api_check.newer_installed_sdks("27.0", "iphoneos", roots=(root,))
+        self.assertEqual([item["sdk_version"] for item in found], ["27.1"])
+        self.assertTrue(found[0]["developer_dir"].endswith("Xcode-27.1.0-Beta.app/Contents/Developer"))
+        report = {"sdk_path": "x", "sdk_version": "27.0", "xcode_version": "Xcode 27.0",
+                  "files_searched": 0, "symbols": [], "newer_sdks_installed": found}
+        self.assertIn("DEVELOPER_DIR=", sdk_api_check.render_markdown(report))
+
+    def test_lists_nothing_when_the_selected_sdk_is_newest(self) -> None:
+        """The negative half: same, older or unparsable SDKs are not offered."""
+        root = Path(self._directory.name) / "Applications"
+        self.make_xcode(root, "Xcode-27.0.0.app", "iPhoneOS27.0.sdk")
+        self.make_xcode(root, "Xcode-27.1.0-Beta.app", "iPhoneOS27.1.sdk")
+        self.make_xcode(root, "Xcode-odd.app", "iPhoneOSbeta.sdk", "iPhoneSimulator28.0.sdk")
+        self.assertEqual(sdk_api_check.newer_installed_sdks("27.1", "iphoneos", roots=(root,)), [])
+        self.assertEqual(sdk_api_check.newer_installed_sdks("unknown", "iphoneos", roots=(root,)), [])
+        report = {"sdk_path": "x", "sdk_version": "27.1", "xcode_version": "Xcode 27.1",
+                  "files_searched": 0, "symbols": [], "newer_sdks_installed": []}
+        self.assertNotIn("DEVELOPER_DIR", sdk_api_check.render_markdown(report))
+
     def test_default_symbols_are_unique(self) -> None:
         names = [symbol.name for symbol in sdk_api_check.DEFAULT_SYMBOLS]
         self.assertEqual(len(names), len(set(names)))

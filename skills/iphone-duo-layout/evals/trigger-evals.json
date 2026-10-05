@@ -98,5 +98,17 @@
   {
     "query": "overlayArrangementZIndex is always 0 in my Up Next view inside an ArrangementView on the iPhone Duo simulator — why doesn't it change?",
     "should_trigger": true
+  },
+  {
+    "query": "WKWebView article on iPhone Duo: env(safe-area-inset-left) doesn't keep our floating button off the hinge in book pose",
+    "should_trigger": true
+  },
+  {
+    "query": "UICollectionViewCompositionalLayout section gets cut by the iPhone Duo crease, the insets never change when folded",
+    "should_trigger": true
+  },
+  {
+    "query": "our WKWebView doesn't load pages after the iOS 27 update, just a white screen",
+    "should_trigger": false
   }
 ]

@@ -8,6 +8,8 @@ for iPhone Duo, **278** Modernize your UIKit app (WWDC26), **HIG** Designing for
 Duo (Human Interface Guidelines, cited by section), **PREP** Preparing your app for
 iPhone Duo (Apple documentation, cited by section), **TN3192** the `UIRequiresFullScreen`
 technote, **Spec** iPhone Duo tech specs, **Newsroom** Apple's iPhone Duo announcement.
+**Forums** an Apple staff answer on the Developer Forums, cited by thread number
+(`references/sources.md` › Developer Forums Q&A); it ranks below the talks and the SDK.
 
 ## Automated rules
 
@@ -50,7 +52,8 @@ the code read before it becomes a recommendation.
 
 - Layout decisions use size classes or container size, never idiom or orientation. (111461 2:46)
 - No cached screen-derived values survive a display change. (111461 3:57)
-- Sensor data uses `deviceMotionBody` / `headingBody`. (278 7:55)
+- Sensor data uses `deviceMotionBody` / `headingBody`. (278 7:55) Body-relative values need the scene full screen on that display. (Forums 847644)
+- No fold state saved or restored in scene lifecycle events, and no device check for iPhone Duo; a fold is a trait and geometry change of the same scene. (Forums 848035, 847775)
 - Games relying on `UIRequiresFullScreen` understand discrete resizing, and that iPhone Duo still resizes them on open and close. (278 5:46; 111461 4:37; TN3192)
 - Biometric copy, symbols and onboarding branch on `LAContext.biometryType`; nothing assumes Face ID. (111461 2:34; Spec)
 
@@ -71,6 +74,8 @@ the code read before it becomes a recommendation.
 - Sheets: vertical bar disabled only for single-control sheets on the outer display; placement on the inner display chosen with `presentationPlacement` / `preferredPlacement`. (PREP Optimize bars for vertical presentation; 111466 8:36)
 - Hero or background images extend under the vertical bar with `backgroundExtensionEffect` / `UIBackgroundExtensionView`. (PREP Optimize bars for vertical presentation)
 - Keyboard accessory bars stay with the keyboard; segmented controls and text buttons stay horizontal. (111462 10:00; 111466 5:07)
+- A bar that must stay custom takes the system bar's slot with `UIView.LayoutRegion.bar(onEdge:extent:)` / `safeAreaBar`, and rebuilds long-press labels and the Large Content Viewer. (Forums 847835, 847644)
+- A custom back chevron is a back indicator image on the system back button, not a custom-view item. (Forums 847875)
 
 ### Layout
 
@@ -84,6 +89,9 @@ the code read before it becomes a recommendation.
 - Same functionality and state on both displays; an extra hierarchy level on the inner display where it fits. (HIG Best practices; 111466 7:34)
 - Small adjustments, not rearrangement, while folding. (HIG Reserved regions)
 - Games playable in every pose, changing aspect ratio rather than letterboxing or pillarboxing. (HIG Best practices)
+- Reserved regions are read during layout; nothing waits for a safe-area inset or a trait to report the fold. (Forums 848035, 847879)
+- Sheets stay presented through a fold; a pose-dependent placement comes from the active division region. (Forums 848034, 847797)
+- Collection-view sections that do not scroll across the fold, and fixed elements in `WKWebView` pages the app controls, are placed from the reserved regions; scrolling content is left alone. (Forums 847879, 848036)
 - Manually positioned content around reserved regions respects right-to-left mirroring (regions mirror by default; `layoutDirectionBehavior: .fixed` only for deliberate absolute placement). (Apple documentation, `ReservedRegion`)
 - Video players design the letterbox area on the inner display rather than leaving it black; landscape supported because people set the device down like a tent. (111461 3:30; `device-geometry.md` aspect consequences, derived)
 

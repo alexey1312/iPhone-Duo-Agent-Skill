@@ -2,17 +2,17 @@
 name: iphone-duo-bars
 description: >-
   Prepare navigation bars, toolbars and tab bars for iPhone Duo's vertical bars,
-  where controls move to the side of the outer display and of the inner display
-  in landscape. Use when a
-  developer asks about vertical bars, bar item ordering, back or close button
-  placement, pinned trailing or prominent actions, toolbar items without titles,
-  axisBehavior, symbol-only items and badges, custom views in toolbars,
-  toolbarVerticalEdge or verticalBarEdge, overflow menus and ToolbarOverflowMenu,
-  visibilityPriority, toolbar or tab bar compression, custom UIToolbar or
-  UINavigationBar instances, sheet toolbars and presentationPlacement, backgrounds
-  under the bar with backgroundExtensionEffect, or opting out with
-  toolbarVerticalBehavior. Covers SwiftUI and UIKit, based on Apple's "Raise the bar
-  with iPhone Duo" and "Preparing your app for iPhone Duo".
+  where controls move to the side of the outer display and of the inner display in
+  landscape. Use when a developer asks about vertical bars, bar item ordering, back,
+  custom back or close button placement, pinned trailing or prominent actions,
+  toolbar items without titles, axisBehavior, symbol-only items and badges, custom
+  views in toolbars, toolbarVerticalEdge or verticalBarEdge, overflow menus and
+  ToolbarOverflowMenu, visibilityPriority, toolbar or tab bar compression, custom
+  UIToolbar or UINavigationBar instances, hand-built tab bars or bars that must stay
+  custom, sheet toolbars and presentationPlacement, backgrounds under the bar with
+  backgroundExtensionEffect, or opting out with toolbarVerticalBehavior. Covers
+  SwiftUI and UIKit, based on Apple's "Raise the bar with iPhone Duo", "Preparing
+  your app for iPhone Duo" and Apple engineers' forum answers.
 ---
 
 # iPhone Duo vertical bars
@@ -56,6 +56,9 @@ Where the corner camera and the side controls physically sit:
   stay horizontal. The title is still required — it is used in overflow menus and
   expanded forms. (5:56)
 - **Custom views stay horizontal by default.** (8:00)
+- **The system picks the axis.** Heuristics decide where each bar goes; the tab bar
+  stays horizontal on the inner display in portrait by design. Never force a vertical
+  tab bar or build layout that assumes one (Forums 847817).
 - **Overflow runs bottom to top**, and toolbars compress before the tab bar by
   default. Overflow happens sooner on the outer display in landscape, with the
   keyboard up, and with Picture in Picture pinned at the top in open portrait.
@@ -65,6 +68,25 @@ Where the corner camera and the side controls physically sit:
 
 1. **Container.** Is every bar item owned by a navigation or tab container? Scanner
    rule `DUO007` finds standalone bars; move their items into the container.
+   A hand-built tab bar or toolbar never moves by itself — no API moves it
+   (Forums 847644). Migrate it first. A team that cannot migrate now still gets the
+   migration as a plan item — the long-term fix — with what the custom bar keeps
+   missing: overflow, compression, visibility priority and the inner display's
+   sidebar come only with `TabView` / `UITabBarController` (Forums 847644).
+   When it must stay custom for now (Forums 847835):
+   - read the side from `verticalBarEdge` / `toolbarVerticalEdge`, observed through
+     `systemTraitsAffectingVerticalBarEdge`;
+   - reserve its strip with `view.layoutGuide(for: .bar(onEdge:extent:))` (UIKit,
+     27.1) or `safeAreaBar(edge:)` with a `HorizontalEdge` (SwiftUI, iOS 26).
+     *Booted*: a 56 pt trailing bar region sits inside the 84 pt trailing inset, below
+     the 120 pt status-bar strip — the system bar's own slot;
+   - do not trust safe-area insets alone for the camera and Dynamic Island strip:
+     query the `.occlusion` regions (Forums 847644);
+   - rebuild what a system bar gives for free: item labels that expand on a long
+     press, and the Large Content Viewer from *Accessibility Medium* text sizes up
+     (`UILargeContentViewerInteraction`, `showsLargeContentViewer`;
+     SwiftUI `accessibilityShowsLargeContentViewer()`).
+   Code: `references/vertical-bars.md` › A bar that must stay custom.
 2. **Order.** Top of the vertical bar: primary navigation (back or close), then
    prominent actions (done, save). Use `.cancellationAction` / leading item groups
    with `leftItemsSupplementBackButton = false` for close, and
@@ -73,6 +95,11 @@ Where the corner camera and the side controls physically sit:
    with `ToolbarItemGroup` / `UIBarButtonItemGroup` instead of manual spacing, and keep
    controls next to the content they affect — Mail's list controls stay above the
    leading pane. (HIG › Vertical controls)
+   A **custom back button** that only changes the chevron: set the back indicator image
+   on `UINavigationBarAppearance` and keep the system back button, which joins the
+   vertical bar by itself. A back item that really is custom (a custom view): set its
+   `axisBehavior` to `.verticalPreferred` and fit it to the bar's fixed width
+   (Forums 847875).
 3. **Title and symbol on every item.** Provide both, even when only the symbol shows.
 4. **Text that carries information stays horizontal.** A symbol plus redundant text →
    symbol only (use a badge for counts, iOS 26 badge API). Text with standalone value
@@ -91,6 +118,9 @@ Where the corner camera and the side controls physically sit:
    actions — move it into `ToolbarOverflowMenu` / `additionalOverflowItems` so people
    see one "more" instead of two — or a single named function such as Filter, which
    deserves its own symbol and title so it can survive in the vertical bar. (11:40)
+   A confirmation for an overflow-menu item cannot anchor to the menu: drive
+   `confirmationDialog` from state that the item's action sets (Forums 847644).
+   For a dot or count on a tab, use a badge, not a `UITabAccessory` (Forums 847644).
 8. **Compression.** Navigation-focused apps: default, or explicitly
    `.prefersTabBar` (toolbar compresses first). Task-oriented screens where actions
    matter more than tabs: `.toolbarVerticalCompressionBehavior(.prefersToolbarItems)` /
@@ -106,7 +136,10 @@ Where the corner camera and the side controls physically sit:
     that overflow. (14:21) The behavior resolves per window or presentation: a
     `NavigationStack` uses its top view, a `TabView` its selected tab, a
     `NavigationSplitView` its trailing-most column; make it a stable choice, never a
-    toggle on a view's state, and use `toolbarVisibility` to hide bars instead. UIKit:
+    toggle on a view's state, and use `toolbarVisibility` to hide bars instead.
+    Varying it by horizontal size class is legitimate only when the regular-width UI
+    really differs — Safari disables the vertical bar in regular width because its
+    tabs stack horizontally (Forums 847864). UIKit:
     `preferredVerticalBarBehavior`, `childForPreferredVerticalBarBehavior`,
     `setNeedsUpdateOfVerticalBarConfiguration()`. Otherwise don't override the default
     placement; a full-width layout suits only immersive, non-scrolling screens that

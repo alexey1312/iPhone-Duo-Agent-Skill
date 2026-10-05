@@ -98,8 +98,8 @@ layout work (how many toolbars, split views, custom bar items, camera sessions).
 | --- | --- | --- |
 | 0 — Blockers | App lifecycle without scenes (`DUO005`) | The app does not launch when built with the latest SDK. |
 | 1 — Correctness | Main screen, screen bounds, orientation and idiom layout forks, symmetric safe-area math, global window state, Face ID copy (`DUO001–004`, `006`, `009`, `013`) | Wrong layout on the inner display, in Split View, in iPhone Mirroring and on iPad; wrong words on a Touch ID device. |
-| 2 — Bars | Standalone bars, titles/symbols, ordering, overflow, priority (`DUO007`, `DUO011`, inventory) | Bars move to the side on the inner display with the 27.1 SDK; items without titles or with text-only labels land badly. |
-| 3 — Richer adoption | Sidebar placement, reserved regions for top custom controls, arrangements, hinge effects, scene accessories, camera direction handling, multiple windows, a widget or Live Activity for StandBy on the outer display, App Store screenshots for both displays (`references/device-geometry.md`) | Makes the app good on iPhone Duo rather than merely correct; most of it compiles on Xcode 27.1 and is blocked only on Xcode 27.0. StandBy cannot be verified in the iPhone Duo simulator (Xcode 27.1 known issues 187708663, 187708767). |
+| 2 — Bars | Standalone bars, titles/symbols, ordering, overflow, priority, hand-built tab bars and back buttons (`DUO007`, `DUO011`, inventory) | Bars move to the side on the inner display with the 27.1 SDK; items without titles or with text-only labels land badly; a custom bar never moves by itself. |
+| 3 — Richer adoption | Sidebar placement, reserved regions for top custom controls, collection-view sections and web content clear of the fold (`compositional layout`, `web views` in the inventory), arrangements, hinge effects, scene accessories, camera direction handling, multiple windows, a widget or Live Activity for StandBy on the outer display, App Store screenshots for both displays (`references/device-geometry.md`) | Makes the app good on iPhone Duo rather than merely correct; most of it compiles on Xcode 27.1 and is blocked only on Xcode 27.0. StandBy cannot be verified in the iPhone Duo simulator (Xcode 27.1 known issues 187708663, 187708767). |
 
 Inside every tier, put items that compile with the installed SDK first and mark the
 rest *blocked*. A toolchain upgrade is a prerequisite note on the blocked items, not a
@@ -111,6 +111,12 @@ iOS 27.1 APIs do not compile for Catalyst (Xcode 27.1 known issue 185924957) and
 target on iOS 27.1 loses its Catalyst run destination (187046347). Plan the
 `#if !targetEnvironment(macCatalyst)` or the Catalyst 27.0 minimum deployment with
 the item, not after it.
+
+Some code looks like work and is not. A scene delegate that saves and restores a fold
+state, a device check for iPhone Duo, or a sheet dismissed when the device folds is a
+finding to remove, not a pattern to extend: a fold is a trait and geometry change of
+the same scene (`references/sources.md` › Developer Forums Q&A, 848035, 847775,
+848034).
 
 Hand each tier to its specialist skill for the detailed recommendations. Classify
 legitimate uses as **kept** with the reason (for example an orientation read that

@@ -385,6 +385,38 @@ class TraversalTests(ScanTestCase):
         ):
             self.assertNotIn(key, inventory)
 
+    def test_inventory_counts_fold_sensitive_content(self) -> None:
+        """Web views and compositional layouts are screens the fold crosses unaided."""
+        self.project.write(
+            "Sources/Article.swift",
+            "import WebKit\nlet web = WKWebView(frame: .zero)\n"
+            "let layout = UICollectionViewCompositionalLayout { _, _ in nil }\n"
+            "override func traitCollectionDidChange(_ previous: UITraitCollection?) {}\n",
+        )
+        self.project.write(
+            "Sources/Bars.swift",
+            "let guide = view.layoutGuide(for: .margins(cornerAdaptation: .horizontal))\n"
+            "Text(\"x\").safeAreaBar(edge: .trailing) { Bar() }\n",
+        )
+        inventory = self.project.scan()["inventory"]
+        self.assertEqual(inventory["web views"], 1)
+        self.assertEqual(inventory["compositional layout"], 1)
+        self.assertEqual(inventory["traitCollectionDidChange"], 1)
+        self.assertEqual(inventory["corner-adapted margins"], 1)
+        self.assertEqual(inventory["bar layout region"], 1)
+
+    def test_inventory_ignores_lookalikes_of_fold_sensitive_content(self) -> None:
+        """The negative half: names that only resemble them, and mentions in comments."""
+        self.project.write(
+            "Sources/Plain.swift",
+            "// A WKWebView used to live here; so did UICollectionViewCompositionalLayout.\n"
+            "let webViewTitle = \"web\"\nlet flow = UICollectionViewFlowLayout()\n"
+            "let adaptation = cornerAdaptationEnabled\n",
+        )
+        inventory = self.project.scan()["inventory"]
+        for key in ("web views", "compositional layout", "traitCollectionDidChange", "corner-adapted margins"):
+            self.assertNotIn(key, inventory)
+
     def test_inventory_counts_containers(self) -> None:
         self.project.write(
             "Sources/Root.swift",

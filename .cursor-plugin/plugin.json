@@ -1,6 +1,6 @@
 {
   "name": "iphone-duo-skills",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Audit and adapt SwiftUI and UIKit apps for iPhone Duo.",
   "author": {
     "name": "Aleksei Kakoulin",

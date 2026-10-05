@@ -51,6 +51,21 @@
         "Cites the scanner rule DUO001 or the adaptivity guidance on main-screen assumptions.",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 4,
+      "name": "fold-state-scene-delegate",
+      "prompt": "Before the iPhone Duo launch a teammate added fold-state persistence to our SceneDelegate (evals/files/Ledger), so the layout is right when the app comes back or launches from a notification while folded. Is this the right approach? Plan only.",
+      "expected_output": "A plan that rejects scene-level fold state and moves the button's placement into layout, driven by the reserved regions.",
+      "files": [
+        "evals/files/Ledger"
+      ],
+      "expectations": [
+        "Says no: a fold is a size-class and geometry change of the same scene, so it should not be saved in sceneWillResignActive or restored in sceneDidBecomeActive; reserved regions and hinge data are current when the scene returns, and a launch while folded needs no special path (Apple engineer on the Developer Forums, thread 848035).",
+        "Moves the Add button's placement into layout: query reservedRegions(kind: .division) in viewDidLayoutSubviews or viewWillLayoutSubviews and place it against the region's frame, with no stored flag or notification — UIKit lays the view out again when the regions change.",
+        "Does not use the hinge status or angle for the layout decision (Tech Talk 111464 around 2:35).",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }

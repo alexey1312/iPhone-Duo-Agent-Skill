@@ -1,0 +1,883 @@
+{
+ "runs": [
+  {
+   "label": "run-1",
+   "note": "first run of the six new cases",
+   "claude_version": "2.1.289",
+   "started_at": "2026-10-05T15:22:41.662Z",
+   "duration_s": 405,
+   "cost_usd_agents": 8.11,
+   "model": "claude-opus-5-5",
+   "judge_model": "claude-sonnet-5-5",
+   "plugin_version": "1.4.0",
+   "runs_per_arm": 2,
+   "mean_delta": 0.631,
+   "cases": [
+    {
+     "name": "adaptivity-audit--fold-state-scene-delegate",
+     "score_with": 1,
+     "score_without": 0.169,
+     "delta": 0.831,
+     "arms": {
+      "with": [
+       {
+        "score": 1,
+        "turns": 10,
+        "cost_usd": 0.426,
+        "judge_cost_usd": 0.116,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 1,
+        "turns": 9,
+        "cost_usd": 0.396,
+        "judge_cost_usd": 0.12,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.003,
+        "turns": 4,
+        "cost_usd": 0.273,
+        "judge_cost_usd": 0.132,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.336,
+        "turns": 4,
+        "cost_usd": 0.218,
+        "judge_cost_usd": 0.081,
+        "graders": {
+         "e01": true,
+         "e02": false,
+         "e03": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "bars--custom-back-chevron",
+     "score_with": 1,
+     "score_without": 0.502,
+     "delta": 0.498,
+     "arms": {
+      "with": [
+       {
+        "score": 1,
+        "turns": 6,
+        "cost_usd": 0.227,
+        "judge_cost_usd": 0.035,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 1,
+        "turns": 8,
+        "cost_usd": 0.277,
+        "judge_cost_usd": 0.044,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.502,
+        "turns": 3,
+        "cost_usd": 0.165,
+        "judge_cost_usd": 0.042,
+        "graders": {
+         "e01": true,
+         "e02": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.502,
+        "turns": 3,
+        "cost_usd": 0.178,
+        "judge_cost_usd": 0.048,
+        "graders": {
+         "e01": true,
+         "e02": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "bars--custom-tab-bar",
+     "score_with": 0.751,
+     "score_without": 0.127,
+     "delta": 0.623,
+     "arms": {
+      "with": [
+       {
+        "score": 0.501,
+        "turns": 13,
+        "cost_usd": 0.686,
+        "judge_cost_usd": 0.132,
+        "graders": {
+         "e01": false,
+         "e02": true,
+         "e03": true,
+         "e04": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 1,
+        "turns": 13,
+        "cost_usd": 0.606,
+        "judge_cost_usd": 0.119,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.252,
+        "turns": 2,
+        "cost_usd": 0.242,
+        "judge_cost_usd": 0.099,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.002,
+        "turns": 3,
+        "cost_usd": 0.249,
+        "judge_cost_usd": 0.102,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "layout--compositional-fold",
+     "score_with": 0.626,
+     "score_without": 0.252,
+     "delta": 0.374,
+     "arms": {
+      "with": [
+       {
+        "score": 0.501,
+        "turns": 9,
+        "cost_usd": 0.495,
+        "judge_cost_usd": 0.088,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": true,
+         "e04": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.751,
+        "turns": 7,
+        "cost_usd": 0.364,
+        "judge_cost_usd": 0.086,
+        "graders": {
+         "e01": false,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.252,
+        "turns": 4,
+        "cost_usd": 0.248,
+        "judge_cost_usd": 0.085,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.252,
+        "turns": 5,
+        "cost_usd": 0.25,
+        "judge_cost_usd": 0.079,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": true,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "layout--sheet-fold-placement",
+     "score_with": 0.834,
+     "score_without": 0.169,
+     "delta": 0.664,
+     "arms": {
+      "with": [
+       {
+        "score": 1,
+        "turns": 8,
+        "cost_usd": 0.365,
+        "judge_cost_usd": 0.071,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.668,
+        "turns": 7,
+        "cost_usd": 0.355,
+        "judge_cost_usd": 0.069,
+        "graders": {
+         "e01": false,
+         "e02": true,
+         "e03": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.336,
+        "turns": 10,
+        "cost_usd": 0.348,
+        "judge_cost_usd": 0.056,
+        "graders": {
+         "e01": false,
+         "e02": true,
+         "e03": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.003,
+        "turns": 9,
+        "cost_usd": 0.257,
+        "judge_cost_usd": 0.029,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "layout--webview-fold",
+     "score_with": 0.9,
+     "score_without": 0.102,
+     "delta": 0.798,
+     "arms": {
+      "with": [
+       {
+        "score": 0.8,
+        "turns": 7,
+        "cost_usd": 0.45,
+        "judge_cost_usd": 0.15,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": false,
+         "e04": true,
+         "e05": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 1,
+        "turns": 9,
+        "cost_usd": 0.519,
+        "judge_cost_usd": 0.12,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "e05": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.202,
+        "turns": 4,
+        "cost_usd": 0.28,
+        "judge_cost_usd": 0.122,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": true,
+         "e05": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.002,
+        "turns": 3,
+        "cost_usd": 0.238,
+        "judge_cost_usd": 0.082,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": false,
+         "e05": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "label": "run-2",
+   "note": "after the newer-SDK hint in sdk_api_check.py and the split compositional-fold criterion",
+   "claude_version": "2.1.289",
+   "started_at": "2026-10-05T15:32:10.842Z",
+   "duration_s": 405,
+   "cost_usd_agents": 8.23,
+   "model": "claude-opus-5-5",
+   "judge_model": "claude-sonnet-5-5",
+   "plugin_version": "1.4.0",
+   "runs_per_arm": 2,
+   "mean_delta": 0.673,
+   "cases": [
+    {
+     "name": "adaptivity-audit--fold-state-scene-delegate",
+     "score_with": 1,
+     "score_without": 0.003,
+     "delta": 0.997,
+     "arms": {
+      "with": [
+       {
+        "score": 1,
+        "turns": 9,
+        "cost_usd": 0.476,
+        "judge_cost_usd": 0.138,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 1,
+        "turns": 10,
+        "cost_usd": 0.434,
+        "judge_cost_usd": 0.119,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.003,
+        "turns": 4,
+        "cost_usd": 0.194,
+        "judge_cost_usd": 0.05,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.003,
+        "turns": 7,
+        "cost_usd": 0.287,
+        "judge_cost_usd": 0.107,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "bars--custom-back-chevron",
+     "score_with": 1,
+     "score_without": 0.502,
+     "delta": 0.498,
+     "arms": {
+      "with": [
+       {
+        "score": 1,
+        "turns": 6,
+        "cost_usd": 0.213,
+        "judge_cost_usd": 0.022,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 1,
+        "turns": 8,
+        "cost_usd": 0.3,
+        "judge_cost_usd": 0.055,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.502,
+        "turns": 3,
+        "cost_usd": 0.179,
+        "judge_cost_usd": 0.046,
+        "graders": {
+         "e01": true,
+         "e02": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.502,
+        "turns": 3,
+        "cost_usd": 0.156,
+        "judge_cost_usd": 0.033,
+        "graders": {
+         "e01": true,
+         "e02": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "bars--custom-tab-bar",
+     "score_with": 0.501,
+     "score_without": 0.002,
+     "delta": 0.499,
+     "arms": {
+      "with": [
+       {
+        "score": 0.252,
+        "turns": 11,
+        "cost_usd": 0.538,
+        "judge_cost_usd": 0.191,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": true,
+         "e04": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.751,
+        "turns": 8,
+        "cost_usd": 0.508,
+        "judge_cost_usd": 0.139,
+        "graders": {
+         "e01": false,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.002,
+        "turns": 4,
+        "cost_usd": 0.214,
+        "judge_cost_usd": 0.064,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.002,
+        "turns": 4,
+        "cost_usd": 0.253,
+        "judge_cost_usd": 0.096,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "layout--compositional-fold",
+     "score_with": 1,
+     "score_without": 0.252,
+     "delta": 0.748,
+     "arms": {
+      "with": [
+       {
+        "score": 1,
+        "turns": 7,
+        "cost_usd": 0.43,
+        "judge_cost_usd": 0.077,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 1,
+        "turns": 8,
+        "cost_usd": 0.471,
+        "judge_cost_usd": 0.146,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.501,
+        "turns": 3,
+        "cost_usd": 0.279,
+        "judge_cost_usd": 0.131,
+        "graders": {
+         "e01": true,
+         "e02": false,
+         "e03": false,
+         "e04": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.002,
+        "turns": 3,
+        "cost_usd": 0.27,
+        "judge_cost_usd": 0.11,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "layout--sheet-fold-placement",
+     "score_with": 0.834,
+     "score_without": 0.336,
+     "delta": 0.498,
+     "arms": {
+      "with": [
+       {
+        "score": 1,
+        "turns": 7,
+        "cost_usd": 0.357,
+        "judge_cost_usd": 0.064,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.668,
+        "turns": 10,
+        "cost_usd": 0.405,
+        "judge_cost_usd": 0.079,
+        "graders": {
+         "e01": false,
+         "e02": true,
+         "e03": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.336,
+        "turns": 13,
+        "cost_usd": 0.497,
+        "judge_cost_usd": 0.055,
+        "graders": {
+         "e01": false,
+         "e02": true,
+         "e03": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.336,
+        "turns": 8,
+        "cost_usd": 0.279,
+        "judge_cost_usd": 0.045,
+        "graders": {
+         "e01": false,
+         "e02": true,
+         "e03": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "layout--webview-fold",
+     "score_with": 1,
+     "score_without": 0.202,
+     "delta": 0.798,
+     "arms": {
+      "with": [
+       {
+        "score": 1,
+        "turns": 11,
+        "cost_usd": 0.534,
+        "judge_cost_usd": 0.139,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "e05": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 1,
+        "turns": 5,
+        "cost_usd": 0.374,
+        "judge_cost_usd": 0.1,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "e05": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.202,
+        "turns": 4,
+        "cost_usd": 0.31,
+        "judge_cost_usd": 0.158,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": true,
+         "e05": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.202,
+        "turns": 6,
+        "cost_usd": 0.274,
+        "judge_cost_usd": 0.091,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": true,
+         "e05": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "label": "run-3",
+   "note": "custom-tab-bar only, after the bars skill kept migration as a plan item",
+   "claude_version": "2.1.289",
+   "started_at": "2026-10-05T15:41:41.079Z",
+   "duration_s": 168,
+   "cost_usd_agents": 2.54,
+   "model": "claude-opus-5-5",
+   "judge_model": "claude-sonnet-5-5",
+   "plugin_version": "1.4.0",
+   "runs_per_arm": 3,
+   "mean_delta": 0.914,
+   "cases": [
+    {
+     "name": "bars--custom-tab-bar",
+     "score_with": 0.917,
+     "score_without": 0.002,
+     "delta": 0.914,
+     "arms": {
+      "with": [
+       {
+        "score": 1,
+        "turns": 8,
+        "cost_usd": 0.629,
+        "judge_cost_usd": 0.252,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.751,
+        "turns": 8,
+        "cost_usd": 0.496,
+        "judge_cost_usd": 0.193,
+        "graders": {
+         "e01": false,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 1,
+        "turns": 10,
+        "cost_usd": 0.666,
+        "judge_cost_usd": 0.23,
+        "graders": {
+         "e01": true,
+         "e02": true,
+         "e03": true,
+         "e04": true,
+         "no-answer-key": true
+        }
+       }
+      ],
+      "without": [
+       {
+        "score": 0.002,
+        "turns": 4,
+        "cost_usd": 0.242,
+        "judge_cost_usd": 0.067,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.002,
+        "turns": 4,
+        "cost_usd": 0.253,
+        "judge_cost_usd": 0.088,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": false,
+         "no-answer-key": true
+        }
+       },
+       {
+        "score": 0.002,
+        "turns": 3,
+        "cost_usd": 0.254,
+        "judge_cost_usd": 0.11,
+        "graders": {
+         "e01": false,
+         "e02": false,
+         "e03": false,
+         "e04": false,
+         "no-answer-key": true
+        }
+       }
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}
