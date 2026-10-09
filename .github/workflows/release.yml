@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - "v*"
+  # Run from main to tag v<plugin version> at main's head and publish it, for
+  # contributors who can merge but cannot push tags.
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -15,13 +18,27 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Check that the tag matches the plugin version
+        id: tag
         run: |
-          tag="${GITHUB_REF_NAME#v}"
           version="$(python3 -c 'import json; print(json.load(open(".claude-plugin/plugin.json"))["version"])')"
-          if [ "$tag" != "$version" ]; then
-            echo "Tag v$tag does not match .claude-plugin/plugin.json version $version" >&2
-            exit 1
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$GITHUB_REF_NAME" != "main" ]; then
+              echo "Run the release from main, not $GITHUB_REF_NAME" >&2
+              exit 1
+            fi
+            tag="v$version"
+            if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+              echo "Tag $tag already exists: bump the version in the manifests first" >&2
+              exit 1
+            fi
+          else
+            tag="$GITHUB_REF_NAME"
+            if [ "${tag#v}" != "$version" ]; then
+              echo "Tag $tag does not match .claude-plugin/plugin.json version $version" >&2
+              exit 1
+            fi
           fi
+          echo "name=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Validate
         run: |
@@ -35,7 +52,9 @@ jobs:
       - name: Publish the release
         uses: softprops/action-gh-release@v3
         with:
-          name: "${{ github.ref_name }} — iPhone Duo Agent Skills"
+          tag_name: ${{ steps.tag.outputs.name }}
+          target_commitish: ${{ github.sha }}
+          name: "${{ steps.tag.outputs.name }} — iPhone Duo Agent Skills"
           generate_release_notes: true
           body: |
             One `.skill` archive per skill, built by `scripts/package_skills.py` (evals left out).
