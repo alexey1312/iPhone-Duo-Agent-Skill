@@ -47,10 +47,12 @@ Where the corner camera and the side controls physically sit:
   side in right-to-left languages. (3:09)
 - **Sheets differ per display.** On the outer display a sheet's toolbar goes vertical
   by default. On the inner display sheets are centered with horizontal bars;
-  `presentationPlacement(.leading)` / `.trailing` (UIKit:
+  `presentationPlacement(_:)` with `.leading` or `.trailing` (UIKit:
   `sheetPresentationController?.preferredPlacement`) moves a sheet to an edge, and
-  only a trailing sheet receives a vertical bar. (3:58; *Preparing your app for iPhone
-  Duo* › Optimize bars for vertical presentation)
+  only a trailing sheet receives a vertical bar. `.automatic` is the default and
+  `.center` the fourth value. The bar's axis therefore follows the placement.
+  (3:58; *Preparing your app for iPhone Duo* › Optimize bars for vertical
+  presentation; `PresentationPlacement` documentation)
 - **Keyboard accessory bars stay with the keyboard.** (10:00)
 - **Fixed width, flexible height.** Items with an icon go vertical; text-only items
   stay horizontal. The title is still required — it is used in overflow menus and
@@ -150,6 +152,36 @@ Where the corner camera and the side controls physically sit:
     (iOS 26) rather than a manually stretched frame; scrollable foreground content
     stays inset. (*Preparing your app for iPhone Duo* › Optimize bars for vertical
     presentation; Tech Talk 111466, 6:33)
+12. **Sheets.** Start from the default. A sheet whose items live in its own
+    `NavigationStack` toolbar adapts with no code: vertical on the outer display,
+    centred with a horizontal bar on the inner display, moved off the fold when
+    folded. No hinge code is needed for that. (Tech Talk 111466, 8:36)
+    - **Placement needs a reason.** One reason is keeping the content behind the sheet
+      visible, as with a map and `.leading`. Another is keeping the sheet on the side
+      of the item that opened it. Do that in regular width only, and leave compact
+      width `.automatic`. A pose-specific side follows the fold
+      (`iphone-duo-layout`, Forums 847797). The same-side pattern comes from a
+      third-party post (Nil Coalescing, 2026-10-04), not from Apple.
+    - **A placement that varies changes the bar.** The same sheet is vertical when
+      trailing and horizontal when centred or leading. Its items need a title and a
+      symbol so they work on both axes (step 3). Close goes first, in
+      `.cancellationAction`; `Button(role: .close)` (iOS 26) supplies the standard
+      label.
+    - **A single-control sheet may opt out.** Apply `toolbarVerticalBehavior(.disabled)`
+      to the top view inside the sheet's own `NavigationStack`. It resolves for that
+      presentation, so the presenter keeps its vertical bars (step 10;
+      `toolbarVerticalBehavior(_:)` documentation).
+    - **Check every trailing sheet on the device or simulator.** On the iOS 27.1 beta,
+      a third party saw `.trailing` sheets without explicit detents lose their
+      vertical bar, with controls under the status bar and camera. In book pose the
+      status display covered Close. Writing out `presentationDetents([.large])`, the
+      default detent, fixed it in that testing. Label it *Unverified* (Nil Coalescing,
+      2026-10-04): it is absent from the Xcode 27.1 RC release notes and was not
+      reproduced here. Recommend it only together with the P3/P5 check that shows
+      whether the app needs it. Never opt a screen out of vertical bars to hide the
+      collision. UIKit's equivalent, `detents = [.large()]`, was not part of that
+      report.
+    Code: `references/vertical-bars.md` › Sheets.
 
 ## Output
 
@@ -163,5 +195,8 @@ ship now and improves bars on every iPhone.
 Pose matrix P1 (outer display: side controls), P2 (outer display landscape, keyboard
 up), P3 (inner landscape: vertical bar), P4 (inner portrait: horizontal), P11 (right-to-left), P12 (Reduce Transparency)
 from `references/pose-test-matrix.md`. Check which items overflow and in what order.
+For each sheet, present it in P1, P3 and P5. Check that a trailing sheet's top control
+sits below the status-bar strip, and that an opted-out sheet leaves the presenter's
+bars vertical.
 `scripts/duo_pose.py shoot <dir> --poses closed,flat` captures P1 and P3 with both
 displays (third-party `hinge` CLI; ask first); P2 and P4 need rotation in Device Hub.

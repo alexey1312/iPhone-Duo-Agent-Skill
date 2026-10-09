@@ -72,6 +72,7 @@ the code read before it becomes a recommendation.
 - Outer display: content offset by the safe area so side controls don't hide it. (111466 6:33; HIG Vertical controls)
 - Related items grouped with `ToolbarItemGroup` / `UIBarButtonItemGroup`, no manual spacing; controls stay next to the content they affect. (HIG Vertical controls)
 - Sheets: vertical bar disabled only for single-control sheets on the outer display; placement on the inner display chosen with `presentationPlacement` / `preferredPlacement`. (PREP Optimize bars for vertical presentation; 111466 8:36)
+- A sheet whose placement varies has items that work on both axes. The opt-out sits inside the sheet's own `NavigationStack`, so the presenter keeps its vertical bars. A `.trailing` sheet's top control sits below the status-bar strip in P3 and P5; a third-party report says this failed on the 27.1 beta. (PREP Optimize bars for vertical presentation; `toolbarVerticalBehavior(_:)` documentation)
 - Hero or background images extend under the vertical bar with `backgroundExtensionEffect` / `UIBackgroundExtensionView`. (PREP Optimize bars for vertical presentation)
 - Keyboard accessory bars stay with the keyboard; segmented controls and text buttons stay horizontal. (111462 10:00; 111466 5:07)
 - A bar that must stay custom takes the system bar's slot with `UIView.LayoutRegion.bar(onEdge:extent:)` / `safeAreaBar`, and rebuilds long-press labels and the Large Content Viewer. (Forums 847835, 847644)
@@ -109,4 +110,4 @@ the code read before it becomes a recommendation.
 ### Verification
 
 - Pose matrix P1–P15 run or reported as not run. Xcode 27.1 ships the iPhone Duo simulator, so use it; on Xcode 27.0, resize mode at the simulator-measured shapes 669 × 951, 951 × 669, 466 × 678 and 678 × 466 pt. (111461 1:17, 7:44; 278 8:19)
-- App Store screenshots for both displays planned (sizes in `device-geometry.md`). (App Store Connect)
+- App Store screenshots for both displays planned (sizes in `device-geometry.md`), dated: required from April 2027 for apps using the iOS 27.1 SDK or later. (App Store Connect screenshot specifications; Apple news, 2026-10-05)

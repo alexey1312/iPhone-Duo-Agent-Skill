@@ -97,6 +97,89 @@ SheetContent()
     .toolbarVerticalBehavior(.disabled)
 ```
 
+### A sheet on the side it came from (regular width)
+
+A design pattern from a third-party post (Nil Coalescing, 2026-10-04), not from Apple.
+The tapped tile's column picks the side. `LazyVGrid` fills each row from the leading
+edge, so the column index also holds in right-to-left languages. A trailing sheet
+gets a vertical bar and a centred or leading one a horizontal bar, so the sheet's
+items must work on both axes.
+
+```swift
+struct TrailBoard: View {
+    @Environment(\.horizontalSizeClass) private var widthClass
+    @State private var openTrail: Trail?
+    let trails: [Trail]
+
+    private var columnCount: Int { widthClass == .regular ? 5 : 2 }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: columnCount)) {
+                    ForEach(trails) { trail in
+                        Button { openTrail = trail } label: { TrailTile(trail: trail) }
+                    }
+                }
+            }
+            .navigationTitle("Trails")
+            .sheet(item: $openTrail) { trail in
+                TrailSheet(trail: trail)
+                    .presentationPlacement(side(of: trail))   // iOS 27.0
+                    .presentationDetents([.large])            // the default; see below
+            }
+        }
+    }
+
+    private func side(of trail: Trail) -> PresentationPlacement {
+        guard widthClass == .regular,
+              let index = trails.firstIndex(where: { $0.id == trail.id }) else {
+            return .automatic                                 // compact width: the system decides
+        }
+        let column = index % columnCount
+        if column * 2 + 1 == columnCount { return .center }   // the middle of an odd count
+        return column * 2 < columnCount ? .leading : .trailing
+    }
+}
+```
+
+`presentationDetents([.large])` restates the default. It is here for one
+*Unverified* reason. On the iOS 27.1 beta, a third party saw `.trailing` sheets
+without explicit detents lose their vertical bar, with controls under the status bar
+and camera. Writing out the detent fixed it in that testing.
+Keep the line only if P3 or P5 shows the collision without it.
+
+### A single-control sheet keeps its horizontal bar — 27.1
+
+Put the opt-out on the top view inside the sheet's own `NavigationStack`. It resolves
+for that presentation, so the board behind the sheet keeps its vertical bar
+(`toolbarVerticalBehavior(_:)` documentation).
+
+```swift
+struct TrailSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let trail: Trail
+
+    var body: some View {
+        NavigationStack {
+            TrailMap(trail: trail)
+                .navigationTitle(trail.name)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(role: .close) { dismiss() }    // iOS 26: the standard Close label
+                    }
+                }
+                .toolbarVerticalBehavior(.disabled)           // this sheet only
+        }
+    }
+}
+```
+
+The two samples above are not typechecked. They were written on 2026-10-09 on a
+machine without Xcode, so no SDK was available. Their iOS 27.x calls are in
+`scripts/probes/api_shapes_probe.swift`, waiting for the next run on a Mac.
+`Trail`, `TrailTile` and `TrailMap` are placeholders, so the samples are fragments.
+
 ## Axis behavior — 27.1 (8:08, 8:36, 8:52)
 
 ```swift

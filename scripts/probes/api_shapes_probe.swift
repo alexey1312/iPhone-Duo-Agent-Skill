@@ -147,6 +147,44 @@ struct BarsView: View {
     vc.setNeedsUpdateOfVerticalBarConfiguration()
 }
 
+// --- Sheets: placement by source side, opt-out inside the sheet (added 2026-10-09, not yet typechecked) ---
+struct SheetSideView: View {
+    @State private var openIndex: Int?
+    private let columnCount = 5
+
+    var body: some View {
+        NavigationStack {
+            Button("Open") { openIndex = 4 }
+                .sheet(isPresented: Binding(get: { openIndex != nil }, set: { if !$0 { openIndex = nil } })) {
+                    NavigationStack {
+                        Color.clear
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button(role: .close) { openIndex = nil }
+                                }
+                            }
+                            .toolbarVerticalBehavior(.disabled)
+                    }
+                    .presentationPlacement(side(of: openIndex ?? 0))
+                    .presentationDetents([.large])
+                }
+        }
+    }
+
+    private func side(of index: Int) -> PresentationPlacement {
+        guard index >= 0 else { return .automatic }
+        let column = index % columnCount
+        if column * 2 + 1 == columnCount { return .center }
+        return column * 2 < columnCount ? .leading : .trailing
+    }
+}
+
+@MainActor func uikitSheetSide(_ sheet: UISheetPresentationController) {
+    sheet.preferredPlacement = .trailing
+    sheet.detents = [.large()]
+    _ = [UISheetPresentationController.Placement.automatic, .center, .leading]
+}
+
 // --- Container content margins (27.1) ---
 struct MarginsView: View {
     var body: some View {

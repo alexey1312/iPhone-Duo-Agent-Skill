@@ -78,6 +78,23 @@
         "Frames it as a toolchain gap rather than a permanent rule: the API is annotated for macOS 27.1 as well, so the gate can be revisited when a macOS 27.1 SDK ships.",
         "The compile-time gate is a platform condition (#if os(...)) rather than #if compiler(...) or #if canImport(...), and the hinge behaviour is kept on iOS."
       ]
+    },
+    {
+      "id": 6,
+      "name": "app-store-deadlines",
+      "prompt": "We'll submit LegacyNotes (evals/files/LegacyNotes) built with Xcode 27.1 next month. Leaving code aside, what App Store work does iPhone Duo add, and by when? Plan only.",
+      "expected_output": "The App Store items with dates and sources: iPhone Duo screenshot sizes for both displays, required from April 2027 (with the difference between the screenshot specifications' and the news post's wording), the iOS 27 SDK requirement from the same month, submissions open since October 5, and app previews as optional with an accepted-resolution row that does not match the displays.",
+      "files": [
+        "evals/files/LegacyNotes"
+      ],
+      "expectations": [
+        "Gives the iPhone Duo screenshot sizes for both displays in both orientations: 1398 × 2034 / 2034 × 1398 px (outer) and 2007 × 2853 / 2853 × 2007 px (inner), citing App Store Connect's screenshot specifications.",
+        "States that iPhone Duo screenshots become required in April 2027, and notes that the screenshot specifications limit this to apps using the iOS 27.1 SDK or later while Apple's October 5 news says any app submitted — so a build with Xcode 27.1 is covered under either wording.",
+        "Mentions that from April 2027 uploads must also be built with the iOS 27 SDK or later.",
+        "Treats app previews as optional and does not present 886 × 1920 / 1920 × 886 px as a fit for the iPhone Duo displays without flagging the aspect-ratio mismatch or the need to confirm in App Store Connect.",
+        "Does not invent requirements Apple has not stated (for example a mandatory app preview, or a deadline before April 2027).",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }

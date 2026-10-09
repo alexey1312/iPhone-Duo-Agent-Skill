@@ -67,6 +67,23 @@
         "Explains that a UIBarButtonItem with a custom view stays horizontal by default (Tech Talk 111462 around 8:00), and that a back item that must stay custom needs axisBehavior = .verticalPreferred (iOS 27.1) and must fit the bar's fixed width.",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 5,
+      "name": "trailing-sheet-and-board-opt-out",
+      "prompt": "Trailhead (evals/files/Trailhead) opens a trail's details in a sheet on the side of the tile that was tapped. On the open iPhone Duo the trailing sheet's Close button sat under the status bar, so we turned vertical bars off for the whole board, and now the board's toolbar is horizontal everywhere. What should we do instead? Plan only.",
+      "expected_output": "A plan that removes the board-wide opt-out, explains that a trailing sheet gets a vertical bar and a leading one a horizontal bar, fixes the sheet's Close item, offers the explicit large detent only as an unverified beta workaround to confirm in P3/P5, and puts any opt-out inside the sheet.",
+      "files": [
+        "evals/files/Trailhead"
+      ],
+      "expectations": [
+        "Recommends removing toolbarVerticalBehavior(.disabled) from the board's NavigationStack: it hides a sheet problem by taking vertical bars away from a screen that should keep them (111462 14:21, or the toolbarVerticalBehavior documentation).",
+        "Explains that on the inner display a trailing sheet gets a vertical bar while a leading or centred one keeps a horizontal bar, so this sheet's bar changes with the tapped tile, citing Preparing your app for iPhone Duo › Optimize bars for vertical presentation.",
+        "Moves the sheet's text-only Close button to the .cancellationAction placement (or Button(role: .close)), so it heads the vertical bar and has a symbol (111462 5:00 or 5:56).",
+        "Mentions explicit presentationDetents([.large]) for the trailing-sheet collision only as an unverified third-party workaround seen on the iOS 27.1 beta, not as an Apple requirement, and ties it to checking the sheet on the simulator in the open (P3) and book (P5) poses.",
+        "If it proposes opting the sheet out of vertical bars, the modifier goes on the content inside the sheet's own NavigationStack, which resolves for that presentation only; it says the API needs the iOS 27.1 SDK.",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }
