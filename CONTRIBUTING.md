@@ -67,6 +67,11 @@ python3 -m unittest discover -s tests -v
    git tag v1.1.0 && git push origin v1.1.0
    ```
 
+   If you can merge but cannot push tags, run the `Release` workflow from `main`
+   instead (Actions › Release › Run workflow). It tags `v<plugin version>` at
+   `main`'s head. It refuses to run from another branch, and it refuses a version
+   whose tag already exists.
+
 The `Release` workflow (`.github/workflows/release.yml`) refuses a tag that does not
 match the plugin version, re-runs the checks, builds one `.skill` archive per skill
 with `scripts/package_skills.py`, and publishes a GitHub release with the archives and
