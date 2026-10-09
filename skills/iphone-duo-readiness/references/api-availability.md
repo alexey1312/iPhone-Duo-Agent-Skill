@@ -1,7 +1,7 @@
 # API availability
 
 The iPhone Duo talks target **Xcode 27.1 and the iOS 27.1 SDK**, which shipped as a
-beta on 2026-09-18.
+beta on 2026-09-18 and as a release candidate on 2026-10-05.
 Several APIs they show do not exist in earlier SDKs,
 and at least one code sample does not match the SDK spelling.
 Before writing code against any API from a talk:
@@ -83,14 +83,22 @@ scales it on the inner display, including in Split View multitasking.
 iOS versions while the app adapts.
 
 iPhone Duo ships **October 23** on iOS 27.1.
+Since **October 5**, App Store Connect accepts iPhone Duo-optimized apps built with
+Xcode 27.1 (Apple news *Prepare and submit your apps for iPhone Duo*).
 From **April 2027**, apps uploaded to App Store Connect must be built with the
-iOS 27 SDK or later. Calendar: `sources.md`.
+iOS 27 SDK or later. From the same month, they must include iPhone Duo screenshots.
+The screenshot specifications limit that to apps using the iOS 27.1 SDK or later; the
+news post does not (`device-geometry.md` › App Store assets). Calendar: `sources.md`.
 
 ## Measured snapshot
 
 Measured on **Xcode 27.1 (27A9269), iPhoneOS 27.1 SDK (version 27.1, build 24A94403)**,
 Swift 6.4, on 2026-09-19, by `scripts/sdk_api_check.py` across 4574 interface files.
 Re-run the script; this table ages.
+
+The Xcode 27.1 RC of 2026-10-05 has not been measured. Its release notes list the same
+known issues as the beta (read 2026-10-09). Re-run the script on it before relying on
+a symbol the table does not list.
 
 Dates, ship schedules and radar numbers below come from Apple's release-notes and
 news pages as read on 2026-09-19. They are **not** reproducible from this machine the

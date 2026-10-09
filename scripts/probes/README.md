@@ -18,6 +18,12 @@ Clean against Xcode 27.1 (27A9269) on 2026-09-19, and again on 2026-10-01 after 
 `onHingeChange(isEnabled:)` with a `switch` over `DeviceHinge.Status`,
 `.overlay.axes(_:)`, the per-axis `splitArrangementLayoutRatio` and
 `splitArrangementFixedLayoutSize`.
+The *Sheets* section was added on 2026-10-09 on a machine without Xcode, so it has
+**not been typechecked**. It holds `presentationPlacement` with all four
+`PresentationPlacement` values, `toolbarVerticalBehavior(.disabled)` inside a sheet's
+`NavigationStack`, `Button(role: .close)` and UIKit's `preferredPlacement` /
+`detents`. Run the command above before relying on the samples in
+`vertical-bars.md` › Sheets.
 
 ## `deployment_gate_probe.swift` — does the sub-27.1 gate compile?
 

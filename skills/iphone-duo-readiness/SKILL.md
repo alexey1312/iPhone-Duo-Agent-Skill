@@ -5,10 +5,12 @@ description: >-
   outer display and a regular-by-regular inner display. Use when a developer wants
   to prepare, audit, plan or test a SwiftUI or UIKit iOS app for iPhone Duo, the
   iOS 27 / 27.1 SDK resizable-app changes, foldable poses and the hinge, vertical
-  bars, Device Hub pose simulation, or Apple's "Prepare your app for iPhone Duo"
-  guidance. Runs a read-only scan and SDK check first, produces a tiered plan with
-  session citations, changes code only after itemized approval by delegating to the
-  iphone-duo specialist skills, and verifies against a pose matrix.
+  bars, Device Hub pose simulation, Apple's "Prepare your app for iPhone Duo"
+  guidance, or what an iPhone Duo submission owes App Store Connect (screenshots for
+  both displays, the April 2027 deadlines). Runs a read-only scan and SDK check
+  first, produces a tiered plan with session citations, changes code only after
+  itemized approval by delegating to the iphone-duo specialist skills, and verifies
+  against a pose matrix.
 ---
 
 # iPhone Duo readiness
@@ -51,9 +53,11 @@ xcrun simctl list devicetypes | grep -i duo     # empty: no iPhone Duo simulator
 xcrun simctl list runtimes | grep -i "iOS 27.1" # the device type needs the 27.1 runtime
 ```
 
-Xcode 27.1 (27A9269) ships the iOS 27.1 SDK, the `iPhone Duo` simulator device type
-(`iPhone19,4`) and the iOS 27.1 runtime, so the 27.1 APIs are ordinarily available
-rather than blocked — the question becomes the deployment target, not the toolchain.
+Xcode 27.1 (beta 27A9269 on 2026-09-18, RC on 2026-10-05) ships the iOS 27.1 SDK, the
+`iPhone Duo` simulator device type (`iPhone19,4`) and the iOS 27.1 runtime, so the
+27.1 APIs are ordinarily available rather than blocked — the question becomes the
+deployment target, not the toolchain. App Store Connect has accepted Xcode 27.1 builds
+optimized for iPhone Duo since 2026-10-05.
 If either command above matches nothing, the installed Xcode is older: say so in the
 report and plan accordingly. `references/api-availability.md` says what each linked
 SDK gets on the device and `references/sources.md` keeps the calendar.
@@ -99,7 +103,14 @@ layout work (how many toolbars, split views, custom bar items, camera sessions).
 | 0 — Blockers | App lifecycle without scenes (`DUO005`) | The app does not launch when built with the latest SDK. |
 | 1 — Correctness | Main screen, screen bounds, orientation and idiom layout forks, symmetric safe-area math, global window state, Face ID copy (`DUO001–004`, `006`, `009`, `013`) | Wrong layout on the inner display, in Split View, in iPhone Mirroring and on iPad; wrong words on a Touch ID device. |
 | 2 — Bars | Standalone bars, titles/symbols, ordering, overflow, priority, hand-built tab bars and back buttons (`DUO007`, `DUO011`, inventory) | Bars move to the side on the inner display with the 27.1 SDK; items without titles or with text-only labels land badly; a custom bar never moves by itself. |
-| 3 — Richer adoption | Sidebar placement, reserved regions for top custom controls, collection-view sections and web content clear of the fold (`compositional layout`, `web views` in the inventory), arrangements, hinge effects, scene accessories, camera direction handling, multiple windows, a widget or Live Activity for StandBy on the outer display, App Store screenshots for both displays (`references/device-geometry.md`) | Makes the app good on iPhone Duo rather than merely correct; most of it compiles on Xcode 27.1 and is blocked only on Xcode 27.0. StandBy cannot be verified in the iPhone Duo simulator (Xcode 27.1 known issues 187708663, 187708767). |
+| 3 — Richer adoption | Sidebar placement, reserved regions for top custom controls, collection-view sections and web content clear of the fold (`compositional layout`, `web views` in the inventory), arrangements, hinge effects, scene accessories, camera direction handling, multiple windows, a widget or Live Activity for StandBy on the outer display, App Store screenshots for both displays, required from April 2027 (`references/device-geometry.md` › App Store assets) | Makes the app good on iPhone Duo rather than merely correct; most of it compiles on Xcode 27.1 and is blocked only on Xcode 27.0. StandBy cannot be verified in the iPhone Duo simulator (Xcode 27.1 known issues 187708663, 187708767). |
+
+Two App Store Connect requirements start in April 2027.
+Builds must use the iOS 27 SDK or later.
+Submissions must include iPhone Duo screenshots: per the screenshot specifications,
+apps using the iOS 27.1 SDK or later; per Apple's news of 2026-10-05, every app.
+Date the screenshot item in the plan, and say which wording you quote
+(`references/sources.md` › Release calendar).
 
 Inside every tier, put items that compile with the installed SDK first and mark the
 rest *blocked*. A toolchain upgrade is a prerequisite note on the blocked items, not a

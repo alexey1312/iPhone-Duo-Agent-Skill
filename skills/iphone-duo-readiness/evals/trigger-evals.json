@@ -8,7 +8,7 @@
     "should_trigger": true
   },
   {
-    "query": "Prepare the Recipes app for iPhone Duo \u2014 go through Apple's 'Prepare your app for iPhone Duo' guidance and tell me what applies to us and in what order.",
+    "query": "Prepare the Recipes app for iPhone Duo — go through Apple's 'Prepare your app for iPhone Duo' guidance and tell me what applies to us and in what order.",
     "should_trigger": true
   },
   {
@@ -28,7 +28,7 @@
     "should_trigger": true
   },
   {
-    "query": "make a plan to adopt iPhone Duo features in our podcast app \u2014 I don't want code changes yet, just what's worth doing and what needs 27.1",
+    "query": "make a plan to adopt iPhone Duo features in our podcast app — I don't want code changes yet, just what's worth doing and what needs 27.1",
     "should_trigger": true
   },
   {
@@ -40,11 +40,15 @@
     "should_trigger": true
   },
   {
+    "query": "first iPhone Duo build with Xcode 27.1 goes to review next month — besides code, what do we still owe for the foldable: Duo screenshots, bars, anything with a deadline?",
+    "should_trigger": true
+  },
+  {
     "query": "my SwiftUI List jumps to the top every time I pop back from the detail view, NavigationStack with a path binding, iOS 27. how do i keep the scroll position",
     "should_trigger": false
   },
   {
-    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent\u2026 for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
+    "query": "Android team asked whether Jetpack WindowManager FoldingFeature has an iOS equivalent… for now just help me wire up WindowInfoTracker in our Kotlin MainActivity",
     "should_trigger": false
   },
   {
@@ -52,7 +56,7 @@
     "should_trigger": false
   },
   {
-    "query": "Our iPad app crashes on launch in Stage Manager with 'UIScene configuration not found' \u2014 here's the Info.plist, what's wrong",
+    "query": "Our iPad app crashes on launch in Stage Manager with 'UIScene configuration not found' — here's the Info.plist, what's wrong",
     "should_trigger": false
   },
   {

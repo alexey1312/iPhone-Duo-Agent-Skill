@@ -44,6 +44,10 @@
     "should_trigger": true
   },
   {
+    "query": "trailing sheet on the open iPhone Duo: the close button hides under the status bar and the sheet has no side bar. presentationPlacement(.trailing), SwiftUI",
+    "should_trigger": true
+  },
+  {
     "query": "my SwiftUI List jumps to the top every time I pop back from the detail view, NavigationStack with a path binding, iOS 27. how do i keep the scroll position",
     "should_trigger": false
   },
@@ -85,6 +89,10 @@
   },
   {
     "query": "on iPad, how do I make my tab bar become a sidebar (sidebarAdaptable)",
+    "should_trigger": false
+  },
+  {
+    "query": "SwiftUI sheet with presentationDetents([.medium, .large]) won't remember the selected detent between presentations on iPhone 17, how do I persist it",
     "should_trigger": false
   },
   {

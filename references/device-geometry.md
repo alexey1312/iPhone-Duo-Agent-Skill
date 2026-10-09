@@ -11,7 +11,7 @@ Every fact carries its provenance. Never present a lower grade as a higher one.
 | --- | --- |
 | **Apple spec** | [iPhone Duo tech specs](https://www.apple.com/iphone-duo/specs/), checked 2026-09-13, re-checked 2026-09-17 |
 | **HIG** | [Designing for iPhone Duo](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo) (new page, September 9, 2026) |
-| **App Store Connect** | [Screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications), iPhone Duo row added September 9, 2026, checked 2026-09-17 |
+| **App Store Connect** | [Screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications), iPhone Duo row added September 9, 2026, checked 2026-09-17, requirement note re-read 2026-10-09; [App preview specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications), read 2026-10-09 |
 | **Derived** | Arithmetic on Apple's figures; exact only as far as the inputs are |
 | **Inference** | A reading of Apple's figures that Apple has not stated; the entry says what it rests on |
 | **Diagram** | Read off the HIG illustrations; approximate (a few percent), not dimensions |
@@ -308,13 +308,38 @@ regular width for the inner display. (HIG; Tech Talk 111466 3:42)
 
 ## App Store assets
 
-App Store Connect lists iPhone Duo screenshot sizes of 1398 × 2034 and 2034 × 1398 px
-(outer display) and 2007 × 2853 and 2853 × 2007 px (inner display); app previews use
-the same device resolutions. "Support for uploading assets for this device in App
-Store Connect will be available later this year" (checked 2026-09-17). Apple's
-product bezel pack for iPhone Duo is on the
-[Design Resources](https://developer.apple.com/design/resources/) page. Screenshots
-are a Tier 3 item in the readiness report, not a code change.
+**Screenshots.** App Store Connect lists iPhone Duo screenshot sizes of
+1398 × 2034 and 2034 × 1398 px for the outer display, and 2007 × 2853 and
+2853 × 2007 px for the inner display.
+On 2026-09-17 the row said uploads would come "later this year". By 2026-10-09 that
+note had become a requirement: "Starting in April 2027, screenshots will be required
+for any app using the iOS 27.1 SDK or later."
+Apple's news of 2026-10-05 states it more broadly: any app or game submitted from
+April 2027 must include iPhone Duo screenshots.
+The same news says iPhone Duo-optimized apps can be submitted now, and that a new
+App Store Connect tool previews screenshots, product page headers and other metadata
+on iPhone Duo.
+Plan screenshots for both displays and both orientations.
+
+**App previews.** The app preview specifications list iPhone Duo with device
+resolutions 2034 × 1398 and 2853 × 2007 px.
+The resolutions they *accept* are 886 × 1920 (portrait) and 1920 × 886 px
+(landscape), labelled 19.5:9. That is the same set as the large Dynamic Island
+iPhones in the next row.
+At ≈ 2.17 : 1 it is far from either display's 1.42–1.45 (Derived), so a screen
+recording from the iPhone Duo simulator only fits that frame letterboxed or cropped.
+Whether the row is final or a copy of its neighbour is not known (read 2026-10-09).
+Check what App Store Connect accepts before cutting video. Previews are optional.
+
+**Featuring.** Apple's *Three steps* page suggests a featuring nomination in App Store
+Connect whose *Helpful Details* say the app is optimized for iPhone Duo, including all
+device poses.
+
+Apple's product bezel pack for iPhone Duo is on the
+[Design Resources](https://developer.apple.com/design/resources/) page.
+Screenshots are not a code change.
+Built with the iOS 27.1 SDK, they become a submission requirement in April 2027, so
+the readiness report lists them in Tier 3 with that date.
 
 ## Drawing iPhone Duo mockups
 

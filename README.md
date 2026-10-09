@@ -292,8 +292,9 @@ READINESS-CHECKS.md             Every automated and manual check, with sources
 - [Choosing a camera by the direction it faces](https://developer.apple.com/documentation/avkit/choosing-a-camera-by-the-direction-it-faces) and [Registering a camera capture accessory on iPhone Duo](https://developer.apple.com/documentation/avfoundation/registering-a-camera-capture-accessory-on-iphone-duo) — Apple documentation
 - [TN3192: Migrating from the deprecated UIRequiresFullScreen key](https://developer.apple.com/documentation/technotes/tn3192-migrating-your-app-from-the-deprecated-uirequiresfullscreen-key) — Apple technote
 - [iPhone Duo tech specs](https://www.apple.com/iphone-duo/specs/) and [App Store Connect screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) — hardware facts and display sizes in `references/device-geometry.md`
+- [Prepare and submit your apps for iPhone Duo](https://developer.apple.com/news/?id=kkphp5qo) — Apple Developer news, October 5, 2026: submissions open, and iPhone Duo screenshots required from April 2027
 - [Modernize your UIKit app](https://developer.apple.com/videos/play/wwdc2026/278/) — WWDC26
-- [Xcode 27.1 beta release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27_1-release-notes) — the iPhone Duo simulator, and the known issues that limit what it can verify
+- [Xcode 27.1 release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27_1-release-notes) (beta and RC) — the iPhone Duo simulator, and the known issues that limit what it can verify
 - [Apple Design Resources](https://developer.apple.com/design/resources/) — iOS & iPadOS 27 UI Kit and the iPhone Duo product bezel
 - Apple engineers' answers on the Developer Forums — the UIKit Q&A of September 23–24, 2026 ([1670080](https://developer.apple.com/forums/activities/1670080), [1665080](https://developer.apple.com/forums/activities/1665080)) and the written [Group Lab summary](https://developer.apple.com/forums/thread/847644), ranked below the talks and the SDK; the behavioral ones are re-measured on the simulator
 
