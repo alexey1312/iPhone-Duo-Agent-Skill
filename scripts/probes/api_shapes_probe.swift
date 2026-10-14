@@ -147,7 +147,7 @@ struct BarsView: View {
     vc.setNeedsUpdateOfVerticalBarConfiguration()
 }
 
-// --- Sheets: placement by source side, opt-out inside the sheet (added 2026-10-09, not yet typechecked) ---
+// --- Sheets: placement by source side, opt-out inside the sheet (added 2026-10-09, typechecked 2026-10-14) ---
 struct SheetSideView: View {
     @State private var openIndex: Int?
     private let columnCount = 5
@@ -183,6 +183,53 @@ struct SheetSideView: View {
     sheet.preferredPlacement = .trailing
     sheet.detents = [.large()]
     _ = [UISheetPresentationController.Placement.automatic, .center, .leading]
+}
+
+// --- Vertical bars: a custom item that joins the vertical bar, as in vertical-bars.md (2026-10-14) ---
+struct SketchScreen: View {
+    @State private var strokeWidth = 4.0
+    @State private var opacity = 1.0
+
+    var body: some View {
+        NavigationStack {
+            Canvas { _, _ in }
+                .navigationTitle("Sketch")
+                .toolbar {
+                    ToolbarItem(placement: .bottomBar) {
+                        Menu {
+                            Picker("Stroke width", selection: $strokeWidth) {
+                                ForEach([2.0, 4.0, 6.0], id: \.self) { Text("\(Int($0)) pt") }
+                            }
+                        } label: {
+                            StrokeWidthLabel(width: strokeWidth)
+                        }
+                    }
+                    .axisBehavior(.verticalPreferred)   // moves custom content out of the horizontal bar
+
+                    ToolbarItem(placement: .bottomBar) {
+                        Slider(value: $opacity) { Text("Opacity") }
+                            .frame(width: 140)
+                    }
+                    .axisBehavior(.horizontalOnly)      // keeps the slider in the horizontal bar
+                }
+        }
+    }
+}
+
+struct StrokeWidthLabel: View {
+    @Environment(\.toolbarVerticalEdge) private var verticalEdge   // nil: no vertical bar
+    let width: Double
+
+    var body: some View {
+        let layout = verticalEdge == nil
+            ? AnyLayout(HStackLayout()) : AnyLayout(VStackLayout(spacing: 2))
+        layout {
+            RoundedRectangle(cornerRadius: width / 2).frame(width: 22, height: width)
+            Text("\(Int(width)) pt").font(.caption2)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Stroke width, \(Int(width)) points")
+    }
 }
 
 // --- Container content margins (27.1) ---

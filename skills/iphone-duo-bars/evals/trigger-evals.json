@@ -106,5 +106,9 @@
   {
     "query": "custom back chevron stays top-left on iPhone Duo instead of going into the side bar",
     "should_trigger": true
+  },
+  {
+    "query": "my toolbar label switches to a VStack when toolbarVerticalEdge isn't nil, but on the closed iPhone Duo it also stacks for the slider that stays in the bottom bar. why isn't the edge nil there?",
+    "should_trigger": true
   }
 ]

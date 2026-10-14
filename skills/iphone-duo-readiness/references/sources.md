@@ -441,3 +441,44 @@ Three things in it are not in Apple's sources:
   `.large` is the default detent, so writing it out changes nothing else.
 
 Do not cite the post as the source of Apple behavior.
+
+Natalia Panferova, [*Configuring SwiftUI toolbars on iPhone Duo*](https://nilcoalescing.com/blog/ConfiguringSwiftUIToolbarsOnIPhoneDuo/)
+(Nil Coalescing, September 21, 2026) — the four iOS 27.1 toolbar APIs on one photo
+editor, with screenshots, read on 2026-10-14.
+This file cites Apple for most of it:
+
+- Items with symbols go vertical; text-only items and custom content stay horizontal
+  (Tech Talk 111462, 5:56, 8:00).
+  `axisBehavior(_:)` with `.verticalPreferred` or `.horizontalOnly` overrides that (8:00).
+- `toolbarVerticalEdge` is the preferred edge whether or not a bar is visible,
+  and `nil` where the system never places a vertical bar
+  (`toolbarVerticalEdge` documentation).
+- By default, toolbar items overflow before the tab bar compresses
+  (Tech Talk 111462, 11:40).
+- `toolbarVerticalBehavior(.disabled)` resolves per window or presentation
+  and stays a stable choice
+  (`toolbarVerticalBehavior(_:)` documentation; Tech Talk 111462, 14:21).
+
+This repository re-checked the rest on 2026-10-14
+with `scripts/probes/toolbar_edge_probe.swift` (Xcode 27.1, 27A9269):
+
+- **A pattern.** The label of a `.verticalPreferred` item switches between
+  `HStackLayout` and `VStackLayout` through `AnyLayout`,
+  on whether `toolbarVerticalEdge` is `nil`.
+  It makes the talk's advice to adapt the layout concrete (Tech Talk 111462, 10:07).
+  `iphone-duo-bars` carries its own version in `vertical-bars.md`.
+- **A caveat.** A `.horizontalOnly` item stays in the horizontal bar,
+  but its label still reads a non-`nil` edge,
+  so the label must not switch its layout on that value.
+  The documentation implies this, and the probe confirmed it.
+  The probe also found the same value in an `.automatic` custom view
+  and an `.automatic` custom menu in the horizontal bar: both read `.trailing`.
+- **An observation.** When the items do not fit,
+  `.prefersToolbarItems` collapses the tab bar into one control.
+  The probe confirmed it on the outer display:
+  the control shows the selected tab's symbol.
+
+The post's claim that a `Slider` stays in the horizontal bar with `.automatic`
+matches Tech Talk 111462, 8:00, on custom views.
+The probe set `.horizontalOnly` on its slider, so it did not test that claim alone.
+Do not cite the post as the source of Apple behavior.

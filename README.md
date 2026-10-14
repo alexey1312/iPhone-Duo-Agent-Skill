@@ -116,8 +116,10 @@ agent reasons over structured JSON instead of ad-hoc grep output.
 - `scripts/probes/` — the programs that produced the measured numbers: a typecheck of
   every iPhone Duo API shape these skills teach, a geometry probe that reports what
   a booted iPhone Duo simulator actually returns, and an arrangement probe that shows
-  which views see an `ArrangementView`'s environment values. Committed so the figures
-  in `references/` can be re-derived rather than trusted.
+  which views see an `ArrangementView`'s environment values.
+  A toolbar probe shows what each toolbar item reads from `toolbarVerticalEdge`
+  and how bars compress.
+  Committed so the figures in `references/` can be re-derived rather than trusted.
 - Xcode's own modernization skill (`xcrun agent skills export`) is used for bulk UIKit
   rewrites when present; these skills cover SwiftUI, bars, the fold and displays.
 
