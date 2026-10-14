@@ -115,6 +115,15 @@ Where the corner camera and the side controls physically sit:
    `toolbarVerticalEdge` / `verticalBarEdge`. Flexible spacers collapse to zero
    vertically; fixed spacers keep their minimum. Legible with no scroll edge effect
    and with the Reduce Transparency background. (10:07)
+   Inside a toolbar item, switch the layout on the edge only for a `.verticalPreferred` item.
+   The value is the preferred edge for the whole window or presentation,
+   not the edge of the bar that holds the item.
+   *Booted* (SwiftUI): items in the horizontal bottom bar read `.trailing`,
+   so a label that stacks for every non-`nil` value stacks there too.
+   Keep the layout of an item in the horizontal bar side by side.
+   Views outside the toolbar read the edge as before.
+   UIKit's `verticalBarEdge` was not measured.
+   Code: `references/vertical-bars.md` › A custom item that joins the vertical bar.
 7. **Overflow.** One overflow menu, and the ellipsis symbol belongs to it (scanner rule
    `DUO011`). A custom ellipsis menu is one of two things: a grab bag of secondary
    actions — move it into `ToolbarOverflowMenu` / `additionalOverflowItems` so people
@@ -127,6 +136,9 @@ Where the corner camera and the side controls physically sit:
    `.prefersTabBar` (toolbar compresses first). Task-oriented screens where actions
    matter more than tabs: `.toolbarVerticalCompressionBehavior(.prefersToolbarItems)` /
    `verticalBarCompressionBehavior = .prefersBarItems`. (12:23)
+   When the items do not fit, `.prefersToolbarItems` collapses the tab bar into one
+   control that shows the selected tab's symbol (*Booted*, outer display closed).
+   Tell the developer that the other tabs then go out of view.
 9. **Priority.** Set `visibilityPriority` on groups first, then items. Compose / New
    Note / primary creation: high. Status-bearing items (badged inbox): high, to
    preserve glanceability. Rare actions: low. Finer steps:
@@ -194,7 +206,10 @@ ship now and improves bars on every iPhone.
 
 Pose matrix P1 (outer display: side controls), P2 (outer display landscape, keyboard
 up), P3 (inner landscape: vertical bar), P4 (inner portrait: horizontal), P11 (right-to-left), P12 (Reduce Transparency)
-from `references/pose-test-matrix.md`. Check which items overflow and in what order.
+from `references/pose-test-matrix.md`.
+Check which items overflow and in what order.
+Check whether the tabs collapse into one control.
+Check that each custom label stacks only in the vertical bar.
 For each sheet, present it in P1, P3 and P5. Check that a trailing sheet's top control
 sits below the status-bar strip, and that an opted-out sheet leaves the presenter's
 bars vertical.

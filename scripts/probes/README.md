@@ -18,12 +18,12 @@ Clean against Xcode 27.1 (27A9269) on 2026-09-19, and again on 2026-10-01 after 
 `onHingeChange(isEnabled:)` with a `switch` over `DeviceHinge.Status`,
 `.overlay.axes(_:)`, the per-axis `splitArrangementLayoutRatio` and
 `splitArrangementFixedLayoutSize`.
-The *Sheets* section was added on 2026-10-09 on a machine without Xcode, so it has
-**not been typechecked**. It holds `presentationPlacement` with all four
+The *Sheets* section was added on 2026-10-09 on a machine without Xcode.
+It typechecked clean on 2026-10-14 against Xcode 27.1 (27A9269).
+It holds `presentationPlacement` with all four
 `PresentationPlacement` values, `toolbarVerticalBehavior(.disabled)` inside a sheet's
 `NavigationStack`, `Button(role: .close)` and UIKit's `preferredPlacement` /
-`detents`. Run the command above before relying on the samples in
-`vertical-bars.md` › Sheets.
+`detents`.
 
 ## `deployment_gate_probe.swift` — does the sub-27.1 gate compile?
 
@@ -331,3 +331,73 @@ Between the first report and the fold, the right inset moved
 from the scroll view's adjusted inset (84, `innerWidth` 867)
 to `env(safe-area-inset-right)` (84 px, `innerWidth` 951).
 The cause is not determined; folding back did not reverse it.
+
+## `toolbar_edge_probe.swift` — what does a toolbar item read from `toolbarVerticalEdge`?
+
+A SwiftUI app with one mode per launch.
+Every reader logs the edge it reads and its global frame.
+The frame shows which bar holds the item.
+
+```bash
+mkdir -p /tmp/TbProbe.app
+sed -e 's/DuoProbe/TbProbe/g' -e 's/com.example.duoprobe/com.example.tbprobe/' \
+  scripts/probes/DuoProbe-Info.plist > /tmp/TbProbe.app/Info.plist
+xcrun -sdk iphonesimulator swiftc -target arm64-apple-ios27.1-simulator \
+  -parse-as-library scripts/probes/toolbar_edge_probe.swift -o /tmp/TbProbe.app/TbProbe
+xcrun simctl install <udid> /tmp/TbProbe.app
+xcrun simctl launch <udid> com.example.tbprobe -mode items   # or automatic, disabled, sheet, tabs, toolbar
+xcrun simctl spawn <udid> log show --last 10s --style compact \
+  --predicate 'eventMessage CONTAINS "TBPROBE"'
+xcrun simctl io <udid> screenshot --display=1 /tmp/tb-outer.png   # --display=3: inner
+```
+
+2026-10-14, Xcode 27.1 (27A9269), iOS 27.1 runtime, last line of each reader.
+Outer display closed (`duo_pose.py set closed`), 466 × 678 pt, trailing inset 84:
+
+```
+-mode items
+TBPROBE content edge=trailing frame=(163.0, 328.8, 56.0, 20.3)
+TBPROBE menu.verticalPreferred edge=trailing frame=(406.0, 619.3, 24.0, 21.3)
+TBPROBE slider.horizontalOnly edge=trailing frame=(102.3, 614.7, 140.0, 31.0)
+TBPROBE custom.automatic edge=trailing frame=(256.3, 619.8, 43.7, 20.3)
+-mode automatic
+TBPROBE menu.automatic edge=trailing frame=(83.3, 619.3, 24.0, 21.3)
+(the other readers as in -mode items, the bottom-bar items shifted right)
+-mode disabled
+TBPROBE content edge=nil frame=(205.0, 354.8, 56.0, 20.3)
+TBPROBE menu.verticalPreferred edge=nil frame=(100.7, 623.3, 53.3, 13.3)
+TBPROBE slider.horizontalOnly edge=nil frame=(176.0, 614.7, 140.0, 31.0)
+TBPROBE custom.automatic edge=nil frame=(330.0, 619.8, 43.7, 20.3)
+-mode sheet
+TBPROBE sheet.content edge=nil frame=(215.3, 419.8, 35.3, 20.3)
+(the presenter's readers as in -mode items)
+```
+
+Inner display flat (`duo_pose.py set flat`), landscape, 951 × 669 pt:
+`-mode items` gave the same edges.
+The menu sat at x 891, in the trailing inset,
+and the slider and the custom view sat in the bottom bar.
+`-mode disabled` gave `nil` everywhere.
+
+1. **`toolbarVerticalEdge` belongs to the window or presentation, not to the item's bar.**
+   The slider and the custom view sat in the horizontal bottom bar and read `.trailing`,
+   the same value as the content.
+   Of the three bottom-bar items, only the `.verticalPreferred` menu went to the vertical bar.
+   Its x of 406 lies inside the trailing inset, which starts at x 382.
+   Its label stacked to 24 pt wide.
+2. **An `.automatic` menu with a custom label stays in the horizontal bar.**
+   It still read `.trailing`, so its label stacked to 24 pt wide inside the bottom bar.
+3. **`toolbarVerticalBehavior(.disabled)` sets the edge to `nil`** for every reader
+   under it.
+   The menu moved into the bottom bar, and its label laid out side by side, 53.3 pt wide.
+   The screenshot shows the status bar horizontal at the top.
+4. **A sheet with the opt-out reads `nil` while its presenter keeps `.trailing`.**
+   The sheet's Close sat at the top in a horizontal bar,
+   and the status bar went horizontal above the sheet.
+5. **Compression** (`-mode tabs`, `-mode toolbar`; nine symbol items in the first of
+   three tabs, outer display, read from screenshots).
+   `.prefersTabBar` kept the three tabs, and four items next to the overflow button.
+   `.prefersToolbarItems` collapsed the tab bar into one control
+   that shows the selected tab's symbol.
+   Seven items stayed next to the overflow button.
+   The probe did not open the overflow menu or tap the collapsed control.

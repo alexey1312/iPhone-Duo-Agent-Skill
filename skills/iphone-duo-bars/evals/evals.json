@@ -84,6 +84,23 @@
         "If it proposes opting the sheet out of vertical bars, the modifier goes on the content inside the sheet's own NavigationStack, which resolves for that presentation only; it says the API needs the iOS 27.1 SDK.",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 6,
+      "name": "adaptive-toolbar-label",
+      "prompt": "Sketchpad (evals/files/Sketchpad) on the closed iPhone Duo: Pen, Eraser and Undo move to the side bar, but the stroke-width menu stays in the bottom bar. And the opacity control's caption is stacked under its dot, even though it sits in the horizontal bottom bar. Plan only.",
+      "expected_output": "A plan that gives the stroke-width menu .verticalPreferred, explains that toolbarVerticalEdge describes the whole window rather than the item's bar (an item in the bottom bar reads .trailing), keeps the opacity item side by side, and notes the 27.1 SDK.",
+      "files": [
+        "evals/files/Sketchpad"
+      ],
+      "expectations": [
+        "Recommends axisBehavior(.verticalPreferred) on the stroke-width menu's ToolbarItem, because an item with custom content stays in the horizontal bar by default (Tech Talk 111462, 8:00–8:52). A plan that instead replaces the custom label with a title-and-symbol Label, which goes to the vertical bar by default (5:56), also passes.",
+        "Explains the stacked opacity caption: toolbarVerticalEdge is the preferred vertical-bar edge for the whole window, scene or presentation, not for the bar that holds the item, so an item in the horizontal bottom bar still reads .trailing on the closed iPhone Duo. It does not claim that the value is nil inside a horizontal bar.",
+        "Keeps the opacity item's layout side by side: only the item that goes to the vertical bar switches its layout on toolbarVerticalEdge (for example a separate label for the slider, or a parameter that turns stacking off). Marking the opacity item .horizontalOnly is optional.",
+        "States that axisBehavior needs the iOS 27.1 SDK, as toolbarVerticalEdge does, and that a deployment target below iOS 27.1 needs an #available(iOS 27.1, *) check.",
+        "Ties verification to the closed outer display (P1) or the inner display in landscape (P3): the stroke-width label stacks in the vertical bar, and the opacity item stays side by side in the bottom bar.",
+        "No file in the project copy was modified."
+      ]
     }
   ]
 }

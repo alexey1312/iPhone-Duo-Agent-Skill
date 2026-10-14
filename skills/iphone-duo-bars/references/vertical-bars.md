@@ -175,10 +175,10 @@ struct TrailSheet: View {
 }
 ```
 
-The two samples above are not typechecked. They were written on 2026-10-09 on a
-machine without Xcode, so no SDK was available. Their iOS 27.x calls are in
-`scripts/probes/api_shapes_probe.swift`, waiting for the next run on a Mac.
-`Trail`, `TrailTile` and `TrailMap` are placeholders, so the samples are fragments.
+The two samples above are fragments:
+`Trail`, `TrailTile` and `TrailMap` are placeholders.
+Their iOS 27.x calls are in `scripts/probes/api_shapes_probe.swift`,
+which typechecked clean on 2026-10-14 against the iOS 27.1 SDK (Xcode 27.1, 27A9269).
 
 ## Axis behavior — 27.1 (8:08, 8:36, 8:52)
 
@@ -235,6 +235,92 @@ case .leading: alignPalette(.leading)
 default: alignPalette(.trailing)
 }
 ```
+
+## A custom item that joins the vertical bar — 27.1 (8:00, 10:07)
+
+A custom view stays in the horizontal bar by default (8:00).
+To move it to the vertical bar, give its item `.verticalPreferred`.
+Let the view pick its layout from `toolbarVerticalEdge`:
+side by side when the value is `nil`, stacked when the value is an edge.
+The stacked form must fit the bar's fixed width (10:07).
+
+```swift
+// SwiftUI — a stroke-width menu joins the vertical bar; the slider stays in the horizontal bar
+struct SketchScreen: View {
+    @State private var strokeWidth = 4.0
+    @State private var opacity = 1.0
+
+    var body: some View {
+        NavigationStack {
+            Canvas { _, _ in }
+                .navigationTitle("Sketch")
+                .toolbar {
+                    ToolbarItem(placement: .bottomBar) {
+                        Menu {
+                            Picker("Stroke width", selection: $strokeWidth) {
+                                ForEach([2.0, 4.0, 6.0], id: \.self) { Text("\(Int($0)) pt") }
+                            }
+                        } label: {
+                            StrokeWidthLabel(width: strokeWidth)
+                        }
+                    }
+                    .axisBehavior(.verticalPreferred)   // moves custom content out of the horizontal bar
+
+                    ToolbarItem(placement: .bottomBar) {
+                        Slider(value: $opacity) { Text("Opacity") }
+                            .frame(width: 140)
+                    }
+                    .axisBehavior(.horizontalOnly)      // keeps the slider in the horizontal bar
+                }
+        }
+    }
+}
+
+struct StrokeWidthLabel: View {
+    @Environment(\.toolbarVerticalEdge) private var verticalEdge   // nil: no vertical bar
+    let width: Double
+
+    var body: some View {
+        let layout = verticalEdge == nil
+            ? AnyLayout(HStackLayout()) : AnyLayout(VStackLayout(spacing: 2))
+        layout {
+            RoundedRectangle(cornerRadius: width / 2).frame(width: 22, height: width)
+            Text("\(Int(width)) pt").font(.caption2)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Stroke width, \(Int(width)) points")
+    }
+}
+```
+
+Typechecked on 2026-10-14 against the iOS 27.1 SDK (Xcode 27.1, 27A9269);
+the same code is in `scripts/probes/api_shapes_probe.swift`.
+The overflow menu shows an item by its title and symbol
+(*Preparing your app* › Organize items in your bars).
+This custom label supplies neither,
+and this repository has not measured how such an item looks in the overflow menu.
+
+**Inside a toolbar item, switch the layout on the edge only if the item goes to the
+vertical bar.**
+`toolbarVerticalEdge` is the preferred edge for the whole window or presentation,
+whether or not a bar is visible (`toolbarVerticalEdge` documentation).
+It is not the edge of the bar that holds the item.
+*Booted*, on the outer display closed and on the inner display flat
+(`scripts/probes/toolbar_edge_probe.swift`):
+
+| Item | Bar it sat in | `toolbarVerticalEdge` |
+| --- | --- | --- |
+| `Menu` with a custom label, `.verticalPreferred` | vertical, trailing | `.trailing` |
+| The same `Menu`, `.automatic` (outer display only) | horizontal, bottom | `.trailing` |
+| `Slider`, `.horizontalOnly` | horizontal, bottom | `.trailing` |
+| Custom view, `.automatic` | horizontal, bottom | `.trailing` |
+| The `.verticalPreferred` menu, the slider and the custom view, under `toolbarVerticalBehavior(.disabled)` | horizontal, bottom | `nil` |
+
+A label that stacks for every non-`nil` value therefore stacks in the horizontal bar too.
+The `.automatic` menu did exactly that.
+Keep the layout of an item in the horizontal bar side by side.
+Views outside the toolbar read the edge as before, for example to align a palette.
+Check in P1 and P3 that the `.verticalPreferred` item really sits in the vertical bar.
 
 ## A bar that must stay custom — 27.1 (Forums 847835, 847644)
 
@@ -364,6 +450,19 @@ TabView {
 // UIKit — .prefersBarItems or .prefersTabBar
 navigationItem.verticalBarCompressionBehavior = .prefersBarItems
 ```
+
+What each choice looks like, *Booted* on the outer display closed,
+when the items do not fit:
+one tab of a three-tab `TabView` holds nine symbol items
+(`toolbar_edge_probe.swift`, `-mode tabs` and `-mode toolbar`; read from screenshots).
+
+- `.prefersTabBar`: all three tabs stayed.
+  Four items stayed in the bar, next to the overflow button.
+- `.prefersToolbarItems`: the tab bar collapsed into one control.
+  The control shows the selected tab's symbol.
+  Seven items stayed in the bar, next to the overflow button.
+
+The probe did not open the overflow menu or tap the collapsed control.
 
 ## One overflow menu (12:43)
 
