@@ -42,14 +42,14 @@
     {
       "id": 3,
       "name": "scripted-pose-testing",
-      "prompt": "We want our CI agent to take screenshots of our app in book pose and lying flat on the iPhone Duo simulator, unattended. simctl doesn't seem to have a fold command. Is there any way to do it, and what can't be automated? There's no project to look at — just answer.",
-      "expected_output": "An answer that says Apple ships no pose command, devicectl reads the angle, the third-party hinge CLI (or the duo_pose.py wrapper) sets it, rotation stays manual, and screenshots must name the display.",
+      "prompt": "We want our CI agent to take screenshots of our app in book pose, lying flat and in tabletop pose on the iPhone Duo simulator, unattended. simctl doesn't seem to have a fold command. Is there any way to do it, and what can't be automated? There's no project to look at — just answer.",
+      "expected_output": "An answer that says Apple ships no pose command, devicectl orientation set does nothing on iPhone Duo, the third-party hinge CLI 0.3.0 or later (or the duo_pose.py wrapper) sets the angle and the orientation, moves sweep rather than jump, and screenshots must name the display.",
       "files": [],
       "expectations": [
-        "States that Apple ships no command that sets the pose — simctl has no fold, pose or hinge subcommand — and that xcrun devicectl device motion hinge-angle reads the angle.",
-        "Points to the third-party hinge CLI (artemnovichkov/hinge) — directly or through the skill's duo_pose.py wrapper — which sets the angle by posting Device Hub's hinge-slider event inside the simulator, and flags that it relies on a private, undocumented protocol that may break with any Xcode and that the simulator must be named explicitly (-d / --device) because hinge otherwise acts on the first booted simulator.",
-        "States that rotation has no command, so inner-display portrait and tabletop stay manual, and that those poses must be reported as not run rather than passed.",
-        "Says screenshots must name the display — --display=1 for the outer display, --display=3 for the inner — because simctl's default display is not stable, and that the display not in use comes back black."
+        "States that Apple ships no command that sets the pose — simctl has no fold, pose, hinge or rotation subcommand — and that xcrun devicectl device orientation set reports success on iPhone Duo without changing anything.",
+        "Points to the third-party hinge CLI (artemnovichkov/hinge) 0.3.0 or later — directly or through the skill's duo_pose.py wrapper — which sets the hinge angle and the device orientation by posting Device Hub's private events inside the simulator, flags that the protocol is undocumented and may break with any Xcode, and passes the simulator explicitly (-d / --device).",
+        "Covers tabletop as scriptable: 90° plus a device orientation (landscape-left) that gives the inner display a portrait interface, and says to read the result back (hinge posture, or the active display's rotation) rather than trust the orientation name.",
+        "Says screenshots must name the display — --display=1 for the outer display, --display=3 for the inner — or use hinge screenshot, because simctl's default display is not stable, and that the display not in use comes back black."
       ]
     },
     {

@@ -551,6 +551,41 @@ would take, so it disables the bar in regular width (Forums 847864).
 The system animates the switch — content reflows, the status bar changes axis and the
 side inset comes and goes — so treat it as a stable property of a screen, not a state.
 
+What the opt-out changes, and what does not free the column
+(*Booted*, `scripts/probes/side_inset_probe.swift`, inner display in landscape,
+2026-10-29, Xcode 27.1).
+A `UINavigationController` screen with a title and two bar button items:
+
+| | `safeAreaInsets` | `verticalBarEdge` | Where things go |
+| --- | --- | --- | --- |
+| Default | top 82, bottom 34, **trailing 84** | `.trailing` | title in a bar at the top; buttons and status bar in the trailing column |
+| `preferredVerticalBarBehavior` `.disabled` | top 82, bottom 34, trailing **0** | `.unspecified` | title, buttons and status bar in one row at the top |
+| `prefersStatusBarHidden` `true` | top 82, bottom 34, **trailing 84** | `.trailing` | clock gone; the column stays, empty |
+
+- **The opt-out gives back the side, not the top.**
+  With a navigation title the top inset is 82 pt either way,
+  because the title keeps a horizontal bar at the top;
+  only the 84 pt side inset goes away.
+  A report of "82 pt at the top instead of 84 pt on the side" describes the same thing.
+- **Hiding the status bar does not free the column.**
+  The clock goes and the 84 pt inset stays.
+  Apple's header for `preferredVerticalBarBehavior` says the same from the other side:
+  to hide the bars and the status bar without changing the layout,
+  use the visibility APIs, not the opt-out.
+- **No scroll edge effect draws in the column, even when asked for.**
+  A carousel that scrolls under the trailing column
+  with `.scrollEdgeEffectStyle(.soft, for: .trailing)` or `.hard`,
+  with a toolbar item in the column or without one,
+  gave pixels identical to `.scrollEdgeEffectHidden(for: .trailing)`.
+  UIKit's `rightEdgeEffect` with style `.soft` gave pixels identical to `isHidden`.
+  The control worked: under the top navigation bar, `.soft` and hidden differed.
+  So content under the column needs a design decision
+  (Tech Talk 111466 at 10:07 says custom bar views get no scroll edge effect by default).
+- A horizontal `UIScrollView` inside another one reports a safe area of **0**:
+  the outer scroll view takes the 84 pt into its `adjustedContentInset`
+  (trailing 84), and nothing reaches the inner one.
+  Inset a nested carousel yourself, from the outer view's safe area.
+
 ## Deployment targets below 27.1
 
 A modifier introduced in 27.1 cannot be applied unconditionally when the app deploys

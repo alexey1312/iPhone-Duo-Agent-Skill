@@ -41,6 +41,20 @@ views, sheets in folded poses — and rank below the talks
   orientation or idiom (`iphone-duo-adaptivity-audit` owns removing those).
 - Design across a continuum of sizes (1:33). A fixed phone-width column centered on
   the inner display is a finding: propose two columns, a split view, or a grid.
+- **A size breakpoint reads both dimensions.** Inner landscape is 951 × 669 pt,
+  a shape that no other iPhone or iPad has.
+  A rule that reads only the width picks the tablet layout there and runs out of height.
+  Check each breakpoint at 466 × 678, 678 × 466, 669 × 951 and 951 × 669 pt
+  (*Booted*, `references/device-geometry.md`).
+- **The size changes while a screen is open.** Folding changes the size, the size
+  classes, the safe area and the bars mid-session.
+  A size saved at launch goes stale, and so do constraints built from
+  `safeAreaInsets` numbers.
+  In UIKit, update in `viewWillTransition(to:with:)`, `viewSafeAreaInsetsDidChange()`
+  and a trait-change registration.
+  In SwiftUI, read the size with `onGeometryChange(for:of:action:)`,
+  not once in `onAppear` into `@State`.
+  Fold and unfold with each screen open (P7), not only at launch.
 - Keep functionality and state the same on both displays; show one more level of
   hierarchy on the inner display where it fits (Mail: list or message when closed,
   both when open). Don't design a layout per pose. (HIG › Best practices; Tech Talk
@@ -87,6 +101,15 @@ views, sheets in folded poses — and rank below the talks
 - `.fullScreen` / `fullScreenCover` fills the app's own window scene, not the
   display: in Split View it covers only the app's own side (Forums 847874).
   `.overCurrentContext` applies only in regular width (Forums 847644).
+- **A custom presentation: check the presented view's safe area.**
+  *Booted* (`scripts/probes/side_inset_probe.swift`): a centred 320 × 420 card
+  from a custom `UIPresentationController` got zero insets and `verticalBarEdge`
+  unspecified. With a navigation controller inside, the card kept its own bar
+  at its top, and the presenter's buttons stayed in the window's column.
+  A third-party report of content in a card that inherits the window's 84 pt inset
+  did not reproduce with this card.
+  Centre a card in the safe area, not in the window:
+  centred in the window, it sits 42 pt to the trailing side of the content beside it.
 - A `UINavigationController` app needs no new architecture: adapt the content inside
   it, for example with a `UIArrangementViewController` as a pushed screen
   (Forums 848055). Keep `UISplitViewController` for sidebar and content; an
@@ -112,6 +135,11 @@ views, sheets in folded poses — and rank below the talks
   no layout margin and no trait (Forums 847879; *Booted*: book pose leaves
   `safeAreaInsets` and `adjustedContentInset` unchanged). Code that waits for an inset
   to move a control off the fold waits forever: query the region.
+- **A nested scroll view sees no side inset.** A horizontal `UIScrollView` inside
+  another one reports a safe area of 0, because the outer one takes the 84 pt into
+  its `adjustedContentInset` (*Booted*). Inset a nested carousel from the outer
+  view's safe area. No scroll edge effect draws under the vertical bar
+  (`iphone-duo-bars`), so content that scrolls there needs a design decision.
 
 ## 4. The hinge and reserved regions (111463)
 
@@ -151,6 +179,8 @@ views, sheets in folded poses — and rank below the talks
   84 pt trailing inset leaves 455.5 pt before the fold's frame and 371.5 pt after
   it. Anything centred in the safe area misses the crease by 42 pt — place against
   the region's frame, not against the middle (*Booted*).
+  In tabletop the band is horizontal, centred on y 475.5 of 951 pt,
+  and the middle of the safe area is 24 pt below it (*Booted*).
 - Tell book pose from tabletop by the shape of the active division —
   a vertical band is book, a horizontal one tabletop —
   not by the hinge (`references/layout-code.md` › Pose from the fold).

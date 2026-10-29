@@ -159,6 +159,12 @@ Where the corner camera and the side controls physically sit:
     placement; a full-width layout suits only immersive, non-scrolling screens that
     don't conflict with the Dynamic Island or status bar. (HIG › Vertical controls;
     Tech Talk 111466, 6:33)
+    *Booted*: the opt-out removes the 84 pt side inset, and a navigation title keeps
+    its 82 pt top bar either way. `prefersStatusBarHidden` removes only the clock and
+    leaves the column empty.
+    No scroll edge effect draws in the column, even when one is set for that edge,
+    so decide with the designer what content shows under it
+    (`references/vertical-bars.md` › Opt out).
 11. **Backgrounds under the bar.** A hero image or full-bleed header extends under the
     vertical bar with `backgroundExtensionEffect()` / `UIBackgroundExtensionView`
     (iOS 26) rather than a manually stretched frame; scrollable foreground content
@@ -213,5 +219,7 @@ Check that each custom label stacks only in the vertical bar.
 For each sheet, present it in P1, P3 and P5. Check that a trailing sheet's top control
 sits below the status-bar strip, and that an opted-out sheet leaves the presenter's
 bars vertical.
-`scripts/duo_pose.py shoot <dir> --poses closed,flat` captures P1 and P3 with both
-displays (third-party `hinge` CLI; ask first); P2 and P4 need rotation in Device Hub.
+`scripts/duo_pose.py shoot <dir> --poses closed,closed-landscape,closed-landscape-flipped,flat,flat-portrait`
+captures P1, both P2 orientations, P3 and P4 with both displays
+(third-party `hinge` CLI 0.3.0 or later; ask first).
+In one P2 orientation the vertical bar is on the **leading** edge.

@@ -152,7 +152,36 @@ sleep 1.2; done`. The run reported 170.3°, 173.1° and 174.1° — all *partial
 for 175°, 178° and 179°; *fully open* only at 180°; *closed* already at 19.2°; and
 seven to ten calls per step whose old and new contexts were equal.
 Closed at 0°, the app moved to the outer display and reported the two outer
-occlusion regions again. Tabletop is not covered: rotation has no command.
+occlusion regions again.
+
+### Rotated: outer landscape, inner portrait, tabletop
+
+Since `hinge` 0.2.0 the device orientation can be set too (`hinge orient`).
+Set the pose, then launch the probe:
+
+```bash
+hinge -d <udid> sweep 0 180 0.6 && hinge -d <udid> orient landscape-left   # inner portrait, P4
+hinge -d <udid> sweep 180 90 0.6                                         # tabletop, P6
+hinge -d <udid> sweep 90 0 0.6 && hinge -d <udid> orient landscape-left    # outer landscape, P2
+xcrun simctl launch <udid> com.example.duoprobe
+```
+
+2026-10-29, Xcode 27.1 (27A9269), last pass of the outer reader:
+
+```
+P4  DUOPROBE pass=7 outer size=669.0x835.0 safeArea(t:82.0 l:0.0 b:34.0 tr:0.0)
+    divisions=["(0.0, 373.5, 669.0, 40.0)|margins(t:20.0 l:0.0 b:20.0 tr:0.0)|active=false"]
+    occlusions=["(21.0, 133.67, 37.0, 58.0)|…|active=false", "(525.0, -82.0, 144.0, 82.0)|…|active=true"]
+    screenBounds=(0.0, 0.0, 669.0, 951.0) verticalBarEdge=0 hSize=2 vSize=2
+P6  the same, except divisions=[…|active=true]; DUOHINGE old=nil new=partiallyOpen@90.0deg
+P2  landscape-left   size=594.0x432.0 safeArea(t:0.0 l:84.0 b:34.0 tr:0.0) verticalBarEdge=1 hSize=1 vSize=1
+    landscape-right  size=594.0x432.0 safeArea(t:0.0 l:0.0 b:34.0 tr:84.0) verticalBarEdge=2
+```
+
+`verticalBarEdge` 0 is `.unspecified`, 1 `.leading`, 2 `.trailing`.
+Frames are in the probe's space, whose top is the top of the safe area:
+add 82 to a P4 y to get the screen's.
+What the numbers settle is in `device-geometry.md` › Rotated poses, measured.
 
 ## `arrangement_probe.swift` — where do an arrangement's environment values reach?
 
@@ -211,7 +240,8 @@ each line (`overlaySmall` and `overlayWrapped` behave as on the outer display):
 
 In book pose both styles first lay out as if flat — layered, or split evenly or by the
 ratio — and move to the fold a few passes later, when the reserved regions arrive.
-Tabletop is not covered: the simulator cannot be rotated from a script.
+Tabletop has not been run with this probe.
+Since `hinge` 0.2.0 it can be (`hinge orient landscape-left` at 90°).
 
 ## `forum_samples_probe.swift` — do the forum-derived samples compile?
 
@@ -401,3 +431,67 @@ and the slider and the custom view sat in the bottom bar.
    that shows the selected tab's symbol.
    Seven items stayed next to the overflow button.
    The probe did not open the overflow menu or tap the collapsed control.
+
+## `side_inset_probe.swift` — what frees the vertical bar's column, and what draws in it?
+
+A UIKit app with one mode per launch.
+It checks the claims of a third-party report (`references/sources.md` › Background reading,
+Samorek) about the side inset.
+Each probed view logs its safe area; the edge modes are read from screenshots.
+
+```bash
+mkdir -p /tmp/SideProbe.app
+sed -e 's/DuoProbe/SideProbe/g' -e 's/com.example.duoprobe/com.example.sideprobe/' \
+  scripts/probes/DuoProbe-Info.plist > /tmp/SideProbe.app/Info.plist
+xcrun -sdk iphonesimulator swiftc -target arm64-apple-ios27.1-simulator \
+  -parse-as-library scripts/probes/side_inset_probe.swift -o /tmp/SideProbe.app/SideProbe
+xcrun simctl install <udid> /tmp/SideProbe.app
+xcrun simctl launch <udid> com.example.sideprobe -mode nav   # the modes are listed in the file
+xcrun simctl spawn <udid> log show --last 10s --style compact \
+  --predicate 'eventMessage CONTAINS "SIDEPROBE"'
+hinge -d <udid> screenshot /tmp/side-nav.png
+```
+
+2026-10-29, Xcode 27.1 (27A9269), iOS 27.1 runtime,
+inner display in landscape (951 × 669 pt), open flat, last line of each view:
+
+```
+nav              SCREEN safe=(t:82.0 l:0.0 b:34.0 r:84.0) verticalBarEdge=2
+disabled         SCREEN safe=(t:82.0 l:0.0 b:34.0 r:0.0)  verticalBarEdge=0
+statusHidden     SCREEN safe=(t:82.0 l:0.0 b:34.0 r:84.0) verticalBarEdge=2
+card             CARD safe=(t:0.0 l:0.0 b:0.0 r:0.0) frameInWindow=(315.5, 124.5, 320.0, 420.0) verticalBarEdge=0
+                 CONTAINER safe=(t:0.0 l:0.0 b:34.0 r:84.0)
+cardNav          CARD safe=(t:82.0 l:0.0 b:0.0 r:0.0) … verticalBarEdge=0
+cardNavDisabled  the same as cardNav
+nested           outer.safe=(t:0.0 l:0.0 b:34.0 r:84.0) outer.adjusted=(t:0.0 l:0.0 b:0.0 r:84.0)
+                 inner.safe=(t:0.0 l:0.0 b:0.0 r:0.0)  inner.adjusted=(t:0.0 l:0.0 b:0.0 r:0.0)
+```
+
+The edge modes were compared pixel by pixel in the trailing 84 pt
+(x 2601–2853, y 400–1800 px of the 2853 × 2007 screenshot, below the status-bar strip):
+
+| Effect | Control | Differing pixels in the column |
+| --- | --- | --- |
+| `edgeSoft`, `edgeHard` | `edgeHidden` | 0 of 352,800 |
+| `edgeBarSoft` (toolbar item in the column) | `edgeBarHidden` | 0 of 352,800 |
+| `edgeUIKit` | `edgeUIKitHidden` | 0 of 352,800 |
+| `topSoft`, top 110 pt | `topHidden` | 739,114 of 825,000 — the effect draws at the top |
+
+Four results:
+
+1. **The opt-out removes the side inset and nothing else.**
+   With a navigation title the top inset is 82 pt with or without it;
+   the title keeps a bar at the top in both.
+   Under the opt-out, `verticalBarEdge` reads `.unspecified`,
+   although the header says the trait reflects the preferred edge
+   "regardless of whether a vertical bar is currently visible".
+2. **Hiding the status bar keeps the 84 pt column.** Only the clock goes.
+3. **No scroll edge effect draws in the column**, set in SwiftUI or UIKit,
+   with a bar item there or without one.
+   The top-edge control shows the effect works in the same build.
+4. **A centred custom card gets no side inset**,
+   and a navigation controller inside it keeps its bar at the card's top.
+   The report of content in a card that inherits the window's 84 pt
+   did not reproduce with this card.
+   A nested scroll view gets a safe area of 0:
+   the outer scroll view takes the inset into its `adjustedContentInset`.

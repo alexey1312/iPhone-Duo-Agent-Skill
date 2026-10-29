@@ -13,7 +13,8 @@ cameras and fold sit: `device-geometry.md`.
   ```bash
   xcrun simctl list devicetypes | grep -i duo
   # iPhone Duo (com.apple.CoreSimulator.SimDeviceType.iPhone-Duo)
-  xcrun simctl boot "iPhone Duo" && open -a Simulator
+  xcrun simctl boot "iPhone Duo"
+  open "$(xcode-select -p)/../Applications/DeviceHub.app"   # Xcode 27 has no Simulator.app
   xcrun simctl io booted enumerate    # both integrated framebuffers, 1398x2034 and 2007x2853
   ```
 
@@ -25,59 +26,109 @@ cameras and fold sit: `device-geometry.md`.
   install the runtime from Xcode › Settings › Components,
   or with `xcodebuild -downloadPlatform iOS -buildVersion 27.1`
   (Apple documentation › *Downloading and installing additional Xcode components*).
-- **Apple ships no command that sets a pose.** `simctl` has no fold, pose or hinge
-  subcommand, and an app launched with `simctl launch` comes up on the display in
+- **Apple ships no command that sets a pose.** `simctl` has no fold, pose, hinge or
+  rotation subcommand, and an app launched with `simctl launch` comes up on the display in
   use — the **outer** one while the device is closed. In Device Hub, hold ⌥ (Option)
   while clicking a pose button to get a slider for the exact hinge angle
   (SwiftLee, 2026-09-22; Apple's *Interacting with your app in Device Hub* documents
-  ⌥-click only for the rotate button). Apple's `devicectl` reads the angle:
+  ⌥-click only for the rotate button).
+  Two commands look like they help and do not.
+  `xcrun devicectl device orientation set landscapeLeft -d <udid>`
+  prints the new orientation, exits 0 and leaves the iPhone Duo as it was
+  (measured 2026-10-29, Xcode 27.1).
+  `XCUIDevice.shared.orientation` in a UI test changes nothing either
+  (reported by Samorek and by duoctl, `sources.md` › Background reading; not measured here).
+  So put the simulator in the pose first, then run the UI test.
+  `xcrun devicectl device motion hinge-angle -d <udid>` reads the angle in Xcode 27.1,
+  but the `devicectl` of Xcode 27.2 has no `motion` subcommand
+  (the hinge 0.3.0 and duoctl READMEs), so do not build on it.
+  `xcrun devicectl device info displays -d <udid> --json-output -`
+  says which display is `active` and gives its `currentOrientation`.
 
-  ```bash
-  xcrun devicectl device motion hinge-angle -d <udid> --session-timeout 5
-  ```
-
-- **`hinge` sets the angle from a script** — a third-party CLI and agent skill,
+- **`hinge` sets the angle and the orientation from a script** — a third-party CLI and agent skill,
   [artemnovichkov/hinge](https://github.com/artemnovichkov/hinge) (MIT). It builds a
   small helper for the simulator SDK and runs it with `simctl spawn`, posting the
-  vendor HID event Device Hub's slider sends. The protocol is private and
-  undocumented; it worked on Xcode 27.1 (27A9269) with the iOS 27.1 runtime on
-  2026-10-01, and may break with any Xcode. Pass the device explicitly — without
-  `-d` it acts on the first booted simulator, whatever that is:
+  vendor HID events that Device Hub's hinge slider and rotate control send.
+  Use **0.3.0 or later** (October 26):
+  0.2.0 added `orient` and `rotate`,
+  and 0.3.0 added `posture`, `screenshot` and `--json`
+  and reads the angle from CoreMotion, not from `devicectl`.
+  The protocol is private and undocumented;
+  it worked on Xcode 27.1 (27A9269) with the iOS 27.1 runtime on 2026-10-29,
+  and may break with any Xcode.
+  Pass the device explicitly with `-d`:
 
   ```bash
-  hinge -d <udid> open           # 180°: P3 (inner display flat)
-  hinge -d <udid> 90             # book pose: P5
-  hinge -d <udid> sweep 180 0 2  # fold closed over 2 s while the app runs: P7
-  hinge -d <udid> get            # reads it back through devicectl
+  hinge -d <udid> sweep 0 180 0.6         # unfold over 0.6 s: P3 (inner display flat)
+  hinge -d <udid> sweep 180 90 0.6        # book pose: P5
+  hinge -d <udid> orient landscape-left   # open: inner portrait, P4; at 90°: tabletop, P6
+  hinge -d <udid> sweep 180 0 2           # fold closed over 2 s while the app runs: P7
+  hinge -d <udid> posture --json          # angle, orientation, active display and its rotation
   ```
 
+  **Move the hinge in a sweep, not a jump.**
+  duoctl reports that a jump straight between 0° and 180° can stop the iOS 27.1 runtime
+  from switching displays until the simulator is recreated (not reproduced here).
+  `hinge <degrees>` jumps; `hinge sweep` does not.
+
+  **Orientation names are the device's, not the interface's.**
+  The inner display sits a quarter turn from the outer one,
+  so one device orientation rotates the two displays differently
+  (measured 2026-10-29, Xcode 27.1, an app that supports portrait and both landscapes):
+
+  | Device orientation | Outer display, closed | Inner display, open |
+  | --- | --- | --- |
+  | `portrait` | portrait, `rot0` — P1 | landscape, `rot90` — P3, P5 |
+  | `landscape-left` | landscape, `rot270`, vertical bar on the **leading** edge — P2 | portrait, `rot0` — P4, P6 |
+  | `landscape-right` | landscape, `rot90`, vertical bar trailing — P2 | portrait upside down, `rot180` |
+  | `portrait-upside-down` | unchanged: the app does not support it | landscape, `rot270`, vertical bar still trailing |
+
+  Read the result back with `posture`; do not trust a name.
+  On the outer display an app turns only to orientations it supports;
+  the inner display ignores them.
   Wait about a second after each step before reading geometry or taking a
-  screenshot. **Rotation is still manual**, so P4 (inner portrait) and P6 (tabletop)
-  need Device Hub's rotate control. A pose reached this way counts as tested on the
+  screenshot. A pose reached this way counts as tested on the
   simulator; say which tool set it.
+- **Taps on the inner display need a tool that knows that display.**
+  AXe (built on idb), XcodeBuildMCP and RocketSim send every touch
+  to the outer display's touchscreen,
+  so on an open iPhone Duo they exit 0 and nothing happens
+  (duoctl README, 2026-10-07; not measured here).
+  [skarol/duoctl](https://github.com/skarol/duoctl) (MIT) clones the touchscreen
+  of the display in use and taps, long-presses and swipes through it.
+  It also folds and rotates, through the same private events as `hinge`.
+  Until a screenshot shows its effect, treat a tap on an open device as not done.
 - **`scripts/duo_pose.py` wraps `hinge` for the verification phase.** It picks the
-  iPhone Duo by device type — never another booted simulator — waits until
-  `devicectl` reports the angle, screenshots both displays by screen ID, and puts the
-  hinge back where it was. It changes simulator state, so run it only after the
+  iPhone Duo by device type — never another booted simulator — sweeps the hinge,
+  sets the device orientation, waits until `hinge posture` reports both,
+  screenshots both displays by screen ID, records which display hosts the app,
+  and puts the hinge and the orientation back where they were.
+  It changes simulator state, so run it only after the
   developer has approved verification, never during a read-only scan:
 
   ```bash
-  python3 scripts/duo_pose.py status                        # Duo simulators, hinge CLI, angle
+  python3 scripts/duo_pose.py status                # Duo simulators, hinge version, posture
   python3 scripts/duo_pose.py shoot /tmp/poses --relaunch com.example.app
-  #   P1 closed, P5 book, P3 flat: <pose>-inner.png and <pose>-outer.png each
-  python3 scripts/duo_pose.py set book                      # leave it in book pose
+  #   closed (P1), closed-landscape and closed-landscape-flipped (P2), flat (P3),
+  #   book (P5), tabletop (P6), flat-portrait (P4): <pose>-inner.png and <pose>-outer.png
+  python3 scripts/duo_pose.py set tabletop          # leave it in tabletop pose
   ```
 
+  All seven poses took 66 s with a relaunch at each (2026-10-29).
   A relaunched app needs a few seconds before it draws (`--launch-wait`, 3 s by
-  default; at 1 s the inner display came back blank). If `hinge` is missing, the
-  script stops with the install command, and the poses are *not run*. If it reports
-  an angle it did not reach, the private protocol has likely changed — say so.
+  default; at 1 s the inner display came back blank). If `hinge` is missing or older
+  than 0.3.0, the script stops with the install command, and the poses are *not run*.
+  If a pose is not reached on the outer display, check that the app supports that
+  orientation; otherwise the private protocol has likely changed — say so.
 - **Screenshots are per display — name the display every time.**
   `xcrun simctl io <udid> screenshot --display=1 outer.png` captures the outer
   display (1398 × 2034) and `--display=3` the inner one (2007 × 2853): the screen IDs
   the device profile declares (`simctl io <udid> enumerate`). Without `--display`,
   simctl picked the inner display in one session and the outer in a later one, so the
-  default proves nothing. Only the display in use has content — the other comes back
+  default proves nothing.
+  Others report the inner display every time, black while folded (Samorek, duoctl),
+  and `Invalid argument` (hinge 0.3.0).
+  `hinge screenshot <path>` captures the display that hosts the app. Only the display in use has content — the other comes back
   black — so a black screenshot usually means the wrong display, not a broken app.
   `recordVideo` takes the same flag. For logs, launch with `--console-pty`
   (`scripts/probes/README.md` in the repository). Measured 2026-10-01 on
