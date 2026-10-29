@@ -7,7 +7,7 @@ Mirroring, iPhone apps on iPad), plus an inventory of the containers and APIs a
 project already uses, so an agent can reason over structured JSON instead of ad
 hoc grep output.
 
-Every rule cites the Apple session it comes from. Matches are heuristics: the
+Every rule cites the Apple session or technote it comes from. Matches are heuristics: the
 agent must read the surrounding code before recommending a change.
 """
 
@@ -21,7 +21,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "1.2.2"
+VERSION = "1.5.1"
 
 SEVERITIES = ["critical", "high", "medium", "low", "info"]
 SOURCE_EXTENSIONS = {".swift", ".m", ".mm", ".h"}
@@ -44,6 +44,8 @@ S_POSE = "Tech Talk 111463 Strike a pose with adaptive layouts on iPhone Duo"
 S_SCENES = "Tech Talk 111464 Leverage multiple displays and scenes on iPhone Duo"
 S_MODERNIZE = "WWDC26 278 Modernize your UIKit app"
 S_SPEC = "Apple iPhone Duo tech specs"
+S_TN_FULL_SCREEN = "TN3192 Migrating your app from the deprecated UIRequiresFullScreen key"
+S_TN_LAUNCH = "TN3208 Preparing your app's launch screen to meet App Store requirements"
 
 
 @dataclass(frozen=True)
@@ -412,7 +414,7 @@ def iter_project_files(root: Path, include_dependencies: bool) -> list[Path]:
             elif entry.is_file():
                 if entry.suffix in SOURCE_EXTENSIONS or entry.suffix in BUILD_SETTING_EXTENSIONS:
                     files.append(entry)
-                elif entry.name.endswith("Info.plist"):
+                elif entry.name.endswith("Info.plist") or entry.name in XCODEGEN_SPECS:
                     files.append(entry)
     return sorted(files)
 
@@ -521,14 +523,16 @@ PROJECT_RULES = {
         title="UIRequiresFullScreen is set",
         severity="info",
         skill="iphone-duo-adaptivity-audit",
-        source=f"{S_MODERNIZE} 5:46; {S_PREPARE} 4:37",
+        source=f"{S_MODERNIZE} 5:46; {S_PREPARE} 4:37; {S_TN_FULL_SCREEN}",
         advice=(
             "Starting in iOS 27 this key no longer opts an app out of resizing: the scene "
             "resizes discretely, and iPhone Duo still resizes the app when it opens or "
             "closes and scales it on the inner display, including in Split View. It is "
-            "meant for games; other apps should remove the key and adapt to any size "
-            "(UIRequiresFullScreenIgnoredStartingWithVersion keeps the old behavior on "
-            "earlier iOS versions)."
+            "meant for games. Other apps adapt their layouts first and remove the key "
+            "after that: removing it first makes the scene resize continuously at once. "
+            "Add UIRequiresFullScreenIgnoredStartingWithVersion only after the layouts "
+            "adapt, because a value of 27 or earlier also makes the scene resize "
+            "continuously on iOS 27."
         ),
         pattern="",
     ),
@@ -545,6 +549,23 @@ PROJECT_RULES = {
         ),
         pattern="",
     ),
+    "DUO022": Rule(
+        id="DUO022",
+        title="No launch screen declared",
+        severity="high",
+        skill="iphone-duo-adaptivity-audit",
+        source=f"{S_TN_LAUNCH}; {S_TN_FULL_SCREEN}",
+        advice=(
+            "No Info.plist, build setting or project manifest declares a launch screen. "
+            "App Store Connect rejects an upload built with the iOS 27 SDK with "
+            "ITMS-90870. Add UILaunchScreen (an empty dictionary is enough), set "
+            "INFOPLIST_KEY_UILaunchScreen_Generation = YES, or keep a launch storyboard. "
+            "Each iPhone and iPad app target needs one, but the scanner checks the "
+            "project as a whole. When a tool generates the Info.plist, confirm the key "
+            "in the built app."
+        ),
+        pattern="",
+    ),
 }
 
 SWIFTUI_APP = re.compile(r"@main\b[\s\S]{0,300}?\bstruct\s+\w+\s*:\s*(?:SwiftUI\s*\.\s*)?App\b")
@@ -552,6 +573,25 @@ SCENE_DELEGATE = re.compile(r"\bUIWindowSceneDelegate\b|\bUISceneDelegate\b|\bco
 APP_DELEGATE = re.compile(r"\bUIApplicationDelegate\b|@UIApplicationMain\b|\bUIApplicationMain\s*\(")
 SETTING_SCENE_MANIFEST = re.compile(r"INFOPLIST_KEY_UIApplicationSceneManifest_Generation\s*=\s*YES")
 SETTING_FULL_SCREEN = re.compile(r"INFOPLIST_KEY_UIRequiresFullScreen\s*=\s*YES")
+# TN3208: App Store Connect accepts any one of these keys, so a device-specific
+# variant (`UILaunchStoryboardName~ipad`) counts too.
+LAUNCH_SCREEN_KEYS = {"UILaunchScreen", "UILaunchScreens", "UILaunchStoryboardName", "UILaunchStoryboards"}
+SETTING_LAUNCH_SCREEN = re.compile(
+    r"INFOPLIST_KEY_UILaunchScreen_Generation(?:\[[^\]]*\])?\"?\s*=\s*YES\b"
+    r"|INFOPLIST_KEY_UILaunchStoryboardName(?:\[[^\]]*\])?\"?\s*=\s*\"?[^;\"\s]"
+)
+# Tuist manifests (`.extendingDefault(with: ["UILaunchScreen": ...])`) and XcodeGen
+# specs (`info: properties: UILaunchScreen: {}`) declare the key before any
+# Info.plist exists on disk.
+TUIST_MANIFEST = re.compile(r"^\s*import\s+ProjectDescription\b", re.MULTILINE)
+TUIST_LAUNCH_SCREEN = re.compile(r"\"UILaunch(?:Screens?|Storyboards|StoryboardName)\"\s*:")
+XCODEGEN_SPECS = {"project.yml", "project.yaml"}
+XCODEGEN_LAUNCH_SCREEN = re.compile(
+    r"^\s*[\"']?UILaunch(?:Screens?|Storyboards|StoryboardName)[\"']?\s*:"
+    r"|^\s*[\"']?INFOPLIST_KEY_UILaunchScreen_Generation[\"']?\s*:\s*[\"']?(?:YES|true)\b"
+    r"|^\s*[\"']?INFOPLIST_KEY_UILaunchStoryboardName[\"']?\s*:\s*[^\s#]",
+    re.MULTILINE,
+)
 SETTING_IPHONE_ORIENTATIONS = re.compile(
     r"INFOPLIST_KEY_UISupportedInterfaceOrientations(?:_iPhone)?\s*=\s*\"?([^;\"\n]+)\"?"
 )
@@ -572,6 +612,8 @@ def scan(root: Path, include_dependencies: bool = False) -> dict:
     findings: list[Finding] = []
 
     swiftui_app = False
+    app_entry: tuple[str, int, str] | None = None
+    launch_screen = False
     scene_delegate_file: str | None = None
     app_delegate: tuple[str, int, str] | None = None
     scene_manifest = False
@@ -596,6 +638,8 @@ def scan(root: Path, include_dependencies: bool = False) -> dict:
                 if isinstance(multiple, bool):
                     supports_multiple_scenes = bool(supports_multiple_scenes) or multiple
             for key, value in plist.items():
+                if key.split("~")[0] in LAUNCH_SCREEN_KEYS:
+                    launch_screen = True
                 if key.lower() == "uirequiresfullscreen" and value is True:
                     findings.append(make_finding(PROJECT_RULES["DUO020"], rel, 1, f"{key} = true"))
             for key in ("UISupportedInterfaceOrientations", "UISupportedInterfaceOrientations~iphone"):
@@ -608,7 +652,14 @@ def scan(root: Path, include_dependencies: bool = False) -> dict:
         if text is None:
             continue
 
+        if path.name in XCODEGEN_SPECS:
+            if XCODEGEN_LAUNCH_SCREEN.search(text):
+                launch_screen = True
+            continue
+
         if path.suffix in BUILD_SETTING_EXTENSIONS:
+            if SETTING_LAUNCH_SCREEN.search(text):
+                launch_screen = True
             if SETTING_SCENE_MANIFEST.search(text):
                 scene_manifest = True
             for match in SETTING_FULL_SCREEN.finditer(text):
@@ -621,8 +672,15 @@ def scan(root: Path, include_dependencies: bool = False) -> dict:
 
         source_count += 1
         stripped = strip_comments(text, nested_block_comments=path.suffix == ".swift")
-        if path.suffix == ".swift" and SWIFTUI_APP.search(stripped):
-            swiftui_app = True
+        if path.suffix == ".swift":
+            app_match = SWIFTUI_APP.search(stripped)
+            if app_match:
+                swiftui_app = True
+                if app_entry is None:
+                    number = line_of(stripped, app_match.start())
+                    app_entry = (rel, number, text.splitlines()[number - 1])
+            if TUIST_MANIFEST.search(stripped) and TUIST_LAUNCH_SCREEN.search(stripped):
+                launch_screen = True
         if scene_delegate_file is None and SCENE_DELEGATE.search(stripped):
             scene_delegate_file = rel
         if app_delegate is None:
@@ -647,6 +705,12 @@ def scan(root: Path, include_dependencies: bool = False) -> dict:
     else:
         lifecycle = "unknown"
 
+    # Only an app needs a launch screen: a package or framework has no entry point.
+    entry = app_entry or app_delegate or ((scene_delegate_file, 1, "scene delegate") if scene_delegate_file else None)
+    if entry and not launch_screen:
+        rel, number, snippet = entry
+        findings.append(make_finding(PROJECT_RULES["DUO022"], rel, number, snippet))
+
     findings.sort(key=lambda f: (SEVERITIES.index(f.severity), f.rule, f.file, f.line))
     by_severity = {severity: 0 for severity in SEVERITIES}
     by_rule: dict[str, int] = {}
@@ -666,6 +730,7 @@ def scan(root: Path, include_dependencies: bool = False) -> dict:
         "project": {
             "lifecycle": lifecycle,
             "scene_manifest_found": scene_manifest,
+            "launch_screen_found": launch_screen,
             "supports_multiple_scenes": supports_multiple_scenes,
         },
         "summary": {"by_severity": by_severity, "by_rule": by_rule, "by_skill": by_skill},
