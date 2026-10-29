@@ -10,8 +10,9 @@ This repository contains Agent Skills that advise on and change iOS app code.
   after the developer approves; it acts on iPhone Duo simulators only and restores the
   angle and the orientation after `shoot`. Its tests never touch a simulator.
 - **Every recommendation cites a session and timestamp.** New scanner rules need a
-  `source` matching `Tech Talk 1114xx … m:ss` or `WWDC26 278 … m:ss`; the metadata test
-  enforces it.
+  `source` matching `Tech Talk 1114xx … m:ss` or `WWDC26 278 … m:ss`.
+  Where no session covers a rule, an Apple technote (`TN3208 …`) is the source;
+  the metadata test enforces both forms.
   An Apple engineer's forum answer is cited by thread number (`Forums 848036`) in the
   skills and references, never as a scanner rule's only source; it ranks below the
   talks, the HIG, the documentation and the SDK (`references/sources.md`).

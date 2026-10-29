@@ -80,7 +80,10 @@ with the key, or with an older SDK, it resizes discretely when the drag ends. iP
 Duo honors the key but still resizes the app when the device opens or closes, and
 scales it on the inner display, including in Split View multitasking.
 `UIRequiresFullScreenIgnoredStartingWithVersion` keeps the old behavior on earlier
-iOS versions while the app adapts.
+iOS versions, so add it only after the app adapts:
+a value of 27 or earlier makes the scene resize continuously on iOS 27 (TN3192).
+An upload built with the iOS 27 SDK also needs a launch screen key in the `Info.plist`.
+Without one, App Store Connect rejects the upload with `ITMS-90870` (TN3208).
 
 iPhone Duo ships **October 23** on iOS 27.1.
 Since **October 5**, App Store Connect accepts iPhone Duo-optimized apps built with

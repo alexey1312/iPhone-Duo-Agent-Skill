@@ -28,12 +28,13 @@ technote, **Spec** iPhone Duo tech specs, **Newsroom** Apple's iPhone Duo announ
 | DUO011 | low | Custom `ellipsis` symbol buttons | bars | 111462 11:40 |
 | DUO012 | low | Scene delegate but no scene manifest found | adaptivity-audit | 278 2:10 |
 | DUO013 | medium | "Face ID" in any case, with a space or hyphen, in single- or multi-line string literals, or the `faceid` symbol; `low` in files that read `biometryType` elsewhere, skipped on the line that reads it | adaptivity-audit | 111461 2:34; Spec |
-| DUO020 | info | `UIRequiresFullScreen` in Info.plist or build settings | adaptivity-audit | 278 5:46; 111461 4:37 |
+| DUO020 | info | `UIRequiresFullScreen` in Info.plist or build settings | adaptivity-audit | 278 5:46; 111461 4:37; TN3192 |
 | DUO021 | info | Portrait-only supported orientations | layout | 111461 2:46; 278 6:50 |
+| DUO022 | high | An app entry point, but no launch screen key in an Info.plist, the build settings, a Tuist manifest or an XcodeGen spec | adaptivity-audit | TN3208; TN3192 |
 
 Limits: logical-line matching (Swift member chains that continue on a line starting with
 `.` are joined; other expressions split across lines can be missed), no macro or
-build-time generated sources, no Tuist/XcodeGen manifest parsing, no `#if 0` awareness,
+build-time generated sources, no Tuist/XcodeGen manifest parsing beyond the launch screen keys of `DUO022`, no `#if 0` awareness,
 no `.strings` / `.xcstrings` catalogs (grep them for Face ID copy). Every finding needs
 the code read before it becomes a recommendation.
 

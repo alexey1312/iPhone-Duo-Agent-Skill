@@ -263,7 +263,7 @@ class ProjectRuleTests(ScanTestCase):
         self.project.write("App/SceneDelegate.swift", "class SceneDelegate: UIResponder, UIWindowSceneDelegate {}\n")
         self.project.write_plist(
             "App/Info.plist",
-            {"UIApplicationSceneManifest": {"UIApplicationSupportsMultipleScenes": True}},
+            {"UIApplicationSceneManifest": {"UIApplicationSupportsMultipleScenes": True}, "UILaunchScreen": {}},
         )
         report = self.project.scan()
         self.assertEqual(report["project"]["lifecycle"], "scene")
@@ -273,13 +273,15 @@ class ProjectRuleTests(ScanTestCase):
 
     def test_scene_delegate_without_manifest_is_low(self) -> None:
         self.project.write("App/SceneDelegate.swift", "class SceneDelegate: UIResponder, UIWindowSceneDelegate {}\n")
+        self.project.write_plist("App/Info.plist", {"UILaunchScreen": {}})
         self.assertEqual(self.project.rules(), ["DUO012"])
 
     def test_generated_manifest_setting_counts(self) -> None:
         self.project.write("App/SceneDelegate.swift", "class SceneDelegate: UIResponder, UIWindowSceneDelegate {}\n")
         self.project.write(
             "App.xcodeproj/project.pbxproj",
-            "INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;\n",
+            "INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;\n"
+            "INFOPLIST_KEY_UILaunchScreen_Generation = YES;\n",
         )
         self.assertEqual(self.project.rules(), [])
 
@@ -312,6 +314,85 @@ class ProjectRuleTests(ScanTestCase):
             "INFOPLIST_KEY_UIRequiresFullScreen = YES;\n",
         )
         self.assertEqual(sorted(self.project.rules()), ["DUO020", "DUO021"])
+
+
+class LaunchScreenTests(ScanTestCase):
+    APP = "import SwiftUI\n\n@main\nstruct PuzzlerApp: App {\n    var body: some Scene { WindowGroup { Text(\"Hi\") } }\n}\n"
+
+    def test_app_without_launch_screen_is_high(self) -> None:
+        self.project.write("App/PuzzlerApp.swift", self.APP)
+        self.project.write_plist("App/Info.plist", {"UIRequiresFullScreen": True})
+        report = self.project.scan()
+        self.assertFalse(report["project"]["launch_screen_found"])
+        launch = [f for f in report["findings"] if f["rule"] == "DUO022"]
+        self.assertEqual(len(launch), 1)
+        self.assertEqual(launch[0]["severity"], "high")
+        self.assertEqual((launch[0]["file"], launch[0]["line"]), ("App/PuzzlerApp.swift", 3))
+        self.assertIn("ITMS-90870", launch[0]["advice"])
+
+    def test_plist_keys_count_including_device_variants(self) -> None:
+        self.project.write("App/PuzzlerApp.swift", self.APP)
+        declarations = {
+            "UILaunchScreen": {},
+            "UILaunchScreens": {},
+            "UILaunchStoryboards": {},
+            "UILaunchStoryboardName~ipad": "LaunchScreen",
+        }
+        for key, value in declarations.items():
+            with self.subTest(key=key):
+                self.project.write_plist("App/Info.plist", {key: value})
+                report = self.project.scan()
+                self.assertTrue(report["project"]["launch_screen_found"])
+                self.assertEqual(report["findings"], [])
+
+    def test_build_settings(self) -> None:
+        self.project.write("App/PuzzlerApp.swift", self.APP)
+        cases = {
+            "INFOPLIST_KEY_UILaunchScreen_Generation = YES;": [],
+            '"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;': [],
+            "INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;": [],
+            "INFOPLIST_KEY_UILaunchScreen_Generation = NO;": ["DUO022"],
+            'INFOPLIST_KEY_UILaunchStoryboardName = "";': ["DUO022"],
+        }
+        for setting, expected in cases.items():
+            with self.subTest(setting=setting):
+                self.project.write("App.xcodeproj/project.pbxproj", setting + "\n")
+                self.assertEqual(self.project.rules(), expected)
+
+    def test_tuist_manifest_declares_the_key(self) -> None:
+        self.project.write("App/Sources/PuzzlerApp.swift", self.APP)
+        self.project.write(
+            "App/Project.swift",
+            'import ProjectDescription\n\nlet project = Project(name: "Puzzler", targets: [.target(\n'
+            '    name: "Puzzler", destinations: .iOS, product: .app, bundleId: "com.example.puzzler",\n'
+            '    infoPlist: .extendingDefault(with: ["UILaunchScreen": .dictionary([:])])\n)])\n',
+        )
+        self.assertEqual(self.project.rules(), [])
+
+    def test_quoted_key_outside_a_manifest_does_not_count(self) -> None:
+        self.project.write("App/PuzzlerApp.swift", self.APP)
+        self.project.write("App/Diagnostics.swift", 'let info = ["UILaunchScreen": Bundle.main.object(forInfoDictionaryKey: "UILaunchScreen")]\n')
+        self.assertEqual(self.project.rules(), ["DUO022"])
+
+    def test_xcodegen_spec_declares_the_key(self) -> None:
+        self.project.write("App/PuzzlerApp.swift", self.APP)
+        specs = {
+            "targets:\n  Puzzler:\n    info:\n      path: App/Info.plist\n      properties:\n        UILaunchScreen: {}\n": [],
+            "settings:\n  base:\n    INFOPLIST_KEY_UILaunchScreen_Generation: YES\n": [],
+            "settings:\n  base:\n    INFOPLIST_KEY_UILaunchScreen_Generation: NO\n": ["DUO022"],
+            "# UIScreen.main.bounds\nname: Puzzler\n": ["DUO022"],
+            "settings:\n  base:\n    # INFOPLIST_KEY_UILaunchScreen_Generation: YES\n": ["DUO022"],
+        }
+        for spec, expected in specs.items():
+            with self.subTest(spec=spec):
+                self.project.write("project.yml", spec)
+                self.assertEqual(self.project.rules(), expected)
+
+    def test_package_without_an_app_is_not_reported(self) -> None:
+        self.project.write("Sources/Kit/Board.swift", "public struct Board {}\n")
+        report = self.project.scan()
+        self.assertFalse(report["project"]["launch_screen_found"])
+        self.assertEqual(report["findings"], [])
 
 
 class TraversalTests(ScanTestCase):
@@ -468,7 +549,7 @@ class CommandLineTests(ScanTestCase):
 
 
 class RuleMetadataTests(unittest.TestCase):
-    def test_every_rule_cites_a_session_and_names_a_skill(self) -> None:
+    def test_every_rule_cites_a_session_or_technote_and_names_a_skill(self) -> None:
         skills = {
             "iphone-duo-adaptivity-audit",
             "iphone-duo-bars",
@@ -479,7 +560,8 @@ class RuleMetadataTests(unittest.TestCase):
         self.assertEqual(len({rule.id for rule in rules}), len(rules))
         for rule in rules:
             self.assertIn(rule.skill, skills, rule.id)
-            self.assertRegex(rule.source, r"(Tech Talk 1114\d\d|WWDC26 278) .+ \d+:\d\d", rule.id)
+            # A technote stands in only where no session covers the rule (TN3208).
+            self.assertRegex(rule.source, r"(Tech Talk 1114\d\d|WWDC26 278) .+ \d+:\d\d|TN3\d{3} ", rule.id)
             self.assertIn(rule.severity, duo_scan.SEVERITIES, rule.id)
 
 

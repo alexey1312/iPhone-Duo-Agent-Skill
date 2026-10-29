@@ -66,6 +66,22 @@
         "Does not use the hinge status or angle for the layout decision (Tech Talk 111464 around 2:35).",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 5,
+      "name": "launch-screen-game-upload",
+      "prompt": "Puzzler (evals/files/Puzzler) is a landscape game. Next week we upload our first build made with Xcode 27.1, so that iPhone Duo buyers get it. Review the app's configuration for that upload and for iPhone Duo. We want to keep the full-screen behavior where we can. Plan only.",
+      "expected_output": "A plan that puts the missing launch screen first as an upload blocker, keeps UIRequiresFullScreen for the game and does not add UIRequiresFullScreenIgnoredStartingWithVersion.",
+      "files": [
+        "evals/files/Puzzler"
+      ],
+      "expectations": [
+        "Reports that the app declares no launch screen: Info.plist has no UILaunchScreen, UILaunchScreens, UILaunchStoryboardName or UILaunchStoryboards key, and the xcconfig turns Info.plist generation off.",
+        "States that App Store Connect rejects an upload built with the iOS 27 SDK without a launch screen (ITMS-90870, or TN3208), and puts this first, as a blocker for next week's upload.",
+        "Recommends adding UILaunchScreen to Info.plist (an empty dictionary is enough) or a launch storyboard.",
+        "Keeps UIRequiresFullScreen for the game, and says that from iOS 27 it gives discrete resizing rather than an opt-out: iPhone Duo still resizes the app when it opens or closes and scales it on the inner display.",
+        "Does not recommend adding UIRequiresFullScreenIgnoredStartingWithVersion; if it mentions the key, it says that a value of 27 or earlier makes the scene resize continuously on iOS 27, the opposite of what the team wants."
+      ]
     }
   ]
 }

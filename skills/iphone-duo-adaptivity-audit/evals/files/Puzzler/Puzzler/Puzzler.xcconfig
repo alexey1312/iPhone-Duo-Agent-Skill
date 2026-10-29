@@ -1,0 +1,6 @@
+// The target reads its Info.plist from disk; Xcode generates no keys.
+GENERATE_INFOPLIST_FILE = NO
+INFOPLIST_FILE = Puzzler/Info.plist
+IPHONEOS_DEPLOYMENT_TARGET = 18.0
+TARGETED_DEVICE_FAMILY = 1
+PRODUCT_BUNDLE_IDENTIFIER = com.example.puzzler

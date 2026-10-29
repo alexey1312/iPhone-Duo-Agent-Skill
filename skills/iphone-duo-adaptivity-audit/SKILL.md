@@ -7,7 +7,8 @@ description: >-
   UIScreen.main or mainScreen, screen bounds or scale, interfaceOrientation or
   UIDevice orientation checks, userInterfaceIdiom layout forks, keyWindow or
   connectedScenes.first, migrating from app lifecycle to UIScene lifecycle
-  (required with the latest SDK), UIRequiresFullScreen, portrait-only apps, or
+  (required with the latest SDK), UIRequiresFullScreen, a missing launch screen
+  (ITMS-90870), portrait-only apps, or
   hard-coded Face ID strings and symbols (iPhone Duo has Touch ID; branch on
   LAContext.biometryType). Covers SwiftUI and UIKit, ships a read-only scanner, and delegates bulk UIKit
   rewrites to Xcode's own modernization skill when available. Not for app features
@@ -54,8 +55,17 @@ begins.
 - `UIRequiresFullScreen` no longer opts an app out of resizing from iOS 27: it gives
   discrete resizing, and iPhone Duo still resizes the app when it opens or closes and
   scales it on the inner display, including in Split View — meant for games.
-  `UIRequiresFullScreenIgnoredStartingWithVersion` keeps the old behavior on earlier
-  iOS. (278 5:46; 111461 4:37; TN3192)
+  Remove the key only after the layouts adapt: removal makes the scene resize
+  continuously at once.
+  Add `UIRequiresFullScreenIgnoredStartingWithVersion` only after that too:
+  a value of 27 or earlier also makes the scene resize continuously on iOS 27.
+  (278 5:46; 111461 4:37; TN3192)
+- **App Store Connect requires a launch screen.** An upload built with the iOS 27 SDK
+  needs `UILaunchScreen`, `UILaunchScreens`, `UILaunchStoryboardName` or
+  `UILaunchStoryboards` in the `Info.plist`, or App Store Connect rejects it with
+  `ITMS-90870`.
+  An empty `UILaunchScreen` dictionary or
+  `INFOPLIST_KEY_UILaunchScreen_Generation = YES` is enough. (TN3208; TN3192)
 - **iPhone Duo has Touch ID in the side button and no Face ID** (Apple tech specs;
   `references/device-geometry.md`). Adaptive apps make no assumptions about device
   capabilities (111461 2:34): copy, symbols and onboarding that name Face ID are
@@ -71,7 +81,7 @@ begins.
    Rules owned here: `DUO001` main screen, `DUO002` screen bounds, `DUO003` idiom,
    `DUO004` orientation, `DUO005` app lifecycle, `DUO009` global window state,
    `DUO012` scene delegate without manifest, `DUO013` Face ID copy, `DUO020`
-   `UIRequiresFullScreen`.
+   `UIRequiresFullScreen`, `DUO022` no launch screen.
    Member chains split across lines (`connectedScenes` … `.first`) are joined before
    matching; other multi-line expressions, macros and generated code are not seen, so
    follow up with targeted searches when the inventory suggests more.
@@ -155,8 +165,9 @@ Full before/after code for SwiftUI and UIKit: `references/legacy-api-remediation
   same on iPhone Duo (Forums 848021), so move off it as code is touched rather than as
   a blocker: `registerForTraitChanges(_:handler:)` or automatic trait tracking
   (278 2:51). The scan inventory counts it.
-- Leave `UIRequiresFullScreen` alone in games that need discrete resizing; for other
-  apps recommend removing it and adapting instead.
+- Leave `UIRequiresFullScreen` alone in games that need discrete resizing.
+  For other apps, recommend adapting first and removing the key after that.
+  Never add `UIRequiresFullScreenIgnoredStartingWithVersion` as a first step.
 - **Localization catalogs hide biometric copy.** The scanner reads Swift and
   Objective-C only; grep `.strings` and `.xcstrings` for "Face ID" and build those
   sentences from the biometry name instead. Keep `NSFaceIDUsageDescription`: Face ID
