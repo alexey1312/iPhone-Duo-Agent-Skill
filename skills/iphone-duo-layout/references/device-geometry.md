@@ -40,6 +40,9 @@ Both displays (Apple spec): Dynamic Island, Always-On, ProMotion up to 120 Hz, H
 1000 nits typical, 1600 nits peak (HDR), 3000 nits peak (outdoor), 2,000,000:1
 contrast, Apple Pencil (USB-C) support. Corners are rounded within a standard
 rectangle; the viewable area is smaller than the rectangle.
+**Apple Pencil hover is not supported** on iPhone Duo
+(Apple spec, footnote 3 of the specs page),
+so a hover feature has no reason to appear there.
 
 ### Points
 
@@ -132,13 +135,12 @@ The 84 pt is the *system* region — the app under test had no bars of its own. 
 with a toolbar or tab bar gets more, because its bars share that edge.
 
 > **`simctl` cannot change poses; a third-party CLI can.** `simctl` has no fold,
-> pose or hinge subcommand, and an app launched with `simctl launch` comes up on the
-> display in use — the outer one while the device is closed. Apple's
-> `xcrun devicectl device motion hinge-angle -d <udid>` *reads* the angle.
-> Setting it takes Device Hub's controls, or `hinge`
-> (`pose-test-matrix.md` › Tooling), which posts the same private event as
-> Device Hub's hinge slider. The inner-display numbers below were taken that way.
-> Rotation is still manual, so tabletop (pose 6) is not covered.
+> pose, hinge or rotation subcommand, and an app launched with `simctl launch` comes up on the
+> display in use — the outer one while the device is closed.
+> Setting a pose takes Device Hub's controls, or `hinge`
+> (`pose-test-matrix.md` › Tooling), which posts the same private events as
+> Device Hub's hinge slider and rotate control.
+> The numbers below were taken that way, rotation included (since 2026-10-29).
 
 ### Inner display, measured
 
@@ -186,6 +188,44 @@ equal — seven to ten times per step.
 These are the simulator's numbers, and the rate and granularity of angle updates
 are system policy (UIKit header, `UIHinge.angle`): read them as "status is the
 system's call and the angle is approximate", not as thresholds to code against.
+
+### Rotated poses, measured
+
+*Booted* grade. The same probe, with the hinge and the device orientation set by
+`hinge` 0.3.0 (`pose-test-matrix.md` › Tooling), 2026-10-29, Xcode 27.1 (27A9269).
+Frames are given in screen coordinates: the probe's frames plus its top and leading insets.
+
+| | Outer, `landscape-left` (P2) | Outer, `landscape-right` (P2) | Inner, portrait, flat (P4) | Inner, portrait, 90° — tabletop (P6) |
+| --- | --- | --- | --- | --- |
+| `screen.bounds` | 678 × 466 pt | same | 669 × 951 pt | same |
+| Size inside the safe area | 594 × 432 pt | same | 669 × 835 pt | same |
+| `safeAreaInsets` | top 0, **leading 84**, bottom 34, trailing 0 | top 0, leading 0, bottom 34, **trailing 84** | **top 82**, leading 0, bottom 34, trailing 0 | same |
+| Size classes | compact / compact | same | regular / regular | same |
+| `verticalBarEdge` | **`.leading`** | `.trailing` | `.unspecified` | same |
+| `reservedRegions(kind: .division)` | none | none | one, **inactive**: 669 × 40 at y 455.5, margins top **20** / bottom **20** | the same frame, **active** |
+| `reservedRegions(kind: .occlusion)` | camera 37 × 37 at (29.3, 29.3); bar strip 84 × 82 at (0, 0) | camera at (611.7, 399.7); bar strip 84 × 82 at (594, 384) | inner camera, inactive, 37 × 58 at (21, 215.7); bar strip 144 × 82 at (525, 0) | same |
+| `onHingeChange`, first call | — | — | `nil` → fully open at 180° | `nil` → partially open at 90° |
+
+What that settles:
+
+- **On the outer display the vertical bar follows the camera.**
+  In one landscape it sits on the leading edge, in the other on the trailing edge,
+  and the bar strip is in the camera's corner both times.
+  Code that assumes a trailing bar breaks in one of the two (rule `DUO006`).
+- **On the inner display it stays trailing.**
+  With the device upside down, inner landscape turns half a turn:
+  the inner camera moves to the bottom, a 58 × 37 region at (215.7, 611).
+  The bar stays on the trailing edge — 84 pt, with an 84 × 124 strip at the top.
+- **Inner portrait has no vertical bar.**
+  The status bar is horizontal, the safe area has a top inset and no side inset,
+  and `verticalBarEdge` reads `.unspecified`:
+  the one state where the system keeps horizontal bars (HIG; P4).
+- **In tabletop the fold is a horizontal band**, 40 pt with 20 pt of margin
+  above and below, centred on y 475.5 — the middle of the 951 pt display.
+  It is not in the middle of the safe area: 373.5 pt of content area lie above
+  its frame and 421.5 pt below, so a layout centred in the safe area puts its middle
+  24 pt below the crease.
+  Flat and folded again differ only in `isActive`.
 
 ### What the simulator reports
 

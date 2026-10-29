@@ -82,6 +82,11 @@ begins.
      alignment before body protocols) → **kept** if documented; otherwise ask.
    - *Non-layout behavior* keyed off idiom (feature availability, analytics) → kept,
      with a comment naming why.
+     Ask first whether a `.pad` gate means "iPad" or "a big screen".
+     A feature hidden on iPhone for lack of room stays hidden on the inner display,
+     because iPhone Duo is `.phone` there too: that gate is a *layout decision*.
+     Check the hardware too: iPhone Duo supports Apple Pencil (USB-C) without hover
+     (`references/device-geometry.md`), so a hover preview stays off.
    - *Capability assumption* (Face ID in strings, `faceid` symbols, onboarding) →
      derive from `LAContext.biometryType`. `DUO013` reports `medium` where nothing in
      the file ever asked, and `low` next to an existing `biometryType` read — confirm

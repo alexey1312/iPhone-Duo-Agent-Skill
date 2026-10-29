@@ -210,9 +210,9 @@ final class RecordControlsView: UIView {
 Book pose sends alerts to the trailing side; tabletop puts viewing content on top and
 controls on the bottom. Which one the device is in follows from the shape of the
 active division region — a vertical band is book, a horizontal one tabletop — so the
-layout needs no hinge reading (111464, 2:35). Book pose is measured — a 40 × 669 pt
-band, active, in landscape; tabletop's horizontal band is derived from the poses in
-`device-geometry.md`, because the simulator cannot be rotated from a script.
+layout needs no hinge reading (111464, 2:35). Both are measured: book pose is a
+40 × 669 pt band, active, in landscape; tabletop is a 669 × 40 pt band, active, with the
+inner display in portrait (`device-geometry.md` › Rotated poses, measured).
 
 ```swift
 struct NowPlaying: View {

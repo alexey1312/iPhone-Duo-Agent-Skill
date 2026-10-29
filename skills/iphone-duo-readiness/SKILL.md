@@ -154,10 +154,12 @@ instead of an arrangement), and keep the blocked change as a plan item.
 4. Re-run `duo_scan.py`; confirm resolved findings are gone and nothing new appeared.
 5. Run the pose matrix (`references/pose-test-matrix.md`) for the screens touched, if
    an iPhone Duo simulator exists. Otherwise list the poses as *not run* and why.
-   With the third-party `hinge` CLI installed, `scripts/duo_pose.py shoot <dir>
-   --relaunch <bundle id>` covers closed, book and flat (P1, P5, P3) with a
+   With the third-party `hinge` CLI (0.3.0 or later) installed, `scripts/duo_pose.py shoot <dir>
+   --relaunch <bundle id>` covers P1–P6, rotated poses included, with a
    screenshot of each display; ask before running it, since it moves the
-   simulator's hinge. Portrait and tabletop need Device Hub's rotate control.
+   simulator's hinge and orientation.
+   UI tests cannot rotate the device (`XCUIDevice.shared.orientation` does nothing
+   there), so set the pose first, then run them.
 6. Update each item's status and hand back the report.
 
 ## Guardrails

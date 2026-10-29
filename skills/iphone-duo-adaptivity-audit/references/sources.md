@@ -391,7 +391,13 @@ Artem Novichkov, [*hinge*](https://github.com/artemnovichkov/hinge)
 booted iPhone Duo simulator by posting, inside the simulator, the private vendor HID
 event Device Hub's hinge slider sends, and reads it back with Apple's
 `devicectl device motion hinge-angle`.
-It is how the inner-display numbers in `device-geometry.md` were taken
+Version 0.2.0 (October 21) added `orient` and `rotate`, which post the event of Device Hub's
+rotate control.
+Version 0.3.0 (October 26) added `posture`, `screenshot` and `--json`,
+and reads the angle from CoreMotion,
+because the `devicectl` of Xcode 27.2 has no `motion` subcommand.
+The 0.3.0 Homebrew files were byte-identical to the tagged source on 2026-10-29.
+It is how the inner-display and rotated numbers in `device-geometry.md` were taken
 (`pose-test-matrix.md` › Tooling).
 It is tooling, not a source: what it measures is cited as *Booted*,
 and the protocol it relies on is undocumented.
@@ -482,3 +488,56 @@ The post's claim that a `Slider` stays in the horizontal bar with `.automatic`
 matches Tech Talk 111462, 8:00, on custom views.
 The probe set `.horizontalOnly` on its slider, so it did not test that claim alone.
 Do not cite the post as the source of Apple behavior.
+
+Karolina Samorek, [*Getting your app ready for iPhone Duo: what actually broke*](https://skarol.dev/posts/getting-your-app-ready-for-iphone-duo/)
+(skarol.dev, October 19, 2026) — one team's audit of a UIKit and SwiftUI app
+on the iPhone Duo simulator.
+Most of it repeats Apple or this repository's measurements:
+the 84 pt side inset, the 42 pt offset, the inner display ignoring supported
+orientations, the idiom staying `.phone`, and the screenshots due in April 2027.
+This repository re-checked the rest on 2026-10-29
+(`scripts/probes/side_inset_probe.swift`, `device-geometry.md`):
+
+- *The opt-out gives 82 pt at the top instead of 84 pt on the side* — confirmed for a
+  screen with a navigation title, which has the 82 pt top inset either way.
+- *Hiding the status bar leaves the column* — confirmed.
+- *Scroll edge effects draw nothing in the column* — confirmed in SwiftUI and UIKit,
+  with a positive control at the top edge.
+- *A nested scroll view reports a safe area of 0* — confirmed.
+- *The vertical bar is on the camera's side* — confirmed on the outer display.
+  On the inner display it stays trailing in both landscapes.
+- *Inner portrait has its safe area at the top* — confirmed: top 82, no side inset.
+- *A screen inside a card-style popup still gets the window's 84 pt* — not reproduced
+  with a centred 320 × 420 custom presentation, with or without a navigation controller.
+- *Hover is the one Pencil feature that would work* — wrong:
+  Apple's specs page says hover is not supported on iPhone Duo.
+- *`XCUIDevice.shared.orientation` changes nothing in a UI test* — not measured here.
+
+Its advice on width-only breakpoints, `.pad` gates and values cached at launch
+is in `iphone-duo-layout` and `iphone-duo-adaptivity-audit`.
+Do not cite the post as the source of Apple behavior.
+
+Karolina Samorek, [*duoctl*](https://github.com/skarol/duoctl)
+(MIT, October 7–28, 2026) — a CLI and agent skill that folds, rotates and touches
+the iPhone Duo simulator.
+Folding and rotation post the same private events as `hinge`.
+Touches go through a clone of the touchscreen of the display in use,
+which is how it reaches the inner display.
+Its README states that AXe (built on idb), XcodeBuildMCP and RocketSim send every touch
+to the outer display's touchscreen, so on an open device they exit 0 and do nothing.
+It also states that a jump straight between 0° and 180° can stop the iOS 27.1 runtime
+from switching displays until the simulator is recreated,
+which is why `duo_pose.py` sweeps the hinge.
+Neither claim was reproduced here.
+`devicectl device orientation set` reporting success and changing nothing
+was reproduced (`pose-test-matrix.md` › Tooling).
+It is tooling, not a source.
+
+Nikhil Nigade, [*Designing for iPhone Duo*](https://pockity.app/blog/2026-10-23/duo-release/)
+(Pockity blog, October 23, 2026) — one indie app's design story.
+It wraps `ArrangementView` in its own list-detail container:
+side by side when open, the detail in a sheet or a pushed view when folded.
+It also has a dedicated tent-pose view,
+and lifts dark tones of full-bleed gradients for the nano-texture finish.
+None of it is checkable on the simulator, which does not show the panel's finish.
+It is an example, not a source.

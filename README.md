@@ -106,10 +106,11 @@ agent reasons over structured JSON instead of ad-hoc grep output.
 - `scripts/sdk_api_check.py` — reads the selected SDK's public headers and Swift
   interfaces and reports which iPhone Duo symbols exist, with their availability
   annotations. Code is never written against a symbol the compiler cannot see.
-- `scripts/duo_pose.py` — puts a booted iPhone Duo simulator into closed, book or
-  flat pose and screenshots both displays, for the verification phase. It drives the
-  third-party [`hinge`](https://github.com/artemnovichkov/hinge) CLI
-  (`brew install artemnovichkov/tap/hinge`), which uses a private simulator event;
+- `scripts/duo_pose.py` — puts a booted iPhone Duo simulator into any pose of the
+  matrix — closed, outer landscape, flat, inner portrait, book or tabletop — and
+  screenshots both displays, for the verification phase. It drives the
+  third-party [`hinge`](https://github.com/artemnovichkov/hinge) CLI, 0.3.0 or later
+  (`brew install artemnovichkov/tap/hinge`), which uses private simulator events;
   Apple ships no command for it.
 - `scripts/build_plugin_evals.py` — stages the plugin without its `evals/` and turns the
   skill-creator cases into a `claude plugin eval` suite (`CONTRIBUTING.md`).
@@ -118,7 +119,8 @@ agent reasons over structured JSON instead of ad-hoc grep output.
   a booted iPhone Duo simulator actually returns, and an arrangement probe that shows
   which views see an `ArrangementView`'s environment values.
   A toolbar probe shows what each toolbar item reads from `toolbarVerticalEdge`
-  and how bars compress.
+  and how bars compress, and a side-inset probe shows what frees the vertical bar's
+  column and what draws in it.
   Committed so the figures in `references/` can be re-derived rather than trusted.
 - Xcode's own modernization skill (`xcrun agent skills export`) is used for bulk UIKit
   rewrites when present; these skills cover SwiftUI, bars, the fold and displays.
