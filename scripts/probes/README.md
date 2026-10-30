@@ -495,3 +495,52 @@ Four results:
    did not reproduce with this card.
    A nested scroll view gets a safe area of 0:
    the outer scroll view takes the inset into its `adjustedContentInset`.
+
+## `sheet_inset_probe.swift` — does a sheet carry its own inset for the vertical bar?
+
+A UIKit app with one mode per launch.
+It checks three statements of Xcode's `app-resizability` skill
+(`safe-area-task.md`, rules 6 and 11):
+a sheet carries its own vertical-bar inset;
+two physically different poses report the same orientation and geometry;
+`verticalBarEdge` `.unspecified` covers more than one situation.
+Modes: `plain`, `sheet`, `sheetNav`, `sheetNavDisabled`, `presenterDisabled`,
+`swiftUISheet`, `swiftUIPresenterDisabled`; `-style page` sets `.pageSheet`.
+It logs the presenter, the sheet, its navigation controller and the window
+on every layout pass, and once more 4 s after launch (the `late` line).
+
+```bash
+U=<iPhone Duo UDID>
+mkdir -p /tmp/SheetProbe.app
+sed -e 's/DuoProbe/SheetProbe/g' -e 's/com.example.duoprobe/com.example.sheetprobe/' \
+  scripts/probes/DuoProbe-Info.plist > /tmp/SheetProbe.app/Info.plist
+xcrun -sdk iphonesimulator swiftc -target arm64-apple-ios27.1-simulator \
+  -parse-as-library scripts/probes/sheet_inset_probe.swift -o /tmp/SheetProbe.app/SheetProbe
+xcrun simctl install $U /tmp/SheetProbe.app
+python3 scripts/duo_pose.py --device $U set flat     # closed, closed-landscape, book, tabletop, …
+xcrun simctl launch --console-pty $U com.example.sheetprobe -mode sheetNav
+# after 7–8 s:
+xcrun simctl terminate $U com.example.sheetprobe
+```
+
+Run on 2026-10-30 with Xcode 27.1 (27A9275), runtime iOS 27.1 (24A94425),
+58 launches over seven poses. `--display=1` was the outer display and `--display=3` the inner one.
+The tables are in `references/device-geometry.md` › Sheets and pose pairs, measured.
+Three results:
+
+1. **A sheet works out its own vertical bar on the outer display.**
+   With the presenter opted out, the sheet keeps the bar and a 76 pt inset
+   (84 pt less its 8 pt offset); with the sheet opted out, the presenter keeps 84 pt.
+   On the inner display in landscape a centred or folded sheet has no bar at all,
+   while the presenter keeps one.
+2. **Flat and book, and tabletop and flat portrait, report the same
+   interface orientation, bounds, safe area and edge.**
+   Only the fold region's `isActive` differs.
+3. **`verticalBarEdge` reads `.unspecified` in four situations**:
+   no bar possible, the view controller opted out (the window still reads the edge),
+   a sheet without a bar under a presenter with one, and before the view is in a window.
+
+`duo_pose.py` reported `reached: false` for `closed-landscape-flipped`
+when no app was running, because the display rotation read `rot0`;
+the app's log confirmed the pose.
+`simctl bootstatus` printed "Data Migration Failed"; the boot completed.

@@ -4,14 +4,15 @@ description: >-
   Use when an app's layout or geometry breaks or wastes space on iPhone Duo's
   foldable inner display: layouts that should become multi-column in regular ×
   regular size classes, NavigationSplitView or TabView sidebars, a phone-width
-  column stuck in the middle, safe-area insets that differ left and right, content,
+  column stuck in the middle, asymmetric safe-area insets, content under the side
+  bar or the keyboard in Split View, content,
   floating controls, sheets, collection-view sections or WKWebView pages crossed by
   the hinge in book or tabletop pose, the FaceTime camera covering UI, or video
   letterboxing on the wide inner screen. Also use it for the iOS 27.1 layout APIs:
   reservedRegions (division, occlusion, right-to-left mirroring), ReservedRegion /
   UIView.ReservedRegion, ArrangementView / UIArrangementViewController split or
   overlay with their ratio, edge and axis modifiers, and corner-aware margins.
-  Follows Apple's talks, documentation and forum answers. Not for toolbar items or
+  Not for toolbar items or
   overflow menus, removing idiom or orientation checks, hinge-angle interactions, or
   generic SwiftUI and Auto Layout bugs unrelated to the foldable.
 ---
@@ -120,8 +121,33 @@ views, sheets in folded poses — and rank below the talks
 - Standard bars lay out outside the safe area and avoid the status bar and camera.
 - Interactive foreground content stays inside the safe area.
 - Background artwork extends past it (`ignoresSafeArea()` / `view.bounds`).
-- Insets and layout margins are often **asymmetric**: never double one side
-  (scanner rule `DUO006`); inset by all edges. Test in Split View.
+- Insets and layout margins are often **asymmetric**: never double one side or apply
+  the larger side to both (scanner rule `DUO006`); inset by all edges.
+  Test in Split View.
+- **A bare `ignoresSafeArea()` puts content under the vertical bar** (`DUO014`).
+  So do `.all` and `.container` with no `edges:`.
+  Keep the call on a background, artwork or full-bleed media layer.
+  For content, name only the edges it must reach.
+  The scanner skips a colour, gradient, image or media receiver,
+  the first view of a `ZStack` and a `.background` block.
+- **Bar offsets assume bars at the top and the bottom** (`DUO015`):
+  20, 44, 64, 88, 34, 49 and 83 pt, and `topLayoutGuide` / `bottomLayoutGuide`.
+  The bars move to the side (111462, 0:28), so pin to `view.safeAreaLayoutGuide`.
+  `topLayoutGuide.bottomAnchor` becomes `safeAreaLayoutGuide.topAnchor`;
+  `topLayoutGuide.topAnchor` becomes `view.topAnchor`, not the guide.
+  The scanner matches 20 and 44 only in a named bar height,
+  so check other 20 and 44 pt top offsets by hand.
+- **A keyboard frame is in screen coordinates** (`DUO016`).
+  In Split View, screen coordinates differ from the view's
+  (`keyboardFrameEndUserInfoKey` documentation),
+  so a raw frame, or one converted with `convert(_:from: nil)`, is wrong.
+  Constrain to `view.keyboardLayoutGuide`.
+  Where the frame itself is necessary, convert it with the screen's
+  `coordinateSpace` when it is used (`references/layout-code.md`).
+- **`contentInsetAdjustmentBehavior = .never`** (`DUO017`) stops a scroll view from
+  adding the vertical bar's inset to its content.
+  Remove it unless the code insets the content itself at layout time.
+  Never add the safe area on top of `adjustedContentInset`.
 - Custom UI that must claim as much space as possible without colliding with system
   UI (custom bars, edge-to-edge designs): `ReservedRegion` / `UIViewReservedRegion`
   (27.1, 8:08).
@@ -184,6 +210,10 @@ views, sheets in folded poses — and rank below the talks
 - Tell book pose from tabletop by the shape of the active division —
   a vertical band is book, a horizontal one tabletop —
   not by the hinge (`references/layout-code.md` › Pose from the fold).
+- **An interface orientation does not identify a pose.**
+  Flat and book report the same orientation, bounds, safe area and `verticalBarEdge`;
+  so do tabletop and flat portrait. Only the fold region's `isActive` differs
+  (*Booted*, `references/device-geometry.md` › Sheets and pose pairs, measured).
 - **Occlusion** regions represent the FaceTime camera. The inner camera's region is
   active only while the camera is (the UI moves aside) and inactive otherwise, so
   `.includeInactive` returns it even then (8:12; HIG › Reserved regions). The outer

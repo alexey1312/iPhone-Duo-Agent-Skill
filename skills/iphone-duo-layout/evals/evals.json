@@ -193,6 +193,22 @@
         "Sets the placement from whether an active division region exists (reservedRegions(kind: .division) / isActive), re-evaluated during layout such as viewWillLayoutSubviews and applied with animateChanges — not from the hinge status or angle.",
         "No file in the project copy was modified."
       ]
+    },
+    {
+      "id": 13,
+      "name": "safe-area-side-bar-and-keyboard",
+      "prompt": "Review the layout code of NoteDeck (evals/files/NoteDeck) for iPhone Duo and plan the changes. Plan only.",
+      "expected_output": "A plan that finds, without being told the symptoms, the bare ignoresSafeArea, the 64 pt and -34 pt offsets, contentInsetAdjustmentBehavior .never and the keyboard frame converted from window coordinates.",
+      "files": [
+        "evals/files/NoteDeck"
+      ],
+      "expectations": [
+        "Flags the bare .ignoresSafeArea() on the VStack in NoteListView: it extends the content, not only the background, under every edge, including the side that holds the vertical bar. It removes the call, moves it to a background layer, or names only the edges the content must reach.",
+        "Flags the 64 pt constant from view.topAnchor in ComposeViewController (a status bar and navigation bar height) and pins the header to view.safeAreaLayoutGuide.topAnchor with no bar-height literal. It also replaces the -34 pt bottom offset (a home indicator height) with the safe area or the keyboard layout guide.",
+        "Flags contentInsetAdjustmentBehavior = .never on the attachment table and removes it (back to .automatic) so that the table view adds the side inset itself, instead of adding a hard-coded inset such as 84 pt.",
+        "Explains that the keyboard frame from the notification is in screen coordinates, and that view.convert(frame, from: nil) treats it as window coordinates, which is wrong when the scene covers only part of the screen in Split View. It recommends view.keyboardLayoutGuide, or a conversion through (notification.object as? UIScreen)?.coordinateSpace.",
+        "Does not propose an orientation check, a device or idiom check, or a fixed side padding for the vertical bar as a fix."
+      ]
     }
   ]
 }
