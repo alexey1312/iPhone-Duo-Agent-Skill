@@ -81,6 +81,10 @@ lifecycle and `UIScreen` — its safe-area task already points at
 Xcode 27.1 also ships `device-interaction`, a subagent skill for driving a simulator
 or device, which complements the pose matrix rather than replacing it. Note what
 exists and remove the temporary directory when done.
+When `app-resizability` is installed as an agent skill, it triggers on the same
+request ("get my app ready for iPhone Duo") and applies every task in its registry.
+Run this workflow first: the scan and the tiers decide the scope.
+Then hand the approved UIKit rewrites to Apple's skill.
 
 ### 2. Scan
 
@@ -101,7 +105,7 @@ layout work (how many toolbars, split views, custom bar items, camera sessions).
 | Tier | Contents | Why first |
 | --- | --- | --- |
 | 0 — Blockers | App lifecycle without scenes (`DUO005`), no launch screen (`DUO022`) | The app does not launch when built with the latest SDK; without a launch screen, App Store Connect rejects the upload (`ITMS-90870`). |
-| 1 — Correctness | Main screen, screen bounds, orientation and idiom layout forks, symmetric safe-area math, global window state, Face ID copy (`DUO001–004`, `006`, `009`, `013`) | Wrong layout on the inner display, in Split View, in iPhone Mirroring and on iPad; wrong words on a Touch ID device. |
+| 1 — Correctness | Main screen, screen bounds, orientation and idiom layout forks, symmetric safe-area math, content under the vertical bar, bar offsets, keyboard frames, global window state, Face ID copy (`DUO001–004`, `006`, `009`, `013–017`) | Wrong layout on the inner display, in Split View, in iPhone Mirroring and on iPad; wrong words on a Touch ID device. |
 | 2 — Bars | Standalone bars, titles/symbols, ordering, overflow, priority, hand-built tab bars and back buttons (`DUO007`, `DUO011`, inventory) | Bars move to the side on the inner display with the 27.1 SDK; items without titles or with text-only labels land badly; a custom bar never moves by itself. |
 | 3 — Richer adoption | Sidebar placement, reserved regions for top custom controls, collection-view sections and web content clear of the fold (`compositional layout`, `web views` in the inventory), arrangements, hinge effects, scene accessories, camera direction handling, multiple windows, a widget or Live Activity for StandBy on the outer display, App Store screenshots for both displays, required from April 2027 (`references/device-geometry.md` › App Store assets) | Makes the app good on iPhone Duo rather than merely correct; most of it compiles on Xcode 27.1 and is blocked only on Xcode 27.0. StandBy cannot be verified in the iPhone Duo simulator (Xcode 27.1 known issues 187708663, 187708767). |
 

@@ -21,7 +21,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-VERSION = "1.5.1"
+VERSION = "1.6.0"
 
 SEVERITIES = ["critical", "high", "medium", "low", "info"]
 SOURCE_EXTENSIONS = {".swift", ".m", ".mm", ".h"}
@@ -141,8 +141,10 @@ RULES: list[Rule] = [
         skill="iphone-duo-layout",
         source=f"{S_PREPARE} 6:06",
         advice=(
-            "Safe areas and layout margins are often asymmetric on iPhone Duo. Handle "
-            "each edge independently, e.g. view.bounds.inset(by: view.safeAreaInsets)."
+            "Safe areas and layout margins are often asymmetric on iPhone Duo: one side "
+            "can hold the vertical bar while the other holds nothing. Handle each edge "
+            "independently, e.g. view.bounds.inset(by: view.safeAreaInsets); never double "
+            "one side or apply the larger side to both."
         ),
         pattern=(
             r"(?:safeAreaInsets|layoutMargins|directionalLayoutMargins)\s*\.\s*"
@@ -153,6 +155,9 @@ RULES: list[Rule] = [
             r"|\b[a-z]\w*(?:[Ii]nset|[Mm]argin)\s*\*\s*2(?:\.0)?\b"
             r"|\b2(?:\.0)?\s*\*\s*[a-z]\w*(?:[Ii]nset|[Mm]argin)\b(?!s?\s*\.)"
             r"|\b(?:inset|margin)\s*\*\s*2(?:\.0)?\b"
+            # The larger side applied to both: `max(insets.left, insets.right)`
+            r"|\bmax\(\s*[\w.?]*(?:[Ii]nsets?|[Mm]argins?)\s*\.\s*(?:left|right|leading|trailing)\s*,"
+            r"\s*[\w.?]*(?:[Ii]nsets?|[Mm]argins?)\s*\.\s*(?:left|right|leading|trailing)\s*\)"
         ),
     ),
     Rule(
@@ -247,6 +252,76 @@ RULES: list[Rule] = [
         # matched inside a single-line literal only, so `.faceID` enum cases stay clean.
         pattern=r"(?i:\bface[ -]id\b)|\"[^\"\n]*(?i:\bfaceid\b)[^\"\n]*\"",
         already_handled=r"\bbiometryType\b|\bLABiometryType\b",
+    ),
+    Rule(
+        id="DUO015",
+        title="Bar offset not taken from the safe area",
+        severity="medium",
+        skill="iphone-duo-layout",
+        source=f"{S_BARS} 0:28; {S_PREPARE} 6:06",
+        advice=(
+            "A top or bottom offset for a status bar, navigation bar, tab bar or home "
+            "indicator (20, 44, 64, 88, 34, 49, 83 pt, or topLayoutGuide / "
+            "bottomLayoutGuide) assumes bars at the top and bottom. On iPhone Duo the "
+            "bars move to the side, so the offset leaves a gap and the side stays "
+            "covered. Constrain to view.safeAreaLayoutGuide (topLayoutGuide.bottomAnchor "
+            "becomes safeAreaLayoutGuide.topAnchor; topLayoutGuide.topAnchor becomes "
+            "view.topAnchor), or read safeAreaInsets in layoutSubviews."
+        ),
+        pattern=(
+            r"\b(?:top|bottom)LayoutGuide\b"
+            r"|\bUIEdgeInsets\(\s*top:\s*(?:34|49|64|83|88)(?:\.0)?\b"
+            r"|\bUIEdgeInsets\(\s*top:[^,()]+,\s*left:[^,()]+,\s*bottom:\s*(?:34|49|64|83|88)(?:\.0)?\b"
+            r"|\bUIEdgeInsetsMake\(\s*(?:34|49|64|83|88)(?:\.0)?\s*,"
+            r"|\bUIEdgeInsetsMake\([^,()]+,[^,()]+,\s*(?:34|49|64|83|88)(?:\.0)?\s*,"
+            r"|\.padding\(\s*\.(?:top|bottom)\s*,\s*(?:34|49|64|83|88)(?:\.0)?\s*\)"
+            # An anchor constraint with a bar-sized constant, unless it already uses a guide.
+            r"|^(?!.*\b(?:safeAreaLayoutGuide|layoutMarginsGuide|keyboardLayoutGuide|readableContentGuide)\b)"
+            r".*\b(?:top|bottom)Anchor\b.*\bconstant:\s*-?(?:34|49|64|83|88)(?:\.0)?\b"
+            r"|\b\w*(?i:top|bottom)\w*\.constant\s*=\s*-?(?:34|49|64|83|88)(?:\.0)?\b"
+            # A named bar height: `let navBarHeight: CGFloat = 44`, `#define TAB_BAR_HEIGHT 49`
+            r"|\b\w*(?i:status_?bar|nav(?:igation)?_?bar|tab_?bar|tool_?bar|home_?indicator)_?(?i:height)\w*"
+            r"\s*(?::\s*CGFloat\s*)?(?:=\s*|\s+)\d+(?:\.\d+)?\b"
+        ),
+    ),
+    Rule(
+        id="DUO016",
+        title="Keyboard frame read from a notification",
+        severity="medium",
+        skill="iphone-duo-layout",
+        source=f"{S_MODERNIZE} 5:06; {S_PREPARE} 6:06",
+        advice=(
+            "A keyboard notification reports the keyboard's frame in the screen's "
+            "coordinate space. In Split View on iPhone Duo's inner display the scene "
+            "covers only part of the screen, so a raw frame, or one converted with "
+            "convert(_:from: nil) as if it were window coordinates, is wrong. Constrain "
+            "content to view.keyboardLayoutGuide. Where the code must keep the frame, "
+            "convert it with (notification.object as? UIScreen)?.coordinateSpace."
+            "convert(frame, to: view) when it is used, and never store it."
+        ),
+        pattern=(
+            r"\b(?:UI)?[Kk]eyboardFrame(?:End|Begin)UserInfoKey\b"
+        ),
+        already_handled=r"\bcoordinateSpace\b|\bkeyboardLayoutGuide\b",
+    ),
+    Rule(
+        id="DUO017",
+        title="Scroll view content inset adjustment turned off",
+        severity="low",
+        skill="iphone-duo-layout",
+        source=f"{S_PREPARE} 6:06",
+        advice=(
+            "contentInsetAdjustmentBehavior .never stops the scroll view from adding the "
+            "safe area to its content inset, so content scrolls under the vertical bar "
+            "and the trailing column of iPhone Duo's outer display. Remove the assignment "
+            "(.automatic is the default) unless the code insets its content from "
+            "safeAreaInsets at layout time. Never add a safe-area inset on top of "
+            "adjustedContentInset, which already contains it."
+        ),
+        pattern=(
+            r"\bcontentInsetAdjustmentBehavior\s*=\s*(?:UIScrollView\s*\.\s*ContentInsetAdjustmentBehavior\s*)?\.never\b"
+            r"|\bUIScrollViewContentInsetAdjustmentNever\b"
+        ),
     ),
 ]
 
@@ -568,6 +643,153 @@ PROJECT_RULES = {
     ),
 }
 
+# Rules that need more context than one logical line: the receiver of a modifier that
+# spans several lines, and the container it sits in.
+CONTEXT_RULES = {
+    "DUO014": Rule(
+        id="DUO014",
+        title="Content that ignores every safe-area edge",
+        severity="medium",
+        skill="iphone-duo-layout",
+        source=f"{S_PREPARE} 6:06; {S_BARS} 0:28",
+        advice=(
+            "A bare ignoresSafeArea() (or .all, or .container without edges) extends the "
+            "view under every edge, including the one that holds the vertical bar on "
+            "iPhone Duo. That is correct for a background, artwork or a full-bleed media "
+            "surface, and wrong for content people read or touch. Move the call to the "
+            "background layer, or name only the edges the content must reach in edges:."
+        ),
+        pattern="",
+    ),
+}
+
+IGNORES_SAFE_AREA = re.compile(r"\.(ignoresSafeArea|edgesIgnoringSafeArea)\s*\(")
+EVERY_EDGE_ARGUMENTS = re.compile(
+    r"\s*(?:\.(?:all|container)\s*)?"
+    r"|\s*(?:\.(?:all|container)\s*,\s*)?edges\s*:\s*\.all\s*"
+)
+# A receiver that names one of these is a background layer or a full-bleed surface.
+BACKGROUND_RECEIVER = re.compile(
+    r"^(?:Color|Image|AsyncImage|Rectangle|Material|VideoPlayer|Map|SpriteView|SceneView"
+    r"|RealityView)$|(?i:gradient|video|camera|artwork|background|backdrop|wallpaper)"
+)
+BACKGROUND_CONTAINER = re.compile(r"(?:\.background\s*(?:\([^()]*\))?|\bbackground\s*:)\s*$")
+ZSTACK_OPENER = re.compile(r"\bZStack\s*(?:\([^()]*\))?\s*$")
+OPENERS = {")": "(", "]": "[", "}": "{"}
+
+
+def matching_opener(text: str, close: int) -> int:
+    """Index of the bracket that opens the one at `close`, or -1."""
+    depth = 0
+    for index in range(close, -1, -1):
+        char = text[index]
+        if char in OPENERS:
+            depth += 1
+        elif char in "([{":
+            depth -= 1
+            if depth == 0:
+                return index
+    return -1
+
+
+def receiver_of(text: str, dot: int) -> tuple[list[str], bool, int]:
+    """Walk back from the `.` of a modifier to the start of the expression it modifies.
+
+    Returns the identifiers of the member chain, right to left (so the root comes
+    last), whether the chain calls anything, and the index where the expression starts.
+    """
+    names: list[str] = []
+    called = False
+    position = dot
+    while True:
+        index = position - 1
+        while index >= 0 and text[index].isspace():
+            index -= 1
+        if index < 0:
+            return names, called, 0
+        char = text[index]
+        if char in OPENERS:
+            opener = matching_opener(text, index)
+            if opener < 0:
+                return names, called, index + 1
+            called = True
+            position = opener
+            # A call's parentheses touch its name; a trailing closure may follow a space.
+            if char == "}":
+                while position > 0 and text[position - 1] in " \t":
+                    position -= 1
+            if position > 0 and (text[position - 1].isalnum() or text[position - 1] in "_)]}"):
+                continue
+            return names, called, opener
+        if char.isalnum() or char == "_":
+            begin = index
+            while begin > 0 and (text[begin - 1].isalnum() or text[begin - 1] == "_"):
+                begin -= 1
+            names.append(text[begin:index + 1])
+            before = begin - 1
+            while before >= 0 and text[before].isspace():
+                before -= 1
+            if before >= 0 and text[before] == ".":
+                position = before
+                continue
+            return names, called, begin
+        return names, called, index + 1
+
+
+def enclosing_block(text: str, start: int) -> tuple[int, str]:
+    """The unmatched opener before `start` and the text on its line before it."""
+    depth = 0
+    for index in range(start - 1, -1, -1):
+        char = text[index]
+        if char in OPENERS:
+            depth += 1
+        elif char in "([{":
+            if depth == 0:
+                line_start = text.rfind("\n", 0, index) + 1
+                return index, text[line_start:index]
+            depth -= 1
+    return -1, ""
+
+
+def is_background_layer(text: str, names: list[str], called: bool, start: int) -> bool:
+    # Only the root names the layer: `.background(.thinMaterial)` further down the chain
+    # decorates content, it does not make the content a background.
+    roots = [name for name in names if name != "self"]
+    if roots and BACKGROUND_RECEIVER.search(roots[-1]):
+        return True
+    # `Palette.paper.ignoresSafeArea()`: a static value, such as a colour constant.
+    if names and not called and len(names) > 1 and names[-1][:1].isupper():
+        return True
+    opener, before = enclosing_block(text, start)
+    if opener < 0:
+        return False
+    if BACKGROUND_CONTAINER.search(before):
+        return True
+    # The first view in a ZStack sits behind the others.
+    if text[opener] == "{" and ZSTACK_OPENER.search(before):
+        return not text[opener + 1:start].strip()
+    return False
+
+
+def scan_ignores_safe_area(rel: str, text: str, stripped: str) -> list[Finding]:
+    rule = CONTEXT_RULES["DUO014"]
+    original_lines = text.splitlines()
+    findings: list[Finding] = []
+    for match in IGNORES_SAFE_AREA.finditer(stripped):
+        close = stripped.find(")", match.end())
+        if close < 0 or not EVERY_EDGE_ARGUMENTS.fullmatch(stripped[match.end():close]):
+            continue
+        names, called, start = receiver_of(stripped, match.start())
+        if is_background_layer(stripped, names, called, start):
+            continue
+        number = line_of(stripped, match.start())
+        snippet = original_lines[number - 1].strip()
+        if names and snippet.startswith("."):
+            snippet = f"{names[-1]} … {snippet}"
+        findings.append(make_finding(rule, rel, number, snippet))
+    return findings
+
+
 SWIFTUI_APP = re.compile(r"@main\b[\s\S]{0,300}?\bstruct\s+\w+\s*:\s*(?:SwiftUI\s*\.\s*)?App\b")
 SCENE_DELEGATE = re.compile(r"\bUIWindowSceneDelegate\b|\bUISceneDelegate\b|\bconfigurationForConnecting(?:SceneSession)?\b")
 APP_DELEGATE = re.compile(r"\bUIApplicationDelegate\b|@UIApplicationMain\b|\bUIApplicationMain\s*\(")
@@ -691,6 +913,8 @@ def scan(root: Path, include_dependencies: bool = False) -> dict:
         for name, regex in inventory_regex.items():
             inventory[name] += len(regex.findall(stripped))
         findings.extend(scan_source(rel, text, stripped, compiled))
+        if path.suffix == ".swift":
+            findings.extend(scan_ignores_safe_area(rel, text, stripped))
 
     if swiftui_app:
         lifecycle = "swiftui-app"

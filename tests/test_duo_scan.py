@@ -316,6 +316,117 @@ class ProjectRuleTests(ScanTestCase):
         self.assertEqual(sorted(self.project.rules()), ["DUO020", "DUO021"])
 
 
+class SafeAreaRuleTests(ScanTestCase):
+    def assertEachRules(self, cases: dict[str, list[str]], name: str = "Sources/View.swift") -> None:
+        for source, expected in cases.items():
+            with self.subTest(source=source):
+                self.project.close()
+                self.project = ProjectFixture()
+                self.assertRules(source, expected, name=name)
+
+    def test_larger_side_applied_to_both(self) -> None:
+        self.assertEachRules({
+            "let side = max(view.safeAreaInsets.left, view.safeAreaInsets.right)\n": ["DUO006"],
+            "let m = max(layoutMargins.leading, layoutMargins.trailing)\n": ["DUO006"],
+            "let w = max(view.bounds.width, 320)\n": [],
+            "let side = max(insets.left, 16)\n": [],
+        })
+
+    def test_ignores_every_safe_area_edge(self) -> None:
+        self.assertEachRules({
+            "List(items) { Text($0.name) }\n    .ignoresSafeArea()\n": ["DUO014"],
+            "content.ignoresSafeArea(.all)\n": ["DUO014"],
+            "content.ignoresSafeArea(.container)\n": ["DUO014"],
+            "content.ignoresSafeArea(.container, edges: .all)\n": ["DUO014"],
+            "content.edgesIgnoringSafeArea(.all)\n": ["DUO014"],
+        })
+
+    def test_background_layers_and_scoped_edges_may_ignore_the_safe_area(self) -> None:
+        self.assertEachRules({
+            "Color.black\n    .ignoresSafeArea()\n": [],
+            ".background(Color.blue.ignoresSafeArea())\n": [],
+            "LinearGradient(colors: [.red, .blue], startPoint: .top, endPoint: .bottom)\n    .ignoresSafeArea()\n": [],
+            "VideoPlayer(player: player)\n    .ignoresSafeArea()\n": [],
+            "content.ignoresSafeArea(edges: .bottom)\n": [],
+            "content.ignoresSafeArea(.keyboard)\n": [],
+            "Palette.paper.ignoresSafeArea()\n": [],
+            "SkinArtworkView(skin: skin)\n    .ignoresSafeArea()\n": [],
+        })
+
+    def test_receiver_and_container_span_several_lines(self) -> None:
+        first_in_zstack = (
+            "ZStack {\n    MirrorView(\n        model: model,\n        ringWidth: 16\n    )\n"
+            "    .ignoresSafeArea()\n    Controls()\n}\n"
+        )
+        second_in_zstack = "ZStack {\n    Mirror()\n    Controls(\n        model: model\n    )\n    .ignoresSafeArea()\n}\n"
+        in_background = ".background {\n    MirrorView(\n        model: model\n    )\n    .ignoresSafeArea()\n}\n"
+        trailing_closure = "RealityView { content in\n    content.add(entity)\n}\n.ignoresSafeArea()\n"
+        root_content = "WindowGroup {\n    RootView()\n        .ignoresSafeArea()\n}\n"
+        self.assertEachRules({
+            first_in_zstack: [],
+            second_in_zstack: ["DUO014"],
+            in_background: [],
+            trailing_closure: [],
+            root_content: ["DUO014"],
+            "VStack {\n    Text(title)\n}\n.padding()\n.background(.thinMaterial)\n.ignoresSafeArea()\n": ["DUO014"],
+            "self.backgroundView.ignoresSafeArea()\n": [],
+        })
+
+    def test_bar_offsets_swift(self) -> None:
+        self.assertEachRules({
+            "label.topAnchor.constraint(equalTo: view.topAnchor, constant: 64)\n": ["DUO015"],
+            "table.contentInset = UIEdgeInsets(top: 64, left: 0, bottom: 49, right: 0)\n": ["DUO015"],
+            "table.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 83, right: 0)\n": ["DUO015"],
+            "content.padding(.top, 88)\n": ["DUO015"],
+            "let navBarHeight: CGFloat = 44\n": ["DUO015"],
+            "topConstraint.constant = 64\n": ["DUO015"],
+            "let top = topLayoutGuide.length\n": ["DUO015"],
+        })
+
+    def test_bar_offsets_objc(self) -> None:
+        self.assertEachRules({
+            "#define TAB_BAR_HEIGHT 49\n": ["DUO015"],
+            "static const CGFloat kStatusBarHeight = 20.0;\n": ["DUO015"],
+            "[label.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:64].active = YES;\n": ["DUO015"],
+            "self.tableView.contentInset = UIEdgeInsetsMake(64, 0, 0, 0);\n": ["DUO015"],
+        }, name="Sources/View.m")
+
+    def test_offsets_from_a_guide_or_a_design_value_are_not_bar_offsets(self) -> None:
+        self.assertEachRules({
+            "label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 64)\n": [],
+            "label.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 8)\n": [],
+            "button.heightAnchor.constraint(equalToConstant: 44)\n": [],
+            "content.padding(.top, 16)\n": [],
+            "let tabBarHeight = tabBar.frame.height\n": [],
+            "cell.contentInset = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)\n": [],
+        })
+
+    def test_keyboard_frame_from_a_notification(self) -> None:
+        source = "let end = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect\n"
+        self.assertRules(source, ["DUO016"])
+        self.assertEqual(self.project.scan()["findings"][0]["severity"], "medium")
+        self.project.write("Sources/View.swift", source + "let local = screen.coordinateSpace.convert(end ?? .zero, to: view)\n")
+        findings = self.project.scan()["findings"]
+        self.assertEqual([(f["rule"], f["severity"]) for f in findings], [("DUO016", "low")])
+        self.assertEachRules({"CGRect r = [info[UIKeyboardFrameEndUserInfoKey] CGRectValue];\n": ["DUO016"]}, name="Sources/View.m")
+
+    def test_keyboard_guide_and_plain_observers_are_not_reported(self) -> None:
+        self.assertEachRules({
+            "field.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)\n": [],
+            "center.addObserver(self, selector: #selector(hide), name: UIResponder.keyboardWillHideNotification, object: nil)\n": [],
+        })
+
+    def test_content_inset_adjustment_never(self) -> None:
+        self.assertEachRules({
+            "scrollView.contentInsetAdjustmentBehavior = .never\n": ["DUO017"],
+            "scrollView.contentInsetAdjustmentBehavior = UIScrollView.ContentInsetAdjustmentBehavior.never\n": ["DUO017"],
+            "scrollView.contentInsetAdjustmentBehavior = .automatic\n": [],
+        })
+        self.assertEachRules({
+            "self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;\n": ["DUO017"],
+        }, name="Sources/View.m")
+
+
 class LaunchScreenTests(ScanTestCase):
     APP = "import SwiftUI\n\n@main\nstruct PuzzlerApp: App {\n    var body: some Scene { WindowGroup { Text(\"Hi\") } }\n}\n"
 
@@ -556,7 +667,7 @@ class RuleMetadataTests(unittest.TestCase):
             "iphone-duo-layout",
             "iphone-duo-displays",
         }
-        rules = list(duo_scan.RULES) + list(duo_scan.PROJECT_RULES.values())
+        rules = list(duo_scan.RULES) + list(duo_scan.PROJECT_RULES.values()) + list(duo_scan.CONTEXT_RULES.values())
         self.assertEqual(len({rule.id for rule in rules}), len(rules))
         for rule in rules:
             self.assertIn(rule.skill, skills, rule.id)

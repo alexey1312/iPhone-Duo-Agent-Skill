@@ -53,6 +53,13 @@ Where the corner camera and the side controls physically sit:
   `.center` the fourth value. The bar's axis therefore follows the placement.
   (3:58; *Preparing your app for iPhone Duo* › Optimize bars for vertical
   presentation; `PresentationPlacement` documentation)
+  *Booted* (`scripts/probes/sheet_inset_probe.swift`): a sheet works out its own bar.
+  On the outer display it keeps the bar when the presenter opts out,
+  and an opted-out sheet leaves the presenter's bar in place.
+  On the inner display in landscape a centred or folded sheet has no bar,
+  while the presenter keeps one.
+  Read a sheet's own view for its inset and edge
+  (`references/device-geometry.md` › Sheets and pose pairs, measured).
 - **Keyboard accessory bars stay with the keyboard.** (10:00)
 - **Fixed width, flexible height.** Items with an icon go vertical; text-only items
   stay horizontal. The title is still required — it is used in overflow menus and
@@ -81,7 +88,9 @@ Where the corner camera and the side controls physically sit:
    - reserve its strip with `view.layoutGuide(for: .bar(onEdge:extent:))` (UIKit,
      27.1) or `safeAreaBar(edge:)` with a `HorizontalEdge` (SwiftUI, iOS 26).
      *Booted*: a 56 pt trailing bar region sits inside the 84 pt trailing inset, below
-     the 120 pt status-bar strip — the system bar's own slot;
+     the status-bar strip (120 pt on Xcode 27A9269, 124 pt on 27A9275) — the system
+     bar's own slot. `.unspecified` means no bar for this view, not for the display:
+     the window still reads an edge when a view controller opts out (*Booted*);
    - do not trust safe-area insets alone for the camera and Dynamic Island strip:
      query the `.occlusion` regions (Forums 847644);
    - rebuild what a system bar gives for free: item labels that expand on a long

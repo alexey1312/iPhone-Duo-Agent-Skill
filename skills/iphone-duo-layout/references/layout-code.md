@@ -89,6 +89,43 @@ let width = view.bounds.width - view.safeAreaInsets.left * 2
 let width = view.bounds.inset(by: view.safeAreaInsets).width
 ```
 
+## Bars, the keyboard and scroll views (111462, 0:28; `keyboardFrameEndUserInfoKey` documentation)
+
+Scanner rules `DUO014`–`DUO017`.
+Typechecked with the iOS 27.1 SDK at iOS 18.0 and 27.1 deployment targets.
+
+```swift
+// ✗ topLayoutGuide, or a 64 pt offset for a status bar and a navigation bar
+// header.topAnchor.constraint(equalTo: view.topAnchor, constant: 64)
+// ✓ the safe area carries whatever the bars need, on whichever edge they sit
+header.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+
+// ✓ the guide tracks the keyboard in every scene size, with no observer
+composer.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor).isActive = true
+
+// ✗ tableView.contentInsetAdjustmentBehavior = .never
+// ✓ leave .automatic: the scroll view adds the vertical bar's inset itself
+
+// Only where the frame itself is needed (an animation, a custom panel):
+@objc func keyboardWillChangeFrame(_ notification: Notification) {
+    guard let screen = notification.object as? UIScreen,
+          let end = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
+    else { return }
+    // ✗ view.convert(end, from: nil): the frame is in screen coordinates, not window ones
+    let local = screen.coordinateSpace.convert(end, to: view)
+    let overlap = view.bounds.intersection(local)
+    panel.transform = CGAffineTransform(translationX: 0, y: overlap.isNull ? 0 : -overlap.height)
+}
+```
+
+```swift
+// ✗ List(notes, id: \.self) { Text($0) }.ignoresSafeArea()
+// ✓ the background reaches every edge; the list keeps out of the vertical bar
+List(notes, id: \.self) { Text($0) }
+    .scrollContentBackground(.hidden)
+    .background { Color.indigo.opacity(0.2).ignoresSafeArea() }
+```
+
 ## Query reserved regions — 27.1 (111463, 6:46–8:07)
 
 ```swift

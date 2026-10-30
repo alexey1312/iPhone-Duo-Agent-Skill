@@ -20,20 +20,25 @@ technote, **Spec** iPhone Duo tech specs, **Newsroom** Apple's iPhone Duo announ
 | DUO003 | medium | `userInterfaceIdiom`, `UI_USER_INTERFACE_IDIOM()` | adaptivity-audit | 111461 1:33; 278 6:17 |
 | DUO004 | high | `interfaceOrientation`, `statusBarOrientation`, `UIDevice` orientation, orientation notifications, `isLandscape` / `isPortrait` | adaptivity-audit | 111461 2:46; 278 6:50 |
 | DUO005 | critical | App delegate with no SwiftUI `App`, scene delegate or scene manifest | adaptivity-audit | 278 2:10 |
-| DUO006 | medium | Safe-area or margin inset on one side multiplied by 2 | layout | 111461 6:06 |
+| DUO006 | medium | Safe-area or margin inset on one side multiplied by 2, or the larger side applied to both (`max(left, right)`) | layout | 111461 6:06 |
 | DUO007 | medium | Standalone `UIToolbar`, `UINavigationBar`, `UITabBar` instances | bars | 111462 2:00 |
 | DUO008 | low | `NavigationView` | layout | 111461 5:01; 111462 2:00 |
 | DUO009 | medium | `UIApplication.shared.keyWindow` / `windows`, `statusBarFrame`, `connectedScenes…first` | adaptivity-audit | 111464 3:38; 278 2:51 |
 | DUO010 | medium | Scene activation with `errorHandler: nil` | displays | 111464 3:38 |
 | DUO011 | low | Custom `ellipsis` symbol buttons | bars | 111462 11:40 |
 | DUO012 | low | Scene delegate but no scene manifest found | adaptivity-audit | 278 2:10 |
+| DUO014 | medium | `ignoresSafeArea()`, `.all` or `.container` with no `edges:`; skipped for colour, gradient, image and media receivers, the first view of a `ZStack` and `.background` blocks | layout | 111461 6:06; 111462 0:28 |
+| DUO015 | medium | `topLayoutGuide` / `bottomLayoutGuide`, or a 34, 49, 64, 83 or 88 pt top or bottom offset in `UIEdgeInsets`, `.padding`, an anchor constant not tied to a guide, or a named bar height | layout | 111462 0:28; 111461 6:06 |
+| DUO016 | medium | `keyboardFrameEndUserInfoKey` / `keyboardFrameBeginUserInfoKey`; `low` in files that use `coordinateSpace` or `keyboardLayoutGuide` | layout | 278 5:06; 111461 6:06 |
+| DUO017 | low | `contentInsetAdjustmentBehavior = .never` | layout | 111461 6:06 |
 | DUO013 | medium | "Face ID" in any case, with a space or hyphen, in single- or multi-line string literals, or the `faceid` symbol; `low` in files that read `biometryType` elsewhere, skipped on the line that reads it | adaptivity-audit | 111461 2:34; Spec |
 | DUO020 | info | `UIRequiresFullScreen` in Info.plist or build settings | adaptivity-audit | 278 5:46; 111461 4:37; TN3192 |
 | DUO021 | info | Portrait-only supported orientations | layout | 111461 2:46; 278 6:50 |
 | DUO022 | high | An app entry point, but no launch screen key in an Info.plist, the build settings, a Tuist manifest or an XcodeGen spec | adaptivity-audit | TN3208; TN3192 |
 
 Limits: logical-line matching (Swift member chains that continue on a line starting with
-`.` are joined; other expressions split across lines can be missed), no macro or
+`.` are joined; other expressions split across lines can be missed; `DUO014` alone walks
+back across lines to the receiver and its container), no macro or
 build-time generated sources, no Tuist/XcodeGen manifest parsing beyond the launch screen keys of `DUO022`, no `#if 0` awareness,
 no `.strings` / `.xcstrings` catalogs (grep them for Face ID copy). Every finding needs
 the code read before it becomes a recommendation.

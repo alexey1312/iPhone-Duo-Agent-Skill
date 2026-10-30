@@ -89,7 +89,7 @@ than taken on trust:
 | `horizontalSizeClass` / `verticalSizeClass` | compact / regular |
 | `verticalBarEdge` | `.trailing` |
 | `reservedRegions(kind: .division)` | none — the device is closed |
-| `reservedRegions(kind: .occlusion)` | **two**: a 37 × 37 camera hole at (399.7, 29.3) and an 84 × 170 strip at (382, 0) for the status bar and Dynamic Island; both active, both with **zero margins** (re-measured 2026-10-01) |
+| `reservedRegions(kind: .occlusion)` | **two**: a 37 × 37 camera hole at (399.7, 29.3) and an 84 × 170 strip at (382, 0) for the status bar and Dynamic Island; both active, both with **zero margins** (re-measured 2026-10-01; the strip is 84 × 174 on Xcode 27.1 27A9275, 2026-10-30) |
 | `onHingeChange`, first call | right after launch, before any change: `oldContext.hinge` **`nil`**, `newContext.hinge` closed at 0° (2026-10-01) |
 
 Three things about reserved regions that only a booted device settles, and that an
@@ -156,7 +156,7 @@ open flat at 180° (P3) and folded like a book at 90° (P5),
 | `horizontalSizeClass` / `verticalSizeClass` | regular / regular | same |
 | `verticalBarEdge` | `.trailing` | same |
 | `reservedRegions(kind: .division)` | one, **inactive**: frame (455.5, 0, **40 × 669**), margins leading **20** / trailing **20** | the same frame, **active** |
-| `reservedRegions(kind: .occlusion)` | the inner camera, **inactive**: 58 × 37 at (677.3, 21); the bar strip, active: 84 × 120 at (867, 0); all margins zero | same |
+| `reservedRegions(kind: .occlusion)` | the inner camera, **inactive**: 58 × 37 at (677.3, 21); the bar strip, active: 84 × 120 at (867, 0) (84 × 124 on 27A9275); all margins zero | same |
 | `onHingeChange`, first call | `nil` → fully open at 180° | `nil` → partially open at 90° |
 
 What that settles:
@@ -177,6 +177,8 @@ What that settles:
   outer camera.
 - **The bar strip shrinks to 84 × 120 pt** on the inner display, against 84 × 170
   on the outer one.
+  On Xcode 27.1 (27A9275, 2026-10-30) both strips are 4 pt taller: 84 × 124 and 84 × 174.
+  Pick a region by a property, never by these numbers.
 
 The simulator also shows how the system reports the hinge.
 Set to 175°, 178° and 179° by `hinge`, it reported 170.3°, 173.1° and 174.1°,
@@ -226,6 +228,76 @@ What that settles:
   its frame and 421.5 pt below, so a layout centred in the safe area puts its middle
   24 pt below the crease.
   Flat and folded again differ only in `isActive`.
+
+### Sheets and pose pairs, measured
+
+*Booted* grade. `scripts/probes/sheet_inset_probe.swift`, 2026-10-30,
+Xcode 27.1 (27A9275), runtime iOS 27.1 (24A94425), poses set by `duo_pose.py`.
+It checks three statements of Xcode's `app-resizability` skill
+(`safe-area-task.md`, rules 6 and 11).
+The default `.automatic` sheet resolves to a form sheet.
+An explicit `.pageSheet` gave the same frames and insets in every pose;
+only its size classes on the inner display differ (regular / regular, not compact / regular).
+
+**A sheet works out its own vertical bar.**
+Values are the sheet content's `safeAreaInsets` and `verticalBarEdge`.
+
+| Pose | Both default | Presenter opted out | Sheet opted out |
+| --- | --- | --- | --- |
+| Outer, portrait | presenter trailing 84; sheet trailing **76**, `.trailing` | presenter top 82, no side inset; sheet trailing **76**, `.trailing` | presenter trailing 84; sheet no side inset, from y 82, `.unspecified` |
+| Outer, landscape | the same, on the bar's edge | the same; the presenter's 82 pt goes to the camera's edge | the same |
+| Inner, landscape (flat, book) | presenter trailing 84; sheet **no side inset**, `.unspecified`, bar at the top | presenter top 82; the sheet moves down to y 82 | sheet no side inset |
+| Inner, portrait | no side inset anywhere | the same | the same |
+
+- **On the outer display the sheet's inset is its own.**
+  With the presenter opted out, the sheet keeps the vertical bar and a 76 pt inset.
+  With the sheet opted out, the presenter keeps its 84 pt.
+  The 76 pt is the container's 84 pt less the sheet's 8 pt offset from the screen edge.
+- **On the inner display in landscape, a centred or a folded sheet has no vertical bar**,
+  as *Preparing your app for iPhone Duo* states for centred and leading placements.
+  The presenter keeps its own bar.
+- **Read the sheet's own view**, never the presenter's or the window's.
+  The window's `verticalBarEdge` read `.trailing` also where the view controller
+  had opted out and the window's own safe area had no side inset.
+- In book pose the sheet moves to the leading side (x 8–467.5 pt).
+  In tabletop it does not move: it spans the fold, as in flat portrait.
+- Opted out on the outer display in landscape, the presenter's 82 pt goes to the camera's edge:
+  the top in one landscape, the bottom in the other, where it replaces the 34 pt home-indicator inset.
+
+**Two pairs of poses report the same orientation and the same geometry.**
+Values are the presenter's, with no sheet.
+
+| Pose | Interface orientation | Scene bounds | Safe area (t, l, b, r) | `verticalBarEdge` | Fold region |
+| --- | --- | --- | --- | --- | --- |
+| Closed | portrait | 466 × 678 | 0, 0, 34, 84 | trailing | none |
+| Closed, landscape | landscapeRight | 678 × 466 | 0, 84, 34, 0 | leading | none |
+| Closed, landscape, flipped | landscapeLeft | 678 × 466 | 0, 0, 34, 84 | trailing | none |
+| Flat | landscapeLeft | 951 × 669 | 0, 0, 34, 84 | trailing | 40 × 669 at x 455.5, inactive |
+| Book | landscapeLeft | 951 × 669 | 0, 0, 34, 84 | trailing | the same frame, **active** |
+| Tabletop | portrait | 669 × 951 | 82, 0, 34, 0 | unspecified | 669 × 40 at y 455.5, active |
+| Flat, portrait | portrait | 669 × 951 | 82, 0, 34, 0 | unspecified | the same frame, **inactive** |
+
+- Flat and book differ only in the fold's `isActive`. So do tabletop and flat portrait.
+  The occlusion regions are identical in each pair.
+- The interface orientation also repeats across different geometry:
+  portrait for the closed device and for inner portrait,
+  `landscapeLeft` for one closed landscape and for flat and book.
+- So an orientation does not identify a pose.
+  Query the division region (`references/layout-code.md` › Pose from the fold in the layout skill).
+
+**`verticalBarEdge` reads `.unspecified` in four situations:**
+
+1. No bar is possible: inner portrait and tabletop.
+2. The view controller opted out. The window still reads the bar's edge.
+3. The window has a bar and a sheet does not: inner landscape.
+4. The view is not in a window yet (`viewDidLoad`).
+   In `viewDidLayoutSubviews` the trait was set on the first pass.
+
+`toolbarVerticalEdge` is `nil` in situations 1–3.
+A SwiftUI presenter with `.toolbarVerticalBehavior(.disabled)` read the bar's edge
+on its first two layout passes and `nil` from the third.
+Read `.unspecified` as "no bar for this view", not as "no bar on this display",
+and read the safe area for the size of the space.
 
 ### What the simulator reports
 

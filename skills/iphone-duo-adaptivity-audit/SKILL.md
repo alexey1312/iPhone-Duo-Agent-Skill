@@ -110,6 +110,8 @@ begins.
    UIKit rewrites: it applies deprecate-and-forward patterns, preserves guards and
    control flow, and tracks file coverage. Review its diff against the approved items.
    SwiftUI code and anything it leaves as a TODO come back here.
+   Installed as an agent skill, it also triggers on "get my app ready for iPhone Duo"
+   and applies every task it has; scope it to the approved items first.
 4. **Recommend** in the format of `references/recommendation-format.md`; wait for
    approval; apply; build; re-scan.
 
